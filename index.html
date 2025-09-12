@@ -1,978 +1,828 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Products Page</title>
-<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
-<script src="//cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-<style>
-/* Add body background and theme */
-body {
-  margin: 0;
-  padding: 0;
-  font-family: 'Arial', sans-serif;
-  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 25%, #0f3460 50%, #533483 75%, #7b2d8e 100%);
-  min-height: 100vh;
-  color: white;
-}
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WEBVTEC - Products</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
 
-/* Your CSS as provided */
-.cart-button {
-  position: absolute;
-  top: 0;
-  right: 0;
-  background: linear-gradient(45deg, #FFD700, #FFA500);
-  border: none;
-  height: 48px;
-  width: 45px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 22px;
-  cursor: pointer;
-  z-index: 1001;
-  box-shadow: 0 4px 15px rgba(255, 215, 0, 0.4);
-  border-radius: 10px;
-  transition: all 0.3s ease;
-}
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: white;
+        }
 
-.cart-button:hover {
-  transform: scale(1.05);
-  box-shadow: 0 6px 20px rgba(255, 215, 0, 0.6);
-}
+        /* Header */
+        .header {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 1rem;
+            backdrop-filter: blur(10px);
+            border-bottom: 2px solid #ffd700;
+        }
 
-.cart-button #cartCount {
-  position: absolute;
-  top: -6px;
-  right: 2px;
-  background: red;
-  color: white;
-  border-radius: 50%;
-  width: 20px;
-  height: 20px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 12px;
-  font-weight: bold;
-  z-index: 1002;
-}
+        .header-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
 
-/* Header styling */
-h1 {
-  background: linear-gradient(45deg, #FFD700, #FFA500) !important;
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-  text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
-}
+        .logo {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #ffd700;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+        }
 
-.delivery-options {
-  display: flex;
-  gap: 10px;
-  margin-top: 15px;
-}
+        .user-actions {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+        }
 
-.option-button {
-  flex: 1;
-  padding: 12px;
-  background: linear-gradient(45deg, #7C3AED, #A855F7);
-  color: white;
-  border: none;
-  border-radius: 8px;
-  font-size: 16px;
-  cursor: pointer;
-  transition: all 0.3s ease;
-}
+        .btn {
+            padding: 0.5rem 1rem;
+            border: none;
+            border-radius: 25px;
+            background: linear-gradient(45deg, #ffd700, #ffed4a);
+            color: #333;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-block;
+        }
 
-.option-button:hover {
-  background: linear-gradient(45deg, #6D28D9, #9333EA);
-  transform: translateY(-2px);
-}
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(255, 215, 0, 0.3);
+        }
 
-.option-button.active {
-  background: linear-gradient(45deg, #FFD700, #FFA500);
-  color: #1a1a2e;
-}
-</style>
+        .search-container {
+            position: relative;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .search-bar {
+            width: 100%;
+            padding: 1rem;
+            border: none;
+            border-radius: 25px;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            color: white;
+            font-size: 1rem;
+            border: 2px solid rgba(255, 215, 0, 0.3);
+        }
+
+        .search-bar::placeholder {
+            color: rgba(255, 255, 255, 0.7);
+        }
+
+        .search-bar:focus {
+            outline: none;
+            border-color: #ffd700;
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        /* Sidebar Menu */
+        .sidebar {
+            position: fixed;
+            left: 0;
+            top: 0;
+            width: 250px;
+            height: 100vh;
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(10px);
+            padding-top: 2rem;
+            z-index: 1000;
+            transform: translateX(-100%);
+            transition: transform 0.3s ease;
+        }
+
+        .sidebar.open {
+            transform: translateX(0);
+        }
+
+        .menu-toggle {
+            position: fixed;
+            top: 1rem;
+            left: 1rem;
+            z-index: 1001;
+            background: rgba(255, 215, 0, 0.9);
+            color: #333;
+            border: none;
+            padding: 0.5rem;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1.2rem;
+        }
+
+        .sidebar ul {
+            list-style: none;
+        }
+
+        .sidebar ul li {
+            padding: 1rem 2rem;
+            border-bottom: 1px solid rgba(255, 215, 0, 0.2);
+        }
+
+        .sidebar ul li a {
+            color: white;
+            text-decoration: none;
+            font-weight: 500;
+            transition: color 0.3s ease;
+        }
+
+        .sidebar ul li:hover {
+            background: rgba(255, 215, 0, 0.1);
+        }
+
+        .sidebar ul li a:hover {
+            color: #ffd700;
+        }
+
+        /* Main Content */
+        .main-content {
+            margin-left: 0;
+            padding: 2rem;
+            transition: margin-left 0.3s ease;
+        }
+
+        .products-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 2rem;
+            margin-top: 2rem;
+        }
+
+        .product-card {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 1.5rem;
+            border: 2px solid rgba(255, 215, 0, 0.3);
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .product-card::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: linear-gradient(45deg, transparent, rgba(255, 215, 0, 0.1), transparent);
+            transform: rotate(45deg);
+            transition: all 0.5s ease;
+            opacity: 0;
+        }
+
+        .product-card:hover::before {
+            animation: shimmer 1s ease-in-out;
+            opacity: 1;
+        }
+
+        .product-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(255, 215, 0, 0.2);
+            border-color: #ffd700;
+        }
+
+        .product-image {
+            width: 100%;
+            height: 200px;
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            border-radius: 10px;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 3rem;
+            position: relative;
+        }
+
+        .product-title {
+            font-size: 1.3rem;
+            margin-bottom: 0.5rem;
+            color: #ffd700;
+        }
+
+        .product-description {
+            color: rgba(255, 255, 255, 0.8);
+            margin-bottom: 1rem;
+            line-height: 1.4;
+        }
+
+        .product-price {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #ffd700;
+            margin-bottom: 1rem;
+        }
+
+        .product-actions {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .add-to-cart {
+            flex: 1;
+            padding: 0.7rem;
+            background: linear-gradient(45deg, #ffd700, #ffed4a);
+            color: #333;
+            border: none;
+            border-radius: 25px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .add-to-cart:hover {
+            transform: scale(1.05);
+            box-shadow: 0 5px 15px rgba(255, 215, 0, 0.4);
+        }
+
+        .view-reviews {
+            padding: 0.7rem 1rem;
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            border: 1px solid rgba(255, 215, 0, 0.5);
+            border-radius: 25px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .view-reviews:hover {
+            background: rgba(255, 215, 0, 0.2);
+            border-color: #ffd700;
+        }
+
+        /* Reviews Section */
+        .reviews-section {
+            margin-top: 1rem;
+            display: none;
+        }
+
+        .reviews-section.active {
+            display: block;
+        }
+
+        .review-form {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 1rem;
+            border-radius: 10px;
+            margin-bottom: 1rem;
+        }
+
+        .review-form input, .review-form textarea {
+            width: 100%;
+            padding: 0.5rem;
+            margin-bottom: 0.5rem;
+            border: none;
+            border-radius: 5px;
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            border: 1px solid rgba(255, 215, 0, 0.3);
+        }
+
+        .review-form input::placeholder, .review-form textarea::placeholder {
+            color: rgba(255, 255, 255, 0.6);
+        }
+
+        .stars {
+            display: flex;
+            gap: 0.2rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .star {
+            font-size: 1.5rem;
+            color: #666;
+            cursor: pointer;
+            transition: color 0.2s ease;
+        }
+
+        .star.active, .star:hover {
+            color: #ffd700;
+        }
+
+        .reviews-list {
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        .review-item {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 1rem;
+            border-radius: 8px;
+            margin-bottom: 0.5rem;
+            border-left: 3px solid #ffd700;
+        }
+
+        .review-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 0.5rem;
+        }
+
+        .reviewer-name {
+            font-weight: bold;
+            color: #ffd700;
+        }
+
+        .review-stars {
+            color: #ffd700;
+        }
+
+        .cart-count {
+            background: #ff4757;
+            color: white;
+            border-radius: 50%;
+            padding: 0.2rem 0.5rem;
+            font-size: 0.8rem;
+            position: absolute;
+            top: -5px;
+            right: -5px;
+        }
+
+        /* Login Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 2000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(5px);
+        }
+
+        .modal-content {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            margin: 10% auto;
+            padding: 2rem;
+            border-radius: 15px;
+            width: 90%;
+            max-width: 400px;
+            border: 2px solid #ffd700;
+        }
+
+        .close {
+            color: #ffd700;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .form-group {
+            margin-bottom: 1rem;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: #ffd700;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 0.7rem;
+            border: none;
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            border: 1px solid rgba(255, 215, 0, 0.3);
+        }
+
+        @keyframes shimmer {
+            0% { transform: translateX(-100%) translateY(-100%) rotate(45deg); }
+            100% { transform: translateX(100%) translateY(100%) rotate(45deg); }
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .header-top {
+                flex-direction: column;
+                gap: 1rem;
+            }
+
+            .products-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
 </head>
 <body>
+    <!-- Menu Toggle -->
+    <button class="menu-toggle" onclick="toggleMenu()">☰</button>
 
-<div class="content-section" id="productsSection" style="position: relative;">
+    <!-- Sidebar -->
+    <nav class="sidebar" id="sidebar">
+        <ul>
+            <li><a href="#" onclick="showSection('home')">🏠 Home</a></li>
+            <li><a href="#" onclick="showSection('products')">📦 Products</a></li>
+            <li><a href="#" onclick="showRequestForm()">🛒 Request Product</a></li>
+            <li><a href="admin.html">⚙️ Admin Dashboard</a></li>
+        </ul>
+    </nav>
 
-  <!-- Cart button (fixed to the top-right corner of this section) -->
-  <button class="cart-button" onclick="toggleCart()">🛒
-    <span id="cartCount">0</span>
-  </button>
+    <!-- Header -->
+    <header class="header">
+        <div class="header-top">
+            <div class="logo">✨ WEBVTEC ✨</div>
+            <div class="user-actions">
+                <button class="btn" onclick="showLogin()">👤 Sign In</button>
+                <button class="btn" onclick="showCart()" style="position: relative;">
+                    🛒 Cart <span class="cart-count" id="cartCount">0</span>
+                </button>
+            </div>
+        </div>
+        <div class="search-container">
+            <input type="text" class="search-bar" placeholder="Search for products..." onkeyup="searchProducts()">
+        </div>
+    </header>
 
-  <div style="text-align: center; margin: 0px 0px 20px 0;">
-    <h1 style="color: #FE5DC7; margin: 0;">PRODUCTS</h1>
-  </div>
+    <!-- Main Content -->
+    <main class="main-content">
+        <div id="homeSection">
+            <h1 style="text-align: center; margin: 2rem 0; font-size: 2.5rem; text-shadow: 2px 2px 4px rgba(0,0,0,0.5);">
+                Welcome to WEBVTEC Store
+            </h1>
+            <p style="text-align: center; font-size: 1.2rem; margin-bottom: 3rem; opacity: 0.9;">
+                Discover amazing products with cutting-edge technology
+            </p>
+        </div>
 
-  <div id="productsGrid" style="
-      padding: 20px;
-      max-width: 1200px;
-      margin: 0 auto;
-  ">
-      <!-- Products grouped by category will be loaded here -->
-  </div>
+        <div class="products-grid" id="productsGrid">
+            <!-- Products will be loaded here -->
+        </div>
+    </main>
 
-</div>
-
-
-  <!-- Empty State -->
-  <div id="productsEmpty" style="
-    text-align: center;
-    padding: 60px 20px;
-    color: #666;
-    display: none;
-  ">
-    <h3>No Products Available</h3>
-    <p>Check back soon for new products!</p>
-  </div>
-</div>
-
-
-
-<!-- Shopping Cart Modal -->
-<div id="cartModal" style="
-  display: none;
-  position: fixed;
-  top: 0; left: 0; right: 0; bottom: 0;
-  background: rgba(0,0,0,0.7);
-  z-index: 10000;
-  justify-content: center;
-  align-items: center;
-">
-  <div style="
-    background: white;
-    width: 90%;
-    max-width: 500px;
-    max-height: 80vh;
-    border-radius: 15px;
-    overflow: hidden;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.3);
-  ">
-    <!-- Cart Header -->
-    <div style="
-      background: #E58BBE;
-      color: white;
-      padding: 20px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    ">
-      <h3 style="margin: 0; font-size: 20px;">Shopping Cart</h3>
-      <button onclick="toggleCart()" style="
-        background: none;
-        border: none;
-        color: white;
-        font-size: 24px;
-        cursor: pointer;
-      ">×</button>
+    <!-- Login Modal -->
+    <div id="loginModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeLogin()">&times;</span>
+            <h2 style="color: #ffd700; margin-bottom: 1rem;">Sign In</h2>
+            <form onsubmit="handleLogin(event)">
+                <div class="form-group">
+                    <label>Email:</label>
+                    <input type="email" required>
+                </div>
+                <div class="form-group">
+                    <label>Password:</label>
+                    <input type="password" required>
+                </div>
+                <button type="submit" class="btn" style="width: 100%;">Sign In</button>
+            </form>
+            <p style="text-align: center; margin-top: 1rem;">
+                Don't have an account? <a href="#" style="color: #ffd700;">Sign Up</a>
+            </p>
+        </div>
     </div>
 
-    <!-- Cart Items -->
-    <div id="cartItems" style="
-      padding: 20px;
-      max-height: 400px;
-      overflow-y: auto;
-    ">
-      <!-- Cart items will be populated here -->
-    </div>
-
-    <!-- Cart Footer -->
-    <div style="
-      background: #f8f8f8;
-      padding: 20px;
-      border-top: 1px solid #eee;
-    ">
-      <div style="
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 15px;
-        font-size: 18px;
-        font-weight: bold;
-      ">
-        <span>Total:</span>
-        <span id="cartTotal" style="color: #E58BBE;">$0.00</span>
-      </div>
-      
-      <button onclick="proceedToCheckout()" style="
-        width: 100%;
-        background: #EF92AB;
-        color: white;
-        border: none;
-        padding: 15px;
-        border-radius: 8px;
-        font-size: 16px;
-        font-weight: bold;
-        cursor: pointer;
-      ">
-        PROCEED TO CHECKOUT
-      </button>
-    </div>
-  </div>
-</div>
-
-<!-- Checkout Modal -->
-<div id="checkoutModal" style="
-  display: none;
-  position: fixed;
-  top: 0; left: 0; right: 0; bottom: 0;
-  background: rgba(0,0,0,0.7);
-  z-index: 10001;
-  justify-content: center;
-  align-items: center;
-">
-  <div style="
-    background: white;
-    width: 90%;
-    max-width: 600px;
-    max-height: 90vh;
-    border-radius: 15px;
-    overflow-y: auto;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.3);
-  ">
-    <!-- Checkout Header -->
-    <div style="
-      background: #61134A;
-      color: white;
-      padding: 20px;
-      text-align: center;
-    ">
-      <h3 style="margin: 0; font-size: 22px;">Checkout</h3>
-    </div>
-
-    <!-- Checkout Form -->
-    <form onsubmit="submitOrder(event)" style="padding: 30px;">
-      <div style="margin-bottom: 20px;">
-        <label style="display: block; margin-bottom: 5px; font-weight: bold;">Full Name:</label>
-        <input id="checkoutName" required type="text" style="
-          width: 100%;
-          padding: 12px;
-          border: 1px solid #ddd;
-          border-radius: 6px;
-          font-size: 16px;
-        ">
-      </div>
-
-      <div style="margin-bottom: 20px;">
-        <label style="display: block; margin-bottom: 5px; font-weight: bold;">Phone Number:</label>
-        <input id="checkoutPhone" required type="tel" maxlength="14" oninput="formatPhoneNumber(this)" placeholder="(876) 123-4567" style="
-  width: 100%;
-  padding: 12px;
-  border: 1px solid #ddd;
-  border-radius: 6px;
-  font-size: 16px;
-">
-      </div>
-
-<!-- Knutsford Locations Dropdown (hidden by default) -->
-<div class="delivery-options">
-  <button type="button" class="option-button" onclick="selectOption('knutsford')">Knutsford</button>
-  <button type="button" class="option-button" onclick="selectOption('bearers')">Bearers</button>
-</div>
-
-<!-- Knutsford dropdown -->
-<div id="knutsfordDropdown" style="display:none; margin-top:15px;">
-  <label for="knutsfordLocation">Select Knutsford Location:</label>
-  <select id="knutsfordLocation" name="knutsfordLocation">
-    <option value="">-- Choose a location --</option>
-    <option>KNUTSFORD Negril, Westmoreland</option>
-    <option>KNUTSFORD Lucea, Hanover</option>
-    <option>KNUTSFORD Montego Bay Airport, St. James</option>
-    <option>KNUTSFORD Falmouth, Trelawny</option>
-    <option>KNUTSFORD Drax Hall, St. Ann</option>
-    <option>KNUTSFORD Angels (Spanish Town), St. Catherine</option>
-    <option>KNUTSFORD New Kingston, Kingston</option>
-    <option>KNUTSFORD Gutters, St. Elizabeth</option>
-    <option>KNUTSFORD Luana, St. Elizabeth</option>
-    <option>KNUTSFORD Mandeville, Manchester</option>
-    <option>KNUTSFORD Savanna-la-Mar, Westmoreland</option>
-    <option>KNUTSFORD May Pen, Clarendon</option>
-    <option>KNUTSFORD Port Antonio, Portland</option>
-    <option>KNUTSFORD Port Maria, St. Mary</option>
-    <option>KNUTSFORD Annotto Bay, St. Mary (Passenger Only)</option>
-    <option>KNUTSFORD Montego Bay (Pier 1), St. James (Courier Only)</option>
-    <option>KNUTSFORD Ocho Rios, St. Ann (Courier Only)</option>
-    <option>KNUTSFORD Washington Boulevard (Courier Only)</option>
-    <option>KNUTSFORD Harbour View, St. Andrew (Courier Only)</option>
-    <option>KNUTSFORD Portmore, St. Catherine (Courier Only)</option>
-  </select>
-</div>
-
-
-<!-- Delivery Address Input (hidden by default) -->
-<div id="deliveryAddressBlock" style="margin-bottom: 20px; display:none;">
-  <label style="display: block; margin-bottom: 5px; font-weight: bold;">Delivery Address:</label>
-  <textarea id="checkoutAddress" rows="3" style="
-    width: 100%;
-    padding: 12px;
-    border: 1px solid #ddd;
-    border-radius: 6px;
-    font-size: 16px;
-    resize: vertical;
-  "></textarea>
-</div>
-
-<!-- Payment Agreement Checkbox -->
-<div style="margin-bottom: 20px;">
-  <input id="onlinepaymentAgreement" type="checkbox" required style="margin-right: 5px;" />
-  <label for="onlinepaymentAgreement" style="font-size: 14px; cursor: pointer; line-height: 1.4;">
-    I agree to pay my order fee within 48 hours to recieve my order.
-  </label>
-</div>
-
-
-<!-- Payment Agreement Checkbox -->
-<div style="margin-bottom: 20px;">
-  <input id="paymentAgreement" type="checkbox" required style="margin-right: 5px;" />
-  <label for="paymentAgreement" style="font-size: 14px; cursor: pointer; line-height: 1.4;">
-    I agree to pay my delivery fee upon order pickup.
-  </label>
-</div>
-      
-
-      <!-- Order Summary -->
-      <div style="
-        background: #f8f8f8;
-        padding: 15px;
-        border-radius: 8px;
-        margin-bottom: 20px;
-      ">
-        <h4 style="margin: 0 0 10px 0; color: #333;">Order Summary:</h4>
-        <div id="checkoutSummary"></div>
-      </div>
-
-      <div style="display: flex; flex-direction: column; gap: 10px;">
-  <button type="submit" style="
-    width: 100%;
-    background: #EF92AB;
-    color: white;
-    border: none;
-    padding: 15px;
-    border-radius: 8px;
-    font-size: 16px;
-    font-weight: bold;
-    cursor: pointer;
-  ">PLACE ORDER</button>
-  
-
-  
-  <button type="button" onclick="closeCheckout()" style="
-    width: 100%;
-    background: #ccc;
-    color: #333;
-    border: none;
-    padding: 12px;
-    border-radius: 8px;
-    font-size: 14px;
-    cursor: pointer;
-  ">Cancel</button>
-      </div>
-    </form>
-  </div>
-</div>
-
-
+    <script src="https://www.paypal.com/sdk/js?client-id=YOUR_PAYPAL_CLIENT_ID&currency=USD"></script>
     <script>
-// Firebase configuration - REPLACE WITH YOUR ACTUAL CONFIG
-const firebaseConfig = {
-  apiKey: "AIzaSyA-qvC7FrUt1yrjEqhN7Paw648j4ISWVgM",
-  authDomain: "resturantsite-a2d56.firebaseapp.com",
-  databaseURL: "https://resturantsite-a2d56-default-rtdb.firebaseio.com",
-  projectId: "resturantsite-a2d56",
-  storageBucket: "resturantsite-a2d56.firebasestorage.app",
-  messagingSenderId: "492861664245",
-  appId: "1:492861664245:web:825a8474f14647e1a8cebc"
-};
-// Initialize Firebase
-firebase.initializeApp(firebaseConfig);
-
-// Initialize services
-const db = firebase.firestore();
-const auth = firebase.auth();
-const storage = firebase.storage();
-
-// Global variables
-let cart = [];
-let currentUser = null;
-
-// Auth state listener
-auth.onAuthStateChanged(user => {
-  currentUser = user;
-  if (user) {
-    console.log('User logged in:', user.email);
-  } else {
-    console.log('User not logged in');
-  }
-});
-
-// Initialize products when page loads
-document.addEventListener('DOMContentLoaded', () => {
-  loadProducts();
-});
-
-
-      function loadProducts() {
-  const productsGrid = document.getElementById("productsGrid");
-  const emptyState = document.getElementById("productsEmpty");
-
-  db.collection("products").onSnapshot(snapshot => {
-    productsGrid.innerHTML = "";
-
-    if (snapshot.empty) {
-      emptyState.style.display = "block";
-      return;
-    } else {
-      emptyState.style.display = "none";
-    }
-
-    const grouped = {};
-    snapshot.forEach(doc => {
-      const product = { id: doc.id, ...doc.data() };
-      const section = product.section || "Other";
-
-      if (!grouped[section]) {
-        grouped[section] = [];
-      }
-      grouped[section].push(product);
-    });
-
-    for (const section in grouped) {
-      const sectionDiv = document.createElement("div");
-      sectionDiv.innerHTML = `<h2 style="color:#E58BBE; margin:20px 0; text-align:center;">${section}</h2>`;
-
-      const grid = document.createElement("div");
-      grid.style.display = "grid";
-      grid.style.gridTemplateColumns = "repeat(auto-fit, minmax(250px, 1fr))";
-      grid.style.gap = "20px";
-
-      grouped[section].forEach(product => {
-        const card = createProductCard(product.id, product);
-        grid.appendChild(card);
-      });
-
-      sectionDiv.appendChild(grid);
-      productsGrid.appendChild(sectionDiv);
-    }
-  });
-}
-
-
-// ✅ Helper to render a single product card
-function renderProductCard(grid, product, imageUrl) {
-  const card = document.createElement('div');
-  card.classList.add('product-card');
-  card.style = `
-    background:#fff;
-    border:1px solid #ddd;
-    border-radius:8px;
-    padding:15px;
-    text-align:center;
-    box-shadow:0 2px 5px rgba(0,0,0,0.1);
-  `;
-  card.innerHTML = `
-    <img src="${imageUrl}" alt="${product.name}" style="width:120px; height:120px; object-fit:cover; border-radius:6px; margin-bottom:10px;">
-    <h3 style="color:#61134A; margin-bottom:5px;">${product.name}</h3>
-    <p style="font-size:14px; color:#444; margin-bottom:10px;">${product.description || ''}</p>
-    <p style="font-weight:bold; color:#FE5DC7;">$${product.price || ''}</p>
-  `;
-  grid.appendChild(card);
-}
-
-
-
-
-// ✅ Update showSection so products load when switching
-function showSection(sectionId) {
-  document.querySelectorAll('.content-section').forEach(section =>
-    section.classList.remove('active')
-  );
-  document.getElementById(sectionId).classList.add('active');
-
-  if (sectionId === 'gallerySection') {
-    loadGallery('galleryDisplay');
-  } else if (sectionId === 'reviewsSection') {
-    loadReviews(currentUser);
-  } else if (sectionId === 'productsSection') {
-    loadProducts();
-  }
-}
-
-    
-// Also update createProductCard to handle missing fields
-function createProductCard(id, product) {
-  const card = document.createElement('div');
-  card.style.cssText = `
-    background: white;
-    border-radius: 12px;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-    overflow: hidden;
-    transition: transform 0.3s ease;
-  `;
-  
-  const name = product.name || 'Unnamed Product';
-  const description = product.description || 'No description available';
-  const price = product.price || 0;
-  const imageUrl = product.imageUrl || product.image || 'https://via.placeholder.com/200x200/ddd/999?text=No+Image';
-  
-  card.innerHTML = `
-    <img src="${imageUrl}" alt="${name}" style="
-      width: 100%;
-      height: 200px;
-      object-fit: cover;
-    " onerror="this.src='https://via.placeholder.com/200x200/ddd/999?text=No+Image';">
-    
-    <div style="padding: 20px;">
-      <h3 style="
-        margin: 0 0 10px 0;
-        color: #333;
-        font-size: 18px;
-      ">${name}</h3>
-      
-      <p style="
-        color: #666;
-        font-size: 14px;
-        line-height: 1.4;
-        margin: 0 0 15px 0;
-      ">${description}</p>
-      
-      <div style="
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-      ">
-        <span style="
-          font-size: 20px;
-          font-weight: bold;
-          color: #E58BBE;
-        ">$${parseFloat(price).toFixed(2)}</span>
-        
-        <button onclick="addToCart('${id}', '${name.replace(/'/g, "\\'")}', ${price}, '${imageUrl}')" style="
-          background: #EF92AB;
-          color: white;
-          border: none;
-          padding: 10px 20px;
-          border-radius: 6px;
-          cursor: pointer;
-          font-weight: bold;
-        ">Add to Cart</button>
-      </div>
-    </div>
-  `;
-  
-  return card;
-}
-
-    
-function addToCart(id, name, price, imageUrl) {
-  const existingItem = cart.find(item => item.id === id);
-  
-  if (existingItem) {
-    existingItem.quantity += 1;
-  } else {
-    cart.push({
-      id,
-      name,
-      price,
-      imageUrl,
-      quantity: 1
-    });
-  }
-  
-  updateCartDisplay();
-  
-  // Show success message
-  const button = event.target;
-  const originalText = button.textContent;
-  button.textContent = 'Added!';
-  button.style.background = '#4CAF50';
-  
-  setTimeout(() => {
-    button.textContent = originalText;
-    button.style.background = '#61134A';
-  }, 1500);
-}
-
-function updateCartDisplay() {
-  const count = cart.reduce((total, item) => total + item.quantity, 0);
-  document.getElementById('cartCount').textContent = count;
-  
-  const total = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-  document.getElementById('cartTotal').textContent = `$${total.toFixed(2)}`;
-  
-  renderCartItems();
-}
-
-function renderCartItems() {
-  const container = document.getElementById('cartItems');
-  
-  if (cart.length === 0) {
-    container.innerHTML = `
-      <div style="text-align: center; padding: 40px; color: #666;">
-        <p>Your cart is empty</p>
-        <button onclick="toggleCart()" style="
-          background: #E58BBE;
-          color: white;
-          border: none;
-          padding: 10px 20px;
-          border-radius: 6px;
-          cursor: pointer;
-        ">Continue Shopping</button>
-      </div>
-    `;
-    return;
-  }
-  
-  container.innerHTML = cart.map(item => `
-    <div style="
-      display: flex;
-      align-items: center;
-      padding: 15px 0;
-      border-bottom: 1px solid #eee;
-    ">
-      <img src="${item.imageUrl}" alt="${item.name}" style="
-        width: 60px;
-        height: 60px;
-        object-fit: cover;
-        border-radius: 6px;
-        margin-right: 15px;
-      ">
-      
-      <div style="flex: 1;">
-        <h4 style="margin: 0 0 5px 0; font-size: 16px;">${item.name}</h4>
-        <p style="margin: 0; color: #666;">$${item.price} each</p>
-      </div>
-      
-      <div style="display: flex; align-items: center; gap: 10px;">
-        <button onclick="updateQuantity('${item.id}', ${item.quantity - 1})" style="
-          background: #ddd;
-          border: none;
-          width: 30px;
-          height: 30px;
-          border-radius: 4px;
-          cursor: pointer;
-        ">-</button>
-        
-        <span style="font-weight: bold; min-width: 20px; text-align: center;">${item.quantity}</span>
-        
-        <button onclick="updateQuantity('${item.id}', ${item.quantity + 1})" style="
-          background: #ddd;
-          border: none;
-          width: 30px;
-          height: 30px;
-          border-radius: 4px;
-          cursor: pointer;
-        ">+</button>
-        
-        <button onclick="removeFromCart('${item.id}')" style="
-          background: #ff4444;
-          color: white;
-          border: none;
-          width: 30px;
-          height: 30px;
-          border-radius: 4px;
-          cursor: pointer;
-          margin-left: 10px;
-        ">×</button>
-      </div>
-    </div>
-  `).join('');
-}
-
-function updateQuantity(id, newQuantity) {
-  if (newQuantity <= 0) {
-    removeFromCart(id);
-    return;
-  }
-  
-  const item = cart.find(item => item.id === id);
-  if (item) {
-    item.quantity = newQuantity;
-    updateCartDisplay();
-  }
-}
-
-function removeFromCart(id) {
-  cart = cart.filter(item => item.id !== id);
-  updateCartDisplay();
-}
-
-function toggleCart() {
-  const modal = document.getElementById('cartModal');
-  const isVisible = modal.style.display === 'flex';
-  modal.style.display = isVisible ? 'none' : 'flex';
-  
-  if (!isVisible) {
-    updateCartDisplay();
-  }
-}
-
-function proceedToCheckout() {
-  if (cart.length === 0) {
-    alert('Your cart is empty!');
-    return;
-  }
-  
-  // Fill checkout summary
-  const summary = document.getElementById('checkoutSummary');
-  const total = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-  
-  summary.innerHTML = cart.map(item => `
-    <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
-      <span>${item.name} (x${item.quantity})</span>
-      <span>$${(item.price * item.quantity).toFixed(2)}</span>
-    </div>
-  `).join('') + `
-    <div style="
-      display: flex;
-      justify-content: space-between;
-      margin-top: 10px;
-      padding-top: 10px;
-      border-top: 1px solid #ddd;
-      font-weight: bold;
-      color: #E58BBE;
-    ">
-      <span>Total:</span>
-      <span>$${total.toFixed(2)}</span>
-    </div>
-  `;
-  
-  document.getElementById('cartModal').style.display = 'none';
-  document.getElementById('checkoutModal').style.display = 'flex';
-}
-
-function closeCheckout() {
-  document.getElementById('checkoutModal').style.display = 'none';
-}
-
-
-    // Add this function to your script section
-async function generateUniqueOrderNumber() {
-  let orderNumber;
-  let isUnique = false;
-  
-  while (!isUnique) {
-    // Generate 6-digit number (100000 to 999999)
-    orderNumber = Math.floor(100000 + Math.random() * 900000).toString();
-    
-    // Check if it exists in database
-    const snapshot = await db.collection('orders')
-      .where('orderNumber', '==', orderNumber)
-      .get();
-    
-    if (snapshot.empty) {
-      isUnique = true;
-    }
-  }
-  
-  return orderNumber;
-}
-
-// Update your submitOrder function (make it async)
-async function submitOrder(event) {
-  event.preventDefault();
-
-  const user = firebase.auth().currentUser;
-  if (!user) {
-    if (confirm("You must be logged in to place an order. Click OK to log in.")) {
-      window.location.href = 'login.html';
-    }
-    return;
-  }
-
-  const customerName = document.getElementById('checkoutName').value.trim();
-  const customerPhone = document.getElementById('checkoutPhone').value.trim();
-  const deliveryAddress = document.getElementById('checkoutAddress')?.value.trim() || "";
-  const knutsfordLocation = document.getElementById('knutsfordLocation')?.value || "";
-
-  // Validation
-  if (!customerName || !customerPhone) {
-    alert("Please fill in your Name and Phone.");
-    return;
-  }
-  if (!knutsfordLocation && !deliveryAddress) {
-    alert("Please select a Knutsford location OR enter a delivery address.");
-    return;
-  }
-  if (!cart || cart.length === 0) {
-    alert("Your cart is empty. Please add items before placing an order.");
-    return;
-  }
-
-  // Generate order number (pass customerName so prefix works)
-  const orderNumber = await generateUniqueOrderNumber(customerName);
-  const total = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-
-  const orderData = {
-    uid: user.uid,
-    customerName,
-    customerPhone,
-    deliveryAddress,
-    knutsfordLocation,
-    items: cart,
-    total,
-    status: 'pending',
-    orderDate: firebase.firestore.FieldValue.serverTimestamp(),
-    orderNumber: orderNumber
-  };
-
-  // Save to Firestore
-  db.collection('orders').add(orderData)
-    .then(() => {
-      // Build Telegram message
-      const orderSummary = cart.map(item =>
-        `• ${item.name} (x${item.quantity}) - $${(item.price * item.quantity).toFixed(2)}`
-      ).join('\n');
-
-      const telegramMessage = `🛒 NEW PRODUCT ORDER
-
-📋 Order #: ${orderNumber}
-👤 Customer: ${customerName}
-📞 Phone: ${customerPhone}
-📍 Address: ${deliveryAddress || knutsfordLocation}
-
-🛍️ Items:
-${orderSummary}
-
-💰 Total: $${total.toFixed(2)}`;
-
-      console.log("Telegram message:", telegramMessage); // debug
-
-      const telegramBotToken = "7638261664:AAGm0MNVQxN0hlW1bhXBRf-kSRuMgRkCLC8";
-      const telegramChatId = "-1002734216867";
-
-      return fetch(`https://api.telegram.org/bot${telegramBotToken}/sendMessage`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          chat_id: telegramChatId,
-          text: telegramMessage,
-          parse_mode: "HTML"
-        })
-      });
-    })
-    .then(() => {
-      // Show confirmation popup
-      showOrderConfirmation(orderNumber, customerName, total, cart);
-
-      // Reset cart and form
-      cart = [];
-      updateCartDisplay();
-      closeCheckout();
-      document.querySelector('#checkoutModal form').reset();
-    })
-    .catch(error => {
-      console.error('Error placing order:', error);
-      alert('Failed to place order. Please try again.');
-    });
-}
-
-
-    function showOrderConfirmation(orderNumber, customerName, total, cart) {
-  Swal.fire({
-    title: "",
-    html: `
-      <div style="text-align:center; font-size:15px; line-height:1.7; color:#222; padding:20px; font-family:Arial, sans-serif;">
-        
-        <!-- Order Number -->
-        <h2 style="color:#000; margin:0 0 8px 0; font-size:24px; font-weight:bold; letter-spacing:1px;">
-          ORDER #: ${orderNumber}
-        </h2>
-        
-
-        <!-- Payment Instructions -->
-        <p style="margin:0 0 12px 0; font-size:15px;">
-          Your order was made, the total must be transferred within <strong>48 hours</strong> or your order will be cancelled.<br>
-          Please use your <strong>Order Number</strong> as the banking reference.
-        </p>
-
-        <hr style="margin:18px 0; border:0; height:1px; background:#ddd;">
-
-        <p style="margin:0 0 20px 0; font-size:15px;">
-          Once payment is received, your order will be shipped and you’ll receive a confirmation message with all necessary details.
-        </p>
-
-        <!-- Total Due -->
-        <p style="margin:0 0 25px 0; font-size:18px; color:#6c2eb9; font-weight:bold;">
-          Payment Due: JMD ${total.toFixed(2)}
-        </p>
-
-        <hr style="margin:18px 0; border:0; height:1px; background:#ddd;">
-
-        <!-- Banking Details -->
-        <div style="text-align:left; margin:15px 0;">
-          <h3 style="color:#000; margin:0 0 12px 0; font-size:17px; font-weight:bold;">Banking Details</h3>
-          <p style="margin:4px 0; color:#000;"><strong>Bank:</strong> First Caribbean Bank</p>
-          <p style="margin:4px 0; color:#000;"><strong>Account Name:</strong> Marissa Persaud</p>
-          <p style="margin:4px 0; color:#000;"><strong>Account Number:</strong> 100806148</p>
-          <p style="margin:4px 0; color:#000;"><strong>Branch:</strong> Port Maria Branch, Jamaica</p>
-        </div>
-
-        <hr style="margin:18px 0; border:0; height:1px; background:#ddd;">
-
-        <!-- Reminder -->
-        <div style="margin-top:20px; text-align:center;">
-          <p style="margin:0; font-size:13px; color:#666;">
-            ℹ️ You can always find the banking details again in the 
-            <strong>PAYMENT INFO</strong> section of the menu.
-          </p>
-        </div>
-
-      </div>
-    `,
-    width: 460,
-    confirmButtonText: "OK",
-    confirmButtonColor: "#61134A",
-    showConfirmButton: true,
-    showCancelButton: false,
-    customClass: {
-      popup: "swal2-rounded"
-    }
-  });
-    }
-
-
-
-    function selectOption(option) {
-  const knutsfordDiv = document.getElementById("knutsfordDropdown");
-  const deliveryDiv = document.getElementById("deliveryAddressBlock");
-  const knutsfordSelect = document.getElementById("knutsfordLocation");
-  const addressInput = document.getElementById("checkoutAddress");
-
-  if (option === "knutsford") {
-    knutsfordDiv.style.display = "block";
-    deliveryDiv.style.display = "none";
-
-    knutsfordSelect.setAttribute("required", "true");
-    addressInput.removeAttribute("required");
-    addressInput.value = ""; // clear hidden input
-  } else if (option === "bearers") {
-    knutsfordDiv.style.display = "none";
-    deliveryDiv.style.display = "block";
-
-    addressInput.setAttribute("required", "true");
-    knutsfordSelect.removeAttribute("required");
-    knutsfordSelect.value = ""; // clear hidden select
-  }
-    }
-
-
-      function formatPhoneNumber(input) {
-  let value = input.value.replace(/\D/g, '');
-  if (value.length >= 6) {
-    value = value.replace(/(\d{3})(\d{3})(\d{4})/, '($1) $2-$3');
-  } else if (value.length >= 3) {
-    value = value.replace(/(\d{3})(\d+)/, '($1) $2');
-  }
-  input.value = value;
-      }
+        // Sample product data
+        let products = [
+            {
+                id: 1,
+                name: "Premium Laptop",
+                description: "High-performance laptop with latest specs",
+                price: 1299.99,
+                image: "💻",
+                reviews: [
+                    { name: "John D.", rating: 5, comment: "Excellent laptop! Very fast and reliable." },
+                    { name: "Sarah M.", rating: 4, comment: "Good value for money. Highly recommended." }
+                ]
+            },
+            {
+                id: 2,
+                name: "Wireless Headphones",
+                description: "Premium quality wireless headphones with noise cancellation",
+                price: 299.99,
+                image: "🎧",
+                reviews: [
+                    { name: "Mike R.", rating: 5, comment: "Amazing sound quality!" }
+                ]
+            },
+            {
+                id: 3,
+                name: "Smart Watch",
+                description: "Feature-rich smartwatch with health monitoring",
+                price: 399.99,
+                image: "⌚",
+                reviews: []
+            },
+            {
+                id: 4,
+                name: "Gaming Mouse",
+                description: "Professional gaming mouse with RGB lighting",
+                price: 79.99,
+                image: "🖱️",
+                reviews: [
+                    { name: "Alex P.", rating: 5, comment: "Perfect for gaming!" },
+                    { name: "Emma T.", rating: 4, comment: "Great precision and comfort." }
+                ]
+            }
+        ];
+
+        let cart = [];
+        let currentUser = null;
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            loadProducts();
+            updateCartCount();
+        });
+
+        function toggleMenu() {
+            const sidebar = document.getElementById('sidebar');
+            sidebar.classList.toggle('open');
+        }
+
+        function showSection(section) {
+            if (section === 'home') {
+                document.getElementById('homeSection').style.display = 'block';
+                document.getElementById('productsGrid').style.display = 'grid';
+            }
+            toggleMenu();
+        }
+
+        function loadProducts() {
+            const grid = document.getElementById('productsGrid');
+            grid.innerHTML = '';
+
+            products.forEach(product => {
+                const productCard = createProductCard(product);
+                grid.appendChild(productCard);
+            });
+        }
+
+        function createProductCard(product) {
+            const card = document.createElement('div');
+            card.className = 'product-card';
+            card.innerHTML = `
+                <div class="product-image">${product.image}</div>
+                <h3 class="product-title">${product.name}</h3>
+                <p class="product-description">${product.description}</p>
+                <div class="product-price">$${product.price}</div>
+                <div class="product-actions">
+                    <button class="add-to-cart" onclick="addToCart(${product.id})">Add to Cart</button>
+                    <button class="view-reviews" onclick="toggleReviews(${product.id})">Reviews (${product.reviews.length})</button>
+                </div>
+                <div class="reviews-section" id="reviews-${product.id}">
+                    ${createReviewsSection(product)}
+                </div>
+            `;
+            return card;
+        }
+
+        function createReviewsSection(product) {
+            const reviewsHtml = product.reviews.map(review => `
+                <div class="review-item">
+                    <div class="review-header">
+                        <span class="reviewer-name">${review.name}</span>
+                        <span class="review-stars">${'★'.repeat(review.rating)}${'☆'.repeat(5-review.rating)}</span>
+                    </div>
+                    <p>${review.comment}</p>
+                </div>
+            `).join('');
+
+            return `
+                <div class="review-form">
+                    <h4 style="color: #ffd700; margin-bottom: 0.5rem;">Leave a Review</h4>
+                    <input type="text" placeholder="Your name" id="reviewName-${product.id}">
+                    <div class="stars" id="stars-${product.id}">
+                        ${[1,2,3,4,5].map(i => `<span class="star" onclick="setRating(${product.id}, ${i})">★</span>`).join('')}
+                    </div>
+                    <textarea placeholder="Your review" rows="3" id="reviewText-${product.id}"></textarea>
+                    <button class="btn" onclick="submitReview(${product.id})">Submit Review</button>
+                </div>
+                <div class="reviews-list">
+                    ${reviewsHtml}
+                </div>
+            `;
+        }
+
+        function toggleReviews(productId) {
+            const reviewsSection = document.getElementById(`reviews-${productId}`);
+            reviewsSection.classList.toggle('active');
+        }
+
+        function setRating(productId, rating) {
+            const stars = document.querySelectorAll(`#stars-${productId} .star`);
+            stars.forEach((star, index) => {
+                star.classList.toggle('active', index < rating);
+            });
+            window[`selectedRating-${productId}`] = rating;
+        }
+
+        function submitReview(productId) {
+            const name = document.getElementById(`reviewName-${productId}`).value;
+            const text = document.getElementById(`reviewText-${productId}`).value;
+            const rating = window[`selectedRating-${productId}`] || 5;
+
+            if (!name || !text) {
+                alert('Please fill in all fields');
+                return;
+            }
+
+            const product = products.find(p => p.id === productId);
+            product.reviews.push({
+                name: name,
+                rating: rating,
+                comment: text
+            });
+
+            // Refresh the product card
+            loadProducts();
+            alert('Review submitted successfully!');
+        }
+
+        function addToCart(productId) {
+            const product = products.find(p => p.id === productId);
+            const existingItem = cart.find(item => item.id === productId);
+            
+            if (existingItem) {
+                existingItem.quantity += 1;
+            } else {
+                cart.push({ ...product, quantity: 1 });
+            }
+            
+            updateCartCount();
+            showCartNotification(product.name);
+        }
+
+        function updateCartCount() {
+            const count = cart.reduce((total, item) => total + item.quantity, 0);
+            document.getElementById('cartCount').textContent = count;
+        }
+
+        function showCartNotification(productName) {
+            // Simple notification
+            const notification = document.createElement('div');
+            notification.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                background: linear-gradient(45deg, #ffd700, #ffed4a);
+                color: #333;
+                padding: 1rem;
+                border-radius: 10px;
+                z-index: 3000;
+                box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+            `;
+            notification.textContent = `${productName} added to cart!`;
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                notification.remove();
+            }, 3000);
+        }
+
+        function showCart() {
+            if (cart.length === 0) {
+                alert('Your cart is empty!');
+                return;
+            }
+            
+            let cartHTML = '<h3>Your Cart:</h3>';
+            let total = 0;
+            
+            cart.forEach(item => {
+                const itemTotal = item.price * item.quantity;
+                total += itemTotal;
+                cartHTML += `
+                    <div style="display: flex; justify-content: space-between; padding: 0.5rem 0; border-bottom: 1px solid #ccc;">
+                        <span>${item.name} x${item.quantity}</span>
+                        <span>$${itemTotal.toFixed(2)}</span>
+                    </div>
+                `;
+            });
+            
+            cartHTML += `<br><strong>Total: $${total.toFixed(2)}</strong>`;
+            cartHTML += `<br><br><button onclick="checkout()" class="btn">Checkout with PayPal</button>`;
+            
+            const modal = document.createElement('div');
+            modal.className = 'modal';
+            modal.style.display = 'block';
+            modal.innerHTML = `
+                <div class="modal-content">
+                    <span class="close" onclick="this.parentElement.parentElement.remove()">&times;</span>
+                    ${cartHTML}
+                </div>
+            `;
+            document.body.appendChild(modal);
+        }
+
+        function checkout() {
+            const total = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+            
+            // PayPal checkout integration would go here
+            alert(`Checkout total: $${total.toFixed(2)}\n\nPayPal integration would be implemented with your actual client ID.`);
+            
+            // Clear cart after successful checkout
+            cart = [];
+            updateCartCount();
+        }
+
+        function showLogin() {
+            document.getElementById('loginModal').style.display = 'block';
+        }
+
+        function closeLogin() {
+            document.getElementById('loginModal').style.display = 'none';
+        }
+
+        function handleLogin(event) {
+            event.preventDefault();
+            // Simple login simulation
+            currentUser = 'User';
+            closeLogin();
+            alert('Login successful!');
+        }
+
+        function searchProducts() {
+            const searchTerm = event.target.value.toLowerCase();
+            const filteredProducts = products.filter(product => 
+                product.name.toLowerCase().includes(searchTerm) || 
+                product.description.toLowerCase().includes(searchTerm)
+            );
+            
+            const grid = document.getElementById('productsGrid');
+            grid.innerHTML = '';
+            
+            filteredProducts.forEach(product => {
+                const productCard = createProductCard(product);
+                grid.appendChild(productCard);
+            });
+        }
+
+        function showRequestForm() {
+            const modal = document.createElement('div');
+            modal.className = 'modal';
+            modal.style.display = 'block';
+            modal.innerHTML = `
+                <div class="modal-content">
+                    <span class="close" onclick="this.parentElement.parentElement.remove()">&times;</span>
+                    <h2 style="color: #ffd700; margin-bottom: 1rem;">Request a Product</h2>
+                    <form onsubmit="handleProductRequest(event)">
+                        <div class="form-group">
+                            <label>Product Name:</label>
+                            <input type="text" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Description:</label>
+                            <textarea rows="3" required></textarea>
+                        </div>
+                        <div class="form-group">
+                            <label>Your Email:</label>
+                            <input type="email" required>
+                        </div>
+                        <button type="submit" class="btn" style="width: 100%;">Submit Request</button>
+                    </form>
+                </div>
+            `;
+            document.body.appendChild(modal);
+            toggleMenu();
+        }
+
+        function handleProductRequest(event) {
+            event.preventDefault();
+            alert('Product request submitted! We\'ll get back to you soon.');
+            event.target.closest('.modal').remove();
+        }
+
+        // Close modals when clicking outside
+        window.onclick = function(event) {
+            if (event.target.classList.contains('modal')) {
+                event.target.style.display = 'none';
+            }
+        }
+
+        // Close sidebar when clicking outside
+        document.addEventListener('click', function(event) {
+            const sidebar = document.getElementById('sidebar');
+            const menuToggle = document.querySelector('.menu-toggle');
+            
+            if (!sidebar.contains(event.target) && !menuToggle.contains(event.target)) {
+                sidebar.classList.remove('open');
+            }
+        });
     </script>
 </body>
 </html>
