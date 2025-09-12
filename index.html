@@ -353,6 +353,43 @@
 
 
     <script>
+// Firebase configuration - REPLACE WITH YOUR ACTUAL CONFIG
+const firebaseConfig = {
+  apiKey: "your-api-key-here",
+  authDomain: "your-project.firebaseapp.com",
+  projectId: "your-project-id",
+  storageBucket: "your-project.appspot.com",
+  messagingSenderId: "123456789",
+  appId: "your-app-id"
+};
+
+// Initialize Firebase
+firebase.initializeApp(firebaseConfig);
+
+// Initialize services
+const db = firebase.firestore();
+const auth = firebase.auth();
+const storage = firebase.storage();
+
+// Global variables
+let cart = [];
+let currentUser = null;
+
+// Auth state listener
+auth.onAuthStateChanged(user => {
+  currentUser = user;
+  if (user) {
+    console.log('User logged in:', user.email);
+  } else {
+    console.log('User not logged in');
+  }
+});
+
+// Initialize products when page loads
+document.addEventListener('DOMContentLoaded', () => {
+  loadProducts();
+});
+
 
       function loadProducts() {
   const productsGrid = document.getElementById("productsGrid");
@@ -897,6 +934,17 @@ ${orderSummary}
     knutsfordSelect.value = ""; // clear hidden select
   }
     }
+
+
+      function formatPhoneNumber(input) {
+  let value = input.value.replace(/\D/g, '');
+  if (value.length >= 6) {
+    value = value.replace(/(\d{3})(\d{3})(\d{4})/, '($1) $2-$3');
+  } else if (value.length >= 3) {
+    value = value.replace(/(\d{3})(\d+)/, '($1) $2');
+  }
+  input.value = value;
+      }
     </script>
 </body>
 </html>
