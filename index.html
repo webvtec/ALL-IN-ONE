@@ -9,12 +9,22 @@
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
 <script src="//cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <style>
+/* Add body background and theme */
+body {
+  margin: 0;
+  padding: 0;
+  font-family: 'Arial', sans-serif;
+  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 25%, #0f3460 50%, #533483 75%, #7b2d8e 100%);
+  min-height: 100vh;
+  color: white;
+}
+
 /* Your CSS as provided */
 .cart-button {
   position: absolute;
   top: 0;
   right: 0;
-  background-color: #EF92AB;
+  background: linear-gradient(45deg, #FFD700, #FFA500);
   border: none;
   height: 48px;
   width: 45px;
@@ -24,7 +34,14 @@
   font-size: 22px;
   cursor: pointer;
   z-index: 1001;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+  box-shadow: 0 4px 15px rgba(255, 215, 0, 0.4);
+  border-radius: 10px;
+  transition: all 0.3s ease;
+}
+
+.cart-button:hover {
+  transform: scale(1.05);
+  box-shadow: 0 6px 20px rgba(255, 215, 0, 0.6);
 }
 
 .cart-button #cartCount {
@@ -44,6 +61,24 @@
   z-index: 1002;
 }
 
+/* Content section styling */
+.content-section {
+  background: rgba(0,0,0,0.2);
+  border-radius: 20px;
+  margin: 20px;
+  backdrop-filter: blur(10px);
+  border: 2px solid rgba(255, 215, 0, 0.2);
+}
+
+/* Header styling */
+h1 {
+  background: linear-gradient(45deg, #FFD700, #FFA500) !important;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+}
+
 .delivery-options {
   display: flex;
   gap: 10px;
@@ -53,21 +88,23 @@
 .option-button {
   flex: 1;
   padding: 12px;
-  background-color: #FE5DC7;
+  background: linear-gradient(45deg, #7C3AED, #A855F7);
   color: white;
   border: none;
   border-radius: 8px;
   font-size: 16px;
   cursor: pointer;
-  transition: background 0.3s ease;
+  transition: all 0.3s ease;
 }
 
 .option-button:hover {
-  background-color: #e04dad;
+  background: linear-gradient(45deg, #6D28D9, #9333EA);
+  transform: translateY(-2px);
 }
 
 .option-button.active {
-  background-color: #EF92AB;
+  background: linear-gradient(45deg, #FFD700, #FFA500);
+  color: #1a1a2e;
 }
 </style>
 </head>
