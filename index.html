@@ -648,9 +648,9 @@
     width: 100%;
     height: 100vh;
     background: white;
-    z-index: 999;  /* Lower z-index - below headers */
+    z-index: 1000;
     overflow-y: auto;
-    padding: 220px 20px 20px 20px;  /* Enough space for both headers */
+    padding: 70px 20px 20px 20px; /* Only account for top header */
 }
 
 .product-detail-view.active {
@@ -1156,14 +1156,11 @@ function showProductDetail(product) {
     }).join('');
     
     detailView.innerHTML = `
-        <div class="detail-header">
-            <h2>${product.name}</h2>
-            <button class="detail-close" onclick="closeProductDetail()">✕ Close</button>
-        </div>
-        
         <div class="product-gallery">
             <img src="${product.image}" alt="${product.name}">
         </div>
+        
+        <h2 style="text-align: center; color: #333; margin: 1rem 0;">${product.name}</h2>
         
         <div class="stars" style="justify-content: center; margin-bottom: 1rem;">
             ${starsHTML} (${reviews.length} reviews)
