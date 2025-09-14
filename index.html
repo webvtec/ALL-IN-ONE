@@ -661,30 +661,30 @@ function createProductCard(product) {
     }).join('');
     
     card.innerHTML = `
-        <div class="product-image">
-            <img src="${product.image}" alt="${product.name}">
+    <div class="product-image">
+        <img src="${product.image}" alt="${product.name}">
+    </div>
+    
+    <div class="product-details">
+        <div class="product-header">
+            <h3 class="product-title">${product.name}</h3>
+            <p class="product-description">${product.description || 'DESCRIPTION'}</p>
         </div>
         
-        <div class="product-details">
-            <div class="product-header">
-                <h3 class="product-title">${product.name}</h3>
-                <p class="product-description">${product.description || 'DESCRIPTION....'}</p>
-            </div>
-            
-            <div class="rating-section">
-                <h4>Star Ratings</h4>
-                <div class="stars">${starsHTML}</div>
-            </div>
-            
-            <div class="product-price">$${product.price}</div>
-            
-            <button class="add-to-cart" onclick="addToCart('${product.id}')">Add to cart</button>
-            
-            <div class="reviews-section" id="reviews-${product.id}" style="display:none;">
-                ${createReviewsSection(product)}
-            </div>
+        <div class="rating-section">
+            <h4>Star Ratings</h4>
+            <div class="stars">${starsHTML}</div>
         </div>
-    `;
+        
+        <div class="product-price">$${product.price}</div>
+        
+        <button class="add-to-cart" onclick="addToCart('${product.id}')">Add to cart</button>
+        
+        <div class="reviews-section" id="reviews-${product.id}" style="display:none;">
+            ${createReviewsSection(product)}
+        </div>
+    </div>
+`;
     
     return card;
 }
