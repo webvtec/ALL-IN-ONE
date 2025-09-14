@@ -752,7 +752,6 @@
 <!-- Top Header -->
 <header class="top-header">
     <div class="logo">WEBVTEC</div>
-    <button class="menu-toggle" onclick="toggleMenu()">☰</button>
 </header>
 
 
@@ -770,10 +769,11 @@
     <header class="header">
         <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
     <button class="btn" onclick="showLogin()">👤 Sign In</button>
+    <button class="btn">Request Product</button>
     <button class="btn" onclick="showCart()" style="position: relative;">
-        🛒 Cart <span class="cart-count" id="cartCount">0</span>
+        🛒 Cart <span class="cart-count">${document.getElementById('cartCount').textContent}</span>
     </button>
-</div>
+        </div>
 <div class="search-container">
     <input type="text" class="search-bar" placeholder="Search for products..." onkeyup="searchProducts()">
     <button class="search-btn" onclick="searchProducts()">🔍</button>
