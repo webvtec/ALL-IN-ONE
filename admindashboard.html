@@ -420,298 +420,177 @@
     </div>
 
     <script>
-        // Admin product management
-        let adminProducts = JSON.parse(localStorage.getItem('adminProducts')) || [
-            {
-                id: 1,
-                name: "Premium Laptop",
-                description: "High-performance laptop with latest specs",
-                price: 1299.99,
-                image: "💻",
-                stock: 15,
-                category: "computers",
-                reviews: [
-                    { name: "John D.", rating: 5, comment: "Excellent laptop! Very fast and reliable." },
-                    { name: "Sarah M.", rating: 4, comment: "Good value for money. Highly recommended." }
-                ]
-            },
-            {
-                id: 2,
-                name: "Wireless Headphones",
-                description: "Premium quality wireless headphones with noise cancellation",
-                price: 299.99,
-                image: "🎧",
-                stock: 25,
-                category: "accessories",
-                reviews: [
-                    { name: "Mike R.", rating: 5, comment: "Amazing sound quality!" }
-                ]
-            },
-            {
-                id: 3,
-                name: "Smart Watch",
-                description: "Feature-rich smartwatch with health monitoring",
-                price: 399.99,
-                image: "⌚",
-                stock: 10,
-                category: "accessories",
-                reviews: []
-            },
-            {
-                id: 4,
-                name: "Gaming Mouse",
-                description: "Professional gaming mouse with RGB lighting",
-                price: 79.99,
-                image: "🖱️",
-                stock: 30,
-                category: "gaming",
-                reviews: [
-                    { name: "Alex P.", rating: 5, comment: "Perfect for gaming!" },
-                    { name: "Emma T.", rating: 4, comment: "Great precision and comfort." }
-                ]
-            }
-        ];
+        
+        // Firebase configuration (same as index.html)
+const firebaseConfig = {
+    // Add your Firebase config here
+    apiKey: "your-api-key",
+    authDomain: "your-project.firebaseapp.com",
+    projectId: "your-project-id",
+    storageBucket: "your-project.appspot.com",
+    messagingSenderId: "your-sender-id",
+    appId: "your-app-id"
+};
 
-        // Initialize admin dashboard
-        document.addEventListener('DOMContentLoaded', function() {
-            loadProductsTable();
-            updateStatistics();
-            saveProducts(); // Save initial products to localStorage
-        });
+// Initialize Firebase
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
 
-        function addProduct(event) {
-            event.preventDefault();
-            
-            const newProduct = {
-                id: Date.now(), // Simple ID generation
-                name: document.getElementById('productName').value,
-                description: document.getElementById('productDescription').value,
-                price: parseFloat(document.getElementById('productPrice').value),
-                image: document.getElementById('productImage').value,
-                stock: parseInt(document.getElementById('productStock').value),
-                category: document.getElementById('productCategory').value,
-                reviews: []
-            };
+let products = [];
 
-            adminProducts.push(newProduct);
-            saveProducts();
-            loadProductsTable();
-            updateStatistics();
-            
-            // Clear form
-            event.target.reset();
-            
-            // Show success message
-            showNotification('Product added successfully!', 'success');
-        }
+// Initialize admin dashboard
+document.addEventListener('DOMContentLoaded', function() {
+    loadProductsFromFirebase();
+});
 
-        function loadProductsTable() {
-            const tbody = document.getElementById('productsTableBody');
-            tbody.innerHTML = '';
-
-            adminProducts.forEach(product => {
-                const row = document.createElement('tr');
-                row.innerHTML = `
-                    <td><div class="product-image-preview">${product.image}</div></td>
-                    <td>${product.name}</td>
-                    <td>${product.description.substring(0, 50)}${product.description.length > 50 ? '...' : ''}</td>
-                    <td>${product.price.toFixed(2)}</td>
-                    <td>${product.stock}</td>
-                    <td>${product.reviews.length}</td>
-                    <td>
-                        <button class="btn" onclick="editProduct(${product.id})">Edit</button>
-                        <button class="btn btn-danger" onclick="deleteProduct(${product.id})">Delete</button>
-                    </td>
-                `;
-                tbody.appendChild(row);
+function loadProductsFromFirebase() {
+    db.collection('products').onSnapshot((snapshot) => {
+        products = [];
+        snapshot.forEach((doc) => {
+            products.push({
+                id: doc.id,
+                ...doc.data()
             });
+        });
+        loadProductsTable();
+        updateStatistics();
+    });
+}
+
+function addProduct(event) {
+    event.preventDefault();
+    
+    const newProduct = {
+        name: document.getElementById('productName').value,
+        description: document.getElementById('productDescription').value,
+        price: parseFloat(document.getElementById('productPrice').value),
+        image: document.getElementById('productImage').value,
+        stock: parseInt(document.getElementById('productStock').value),
+        category: document.getElementById('productCategory').value,
+        reviews: []
+    };
+
+    db.collection('products').add(newProduct).then(() => {
+        event.target.reset();
+        showNotification('Product added successfully!', 'success');
+    }).catch((error) => {
+        showNotification('Error adding product: ' + error.message, 'error');
+    });
+}
+
+function loadProductsTable() {
+    const tbody = document.getElementById('productsTableBody');
+    tbody.innerHTML = '';
+
+    products.forEach(product => {
+        const row = document.createElement('tr');
+        row.innerHTML = `
+            <td><div class="product-image-preview">${product.image}</div></td>
+            <td>${product.name}</td>
+            <td>${product.description.substring(0, 50)}${product.description.length > 50 ? '...' : ''}</td>
+            <td>$${product.price.toFixed(2)}</td>
+            <td>${product.stock}</td>
+            <td>${(product.reviews || []).length}</td>
+            <td>
+                <button class="btn" onclick="editProduct('${product.id}')">Edit</button>
+                <button class="btn btn-danger" onclick="deleteProduct('${product.id}')">Delete</button>
+            </td>
+        `;
+        tbody.appendChild(row);
+    });
+}
+
+function editProduct(productId) {
+    const product = products.find(p => p.id === productId);
+    if (!product) return;
+
+    document.getElementById('editProductId').value = product.id;
+    document.getElementById('editProductName').value = product.name;
+    document.getElementById('editProductDescription').value = product.description;
+    document.getElementById('editProductPrice').value = product.price;
+    document.getElementById('editProductImage').value = product.image;
+    document.getElementById('editProductStock').value = product.stock;
+
+    document.getElementById('editForm').style.display = 'block';
+}
+
+function updateProduct(event) {
+    event.preventDefault();
+    
+    const productId = document.getElementById('editProductId').value;
+    
+    const updatedProduct = {
+        name: document.getElementById('editProductName').value,
+        description: document.getElementById('editProductDescription').value,
+        price: parseFloat(document.getElementById('editProductPrice').value),
+        image: document.getElementById('editProductImage').value,
+        stock: parseInt(document.getElementById('editProductStock').value)
+    };
+
+    db.collection('products').doc(productId).update(updatedProduct).then(() => {
+        closeEditForm();
+        showNotification('Product updated successfully!', 'success');
+    }).catch((error) => {
+        showNotification('Error updating product: ' + error.message, 'error');
+    });
+}
+
+function deleteProduct(productId) {
+    if (confirm('Are you sure you want to delete this product?')) {
+        db.collection('products').doc(productId).delete().then(() => {
+            showNotification('Product deleted successfully!', 'success');
+        }).catch((error) => {
+            showNotification('Error deleting product: ' + error.message, 'error');
+        });
+    }
+}
+
+function closeEditForm() {
+    document.getElementById('editForm').style.display = 'none';
+}
+
+function updateStatistics() {
+    const totalProducts = products.length;
+    const totalReviews = products.reduce((sum, product) => sum + (product.reviews || []).length, 0);
+    const totalRevenue = products.reduce((sum, product) => sum + (product.price * Math.max(0, 50 - product.stock)), 0);
+    const totalOrders = Math.floor(totalRevenue / 100);
+
+    document.getElementById('totalProducts').textContent = totalProducts;
+    document.getElementById('totalRevenue').textContent = `$${totalRevenue.toFixed(2)}`;
+    document.getElementById('totalOrders').textContent = totalOrders;
+    document.getElementById('totalReviews').textContent = totalReviews;
+}
+
+function showNotification(message, type) {
+    const notification = document.createElement('div');
+    notification.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        padding: 1rem 2rem;
+        border-radius: 10px;
+        z-index: 2000;
+        font-weight: bold;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+        ${type === 'success' ? 
+            'background: linear-gradient(45deg, #2ecc71, #27ae60); color: white;' : 
+            'background: linear-gradient(45deg, #e74c3c, #c0392b); color: white;'
         }
+    `;
+    notification.textContent = message;
+    document.body.appendChild(notification);
+    
+    setTimeout(() => {
+        notification.remove();
+    }, 3000);
+}
 
-        function editProduct(productId) {
-            const product = adminProducts.find(p => p.id === productId);
-            if (!product) return;
-
-            document.getElementById('editProductId').value = product.id;
-            document.getElementById('editProductName').value = product.name;
-            document.getElementById('editProductDescription').value = product.description;
-            document.getElementById('editProductPrice').value = product.price;
-            document.getElementById('editProductImage').value = product.image;
-            document.getElementById('editProductStock').value = product.stock;
-
-            document.getElementById('editForm').style.display = 'block';
-        }
-
-        function updateProduct(event) {
-            event.preventDefault();
-            
-            const productId = parseInt(document.getElementById('editProductId').value);
-            const productIndex = adminProducts.findIndex(p => p.id === productId);
-            
-            if (productIndex === -1) return;
-
-            adminProducts[productIndex] = {
-                ...adminProducts[productIndex],
-                name: document.getElementById('editProductName').value,
-                description: document.getElementById('editProductDescription').value,
-                price: parseFloat(document.getElementById('editProductPrice').value),
-                image: document.getElementById('editProductImage').value,
-                stock: parseInt(document.getElementById('editProductStock').value)
-            };
-
-            saveProducts();
-            loadProductsTable();
-            updateStatistics();
-            closeEditForm();
-            
-            showNotification('Product updated successfully!', 'success');
-        }
-
-        function deleteProduct(productId) {
-            if (confirm('Are you sure you want to delete this product?')) {
-                adminProducts = adminProducts.filter(p => p.id !== productId);
-                saveProducts();
-                loadProductsTable();
-                updateStatistics();
-                showNotification('Product deleted successfully!', 'success');
-            }
-        }
-
-        function closeEditForm() {
-            document.getElementById('editForm').style.display = 'none';
-        }
-
-        function saveProducts() {
-            localStorage.setItem('adminProducts', JSON.stringify(adminProducts));
-        }
-
-        function updateStatistics() {
-            const totalProducts = adminProducts.length;
-            const totalReviews = adminProducts.reduce((sum, product) => sum + product.reviews.length, 0);
-            const totalRevenue = adminProducts.reduce((sum, product) => sum + (product.price * Math.max(0, 50 - product.stock)), 0);
-            const totalOrders = Math.floor(totalRevenue / 100); // Simulated orders
-
-            document.getElementById('totalProducts').textContent = totalProducts;
-            document.getElementById('totalRevenue').textContent = `${totalRevenue.toFixed(2)}`;
-            document.getElementById('totalOrders').textContent = totalOrders;
-            document.getElementById('totalReviews').textContent = totalReviews;
-        }
-
-        function exportProducts() {
-            const dataStr = JSON.stringify(adminProducts, null, 2);
-            const dataBlob = new Blob([dataStr], {type: 'application/json'});
-            
-            const link = document.createElement('a');
-            link.href = URL.createObjectURL(dataBlob);
-            link.download = 'webvtec_products.json';
-            link.click();
-            
-            showNotification('Products exported successfully!', 'success');
-        }
-
-        function importProducts() {
-            const input = document.createElement('input');
-            input.type = 'file';
-            input.accept = '.json';
-            input.onchange = function(event) {
-                const file = event.target.files[0];
-                if (file) {
-                    const reader = new FileReader();
-                    reader.onload = function(e) {
-                        try {
-                            const importedProducts = JSON.parse(e.target.result);
-                            adminProducts = importedProducts;
-                            saveProducts();
-                            loadProductsTable();
-                            updateStatistics();
-                            showNotification('Products imported successfully!', 'success');
-                        } catch (error) {
-                            showNotification('Error importing products. Invalid file format.', 'error');
-                        }
-                    };
-                    reader.readAsText(file);
-                }
-            };
-            input.click();
-        }
-
-        function clearAllProducts() {
-            if (confirm('Are you sure you want to delete ALL products? This action cannot be undone.')) {
-                adminProducts = [];
-                saveProducts();
-                loadProductsTable();
-                updateStatistics();
-                showNotification('All products cleared!', 'success');
-            }
-        }
-
-        function generateSampleData() {
-            const sampleProducts = [
-                {
-                    id: Date.now() + 1,
-                    name: "4K Monitor",
-                    description: "Ultra-wide 4K gaming monitor with HDR support",
-                    price: 549.99,
-                    image: "🖥️",
-                    stock: 12,
-                    category: "electronics",
-                    reviews: []
-                },
-                {
-                    id: Date.now() + 2,
-                    name: "Mechanical Keyboard",
-                    description: "RGB mechanical keyboard with blue switches",
-                    price: 129.99,
-                    image: "⌨️",
-                    stock: 20,
-                    category: "accessories",
-                    reviews: []
-                }
-            ];
-            
-            adminProducts.push(...sampleProducts);
-            saveProducts();
-            loadProductsTable();
-            updateStatistics();
-            showNotification('Sample data generated!', 'success');
-        }
-
-        function updateStoreName() {
-            const newName = document.getElementById('storeName').value;
-            // In a real application, this would update the store configuration
-            showNotification(`Store name updated to: ${newName}`, 'success');
-        }
-
-        function showNotification(message, type) {
-            const notification = document.createElement('div');
-            notification.style.cssText = `
-                position: fixed;
-                top: 20px;
-                right: 20px;
-                padding: 1rem 2rem;
-                border-radius: 10px;
-                z-index: 2000;
-                font-weight: bold;
-                box-shadow: 0 5px 15px rgba(0,0,0,0.3);
-                ${type === 'success' ? 
-                    'background: linear-gradient(45deg, #2ecc71, #27ae60); color: white;' : 
-                    'background: linear-gradient(45deg, #e74c3c, #c0392b); color: white;'
-                }
-            `;
-            notification.textContent = message;
-            document.body.appendChild(notification);
-            
-            setTimeout(() => {
-                notification.remove();
-            }, 3000);
-        }
-
-        // Close modal when clicking outside
-        window.onclick = function(event) {
-            const editForm = document.getElementById('editForm');
-            if (event.target === editForm) {
-                closeEditForm();
-            }
-        }
+window.onclick = function(event) {
+    const editForm = document.getElementById('editForm');
+    if (event.target === editForm) {
+        closeEditForm();
+    }
+}
     </script>
 </body>
 </html>
