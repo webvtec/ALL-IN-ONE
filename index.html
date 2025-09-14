@@ -849,6 +849,7 @@ function displayProducts() {
 
 
 function createProductCard(product) {
+function createProductCard(product) {
     const card = document.createElement('div');
     card.className = 'product-card';
     
@@ -859,8 +860,11 @@ function createProductCard(product) {
     
     // Generate filled stars for average rating, empty stars for remainder
     const starsHTML = Array.from({length: 5}, (_, i) => {
-        const starClass = i < Math.floor(avgRating) ? 'star' : 'star empty';
-        return `<span class="${starClass}">⭐</span>`;
+        if (i < Math.floor(avgRating)) {
+            return `<span class="star">★</span>`;
+        } else {
+            return `<span class="star empty">☆</span>`;
+        }
     }).join('');
     
     card.innerHTML = `
@@ -897,6 +901,7 @@ function createProductCard(product) {
     
     return card;
 }
+
 
         
 // Also add this function to handle button clicks properly:
