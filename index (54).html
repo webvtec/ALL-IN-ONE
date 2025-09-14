@@ -1,0 +1,889 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WEBVTEC - Products</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+    font-family: 'Arial', sans-serif;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    min-height: 100vh;
+    color: white;
+    padding-top: 70px;
+        }
+
+
+
+        .top-header {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    padding: 1rem;
+    background: #261A4C;
+    z-index: 1002;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-top: 0px !important;
+    margin-bottom: 0px !important;
+        }
+
+.top-header .logo {
+    font-size: 2rem;
+    font-weight: bold;
+    color: black;
+    text-shadow: 
+        -2px -2px 0 #ffd700,
+        2px -2px 0 #ffd700,
+        -2px 2px 0 #ffd700,
+        2px 2px 0 #ffd700,
+        -2px 0 0 #ffd700,
+        2px 0 0 #ffd700,
+        0 -2px 0 #ffd700,
+        0 2px 0 #ffd700;
+}
+
+.top-header .menu-toggle {
+    position: absolute;
+    left: 1rem;
+    background: rgba(255, 215, 0, 0.9);
+    color: #333;
+    border: none;
+    padding: 0.5rem;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 1.2rem;
+}
+
+        /* Header */
+        .header {
+    background: rgba(0, 0, 0, 0.3);
+    padding: 0.5rem 1rem;
+    backdrop-filter: blur(10px);
+    border-bottom: 2px solid #ffd700;
+    margin-top: 0px !important;
+    margin-bottom: 0px !important;
+        }
+
+        .header-top {
+         display: flex;
+         justify-content: center;
+         align-items: center;
+         margin-bottom: 0rem;
+         position: relative;
+        }
+
+        .logo {
+    font-size: 2rem;
+    font-weight: bold;
+    color: black;
+    text-shadow: 
+        -2px -2px 0 #ffd700,
+        2px -2px 0 #ffd700,
+        -2px 2px 0 #ffd700,
+        2px 2px 0 #ffd700,
+        -2px 0 0 #ffd700,
+        2px 0 0 #ffd700,
+        0 -2px 0 #ffd700,
+        0 2px 0 #ffd700;
+        }
+
+        .user-actions {
+          display: flex;
+          gap: 1rem;
+          align-items: center;
+          position: absolute;
+          width: 100%;
+          justify-content: space-between;
+          padding: 0 30px;
+          top: 60px;
+        }
+
+        .btn {
+            padding: 0.5rem 1rem;
+            border: none;
+            border-radius: 25px;
+            background: linear-gradient(45deg, #ffd700, #ffed4a);
+            color: #333;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(255, 215, 0, 0.3);
+        }
+
+        .search-container {
+    position: relative;
+    max-width: 600px;
+    margin: 0 auto;
+        }
+        
+        .search-bar {
+            width: 100%;
+            padding: 1rem;
+            border: none;
+            border-radius: 25px;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            color: white;
+            font-size: 1rem;
+            border: 2px solid rgba(255, 215, 0, 0.3);
+        }
+
+        .search-bar::placeholder {
+            color: rgba(255, 255, 255, 0.7);
+        }
+
+        .search-bar:focus {
+            outline: none;
+            border-color: #ffd700;
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        /* Sidebar Menu */
+        .sidebar {
+            position: fixed;
+            left: 0;
+            top: 0;
+            width: 250px;
+            height: 100vh;
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(10px);
+            padding-top: 2rem;
+            z-index: 1000;
+            transform: translateX(-100%);
+            transition: transform 0.3s ease;
+        }
+
+        .sidebar.open {
+            transform: translateX(0);
+        }
+
+        .menu-toggle {
+            position: fixed;
+            top: 1rem;
+            left: 1rem;
+            z-index: 1001;
+            background: rgba(255, 215, 0, 0.9);
+            color: #333;
+            border: none;
+            padding: 0.5rem;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1.2rem;
+        }
+
+        .sidebar ul {
+            list-style: none;
+        }
+
+        .sidebar ul li {
+            padding: 1rem 2rem;
+            border-bottom: 1px solid rgba(255, 215, 0, 0.2);
+        }
+
+        .sidebar ul li a {
+            color: white;
+            text-decoration: none;
+            font-weight: 500;
+            transition: color 0.3s ease;
+        }
+
+        .sidebar ul li:hover {
+            background: rgba(255, 215, 0, 0.1);
+        }
+
+        .sidebar ul li a:hover {
+            color: #ffd700;
+        }
+
+        /* Main Content */
+        .main-content {
+            margin-left: 0;
+            padding: 2rem;
+            transition: margin-left 0.3s ease;
+        }
+
+        .products-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 2rem;
+            margin-top: 2rem;
+        }
+
+        .product-card {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 1.5rem;
+            border: 2px solid rgba(255, 215, 0, 0.3);
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .product-card::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: linear-gradient(45deg, transparent, rgba(255, 215, 0, 0.1), transparent);
+            transform: rotate(45deg);
+            transition: all 0.5s ease;
+            opacity: 0;
+        }
+
+        .product-card:hover::before {
+            animation: shimmer 1s ease-in-out;
+            opacity: 1;
+        }
+
+        .product-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(255, 215, 0, 0.2);
+            border-color: #ffd700;
+        }
+
+        .product-image {
+            width: 100%;
+            height: 200px;
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            border-radius: 10px;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 3rem;
+            position: relative;
+        }
+
+        .product-title {
+            font-size: 1.3rem;
+            margin-bottom: 0.5rem;
+            color: #ffd700;
+        }
+
+        .product-description {
+            color: rgba(255, 255, 255, 0.8);
+            margin-bottom: 1rem;
+            line-height: 1.4;
+        }
+
+        .product-price {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #ffd700;
+            margin-bottom: 1rem;
+        }
+
+        .product-actions {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .add-to-cart {
+            flex: 1;
+            padding: 0.7rem;
+            background: linear-gradient(45deg, #ffd700, #ffed4a);
+            color: #333;
+            border: none;
+            border-radius: 25px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .add-to-cart:hover {
+            transform: scale(1.05);
+            box-shadow: 0 5px 15px rgba(255, 215, 0, 0.4);
+        }
+
+        .view-reviews {
+            padding: 0.7rem 1rem;
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            border: 1px solid rgba(255, 215, 0, 0.5);
+            border-radius: 25px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .view-reviews:hover {
+            background: rgba(255, 215, 0, 0.2);
+            border-color: #ffd700;
+        }
+
+        /* Reviews Section */
+        .reviews-section {
+            margin-top: 1rem;
+            display: none;
+        }
+
+        .reviews-section.active {
+            display: block;
+        }
+
+        .review-form {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 1rem;
+            border-radius: 10px;
+            margin-bottom: 1rem;
+        }
+
+        .review-form input, .review-form textarea {
+            width: 100%;
+            padding: 0.5rem;
+            margin-bottom: 0.5rem;
+            border: none;
+            border-radius: 5px;
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            border: 1px solid rgba(255, 215, 0, 0.3);
+        }
+
+        .review-form input::placeholder, .review-form textarea::placeholder {
+            color: rgba(255, 255, 255, 0.6);
+        }
+
+        .stars {
+            display: flex;
+            gap: 0.2rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .star {
+            font-size: 1.5rem;
+            color: #666;
+            cursor: pointer;
+            transition: color 0.2s ease;
+        }
+
+        .star.active, .star:hover {
+            color: #ffd700;
+        }
+
+        .reviews-list {
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        .review-item {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 1rem;
+            border-radius: 8px;
+            margin-bottom: 0.5rem;
+            border-left: 3px solid #ffd700;
+        }
+
+        .review-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 0.5rem;
+        }
+
+        .reviewer-name {
+            font-weight: bold;
+            color: #ffd700;
+        }
+
+        .review-stars {
+            color: #ffd700;
+        }
+
+        .cart-count {
+            background: #ff4757;
+            color: white;
+            border-radius: 50%;
+            padding: 0.2rem 0.5rem;
+            font-size: 0.8rem;
+            position: absolute;
+            top: -5px;
+            right: -5px;
+        }
+
+        /* Login Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 2000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(5px);
+        }
+
+        .modal-content {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            margin: 10% auto;
+            padding: 2rem;
+            border-radius: 15px;
+            width: 90%;
+            max-width: 400px;
+            border: 2px solid #ffd700;
+        }
+
+        .close {
+            color: #ffd700;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .form-group {
+            margin-bottom: 1rem;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: #ffd700;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 0.7rem;
+            border: none;
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            border: 1px solid rgba(255, 215, 0, 0.3);
+        }
+
+        @keyframes shimmer {
+            0% { transform: translateX(-100%) translateY(-100%) rotate(45deg); }
+            100% { transform: translateX(100%) translateY(100%) rotate(45deg); }
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .header-top {
+                flex-direction: column;
+                gap: 1rem;
+            }
+
+            .products-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+
+        .search-btn {
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: linear-gradient(45deg, #ffd700, #ffed4a);
+    color: #333;
+    border: none;
+    padding: 0.8rem 1rem;
+    border-radius: 20px;
+    cursor: pointer;
+    font-size: 1rem;
+    transition: all 0.3s ease;
+}
+
+.search-btn:hover {
+    transform: translateY(-50%) scale(1.05);
+    box-shadow: 0 5px 15px rgba(255, 215, 0, 0.3);
+}
+    </style>
+</head>
+<body>
+    
+<!-- Top Header -->
+<header class="top-header">
+    <div class="logo">WEBVTEC</div>
+    <button class="menu-toggle" onclick="toggleMenu()">☰</button>
+</header>
+
+
+    <!-- Sidebar -->
+    <nav class="sidebar" id="sidebar">
+        <ul>
+            <li><a href="#" onclick="showSection('home')">🏠 Home</a></li>
+            <li><a href="#" onclick="showSection('products')">📦 Products</a></li>
+            <li><a href="#" onclick="showRequestForm()">🛒 Request Product</a></li>
+            <li><a href="admin.html">⚙️ Admin Dashboard</a></li>
+        </ul>
+    </nav>
+
+    <!-- Header -->
+    <header class="header">
+        <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
+    <button class="btn" onclick="showLogin()">👤 Sign In</button>
+    <button class="btn" onclick="showCart()" style="position: relative;">
+        🛒 Cart <span class="cart-count" id="cartCount">0</span>
+    </button>
+</div>
+<div class="search-container">
+    <input type="text" class="search-bar" placeholder="Search for products..." onkeyup="searchProducts()">
+    <button class="search-btn" onclick="searchProducts()">🔍</button>
+</div>
+    </header>
+
+        <div class="products-grid" id="productsGrid">
+            <!-- Products will be loaded here -->
+        </div>
+    </main>
+
+    <!-- Login Modal -->
+    <div id="loginModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeLogin()">&times;</span>
+            <h2 style="color: #ffd700; margin-bottom: 1rem;">Sign In</h2>
+            <form onsubmit="handleLogin(event)">
+                <div class="form-group">
+                    <label>Email:</label>
+                    <input type="email" required>
+                </div>
+                <div class="form-group">
+                    <label>Password:</label>
+                    <input type="password" required>
+                </div>
+                <button type="submit" class="btn" style="width: 100%;">Sign In</button>
+            </form>
+            <p style="text-align: center; margin-top: 1rem;">
+                Don't have an account? <a href="#" style="color: #ffd700;">Sign Up</a>
+            </p>
+        </div>
+    </div>
+    <script>
+        let cart = [];
+        
+    // Firebase configuration
+const firebaseConfig = {
+    apiKey: "AIzaSyD01uGyvyD9vyXa6SFAqxqEdEFuedc-b5M",
+    authDomain: "e-commerce-f2233.firebaseapp.com",
+    projectId: "e-commerce-f2233",
+    storageBucket: "e-commerce-f2233.firebasestorage.app",
+    messagingSenderId: "363586978941",
+    appId: "1:363586978941:web:35b3b34237bca75b405d14"
+};
+
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
+
+let products = [];
+
+// Replace your DOMContentLoaded listener with this:
+document.addEventListener('DOMContentLoaded', function() {
+    loadProductsFromFirebase();
+    updateCartCount();
+});
+
+function loadProductsFromFirebase() {
+    db.collection('products').onSnapshot((snapshot) => {
+        products = [];
+        snapshot.forEach((doc) => {
+            products.push({
+                id: doc.id,
+                ...doc.data()
+            });
+        });
+        displayProducts(); // This will refresh the display
+    });
+}
+
+function displayProducts() {
+    const grid = document.getElementById('productsGrid');
+    grid.innerHTML = '';
+
+    products.forEach(product => {
+        const productCard = createProductCard(product);
+        grid.appendChild(productCard);
+    });
+}
+
+function createProductCard(product) {
+    const card = document.createElement('div');
+    card.className = 'product-card';
+    card.innerHTML = `
+        <div class="product-image">
+    <img src="${product.image}" alt="${product.name}" style="width: 100%; height: 100%; object-fit: cover; border-radius: 10px;">
+</div>
+        <h3 class="product-title">${product.name}</h3>
+        <p class="product-description">${product.description}</p>
+        <div class="product-price">$${product.price}</div>
+        <div class="product-actions">
+            <button class="add-to-cart" onclick="addToCart('${product.id}')">Add to Cart</button>
+            <button class="view-reviews" onclick="toggleReviews('${product.id}')">Reviews (${(product.reviews || []).length})</button>
+        </div>
+        <div class="reviews-section" id="reviews-${product.id}">
+            ${createReviewsSection(product)}
+        </div>
+    `;
+    return card;
+}
+
+function createReviewsSection(product) {
+    const reviews = product.reviews || [];
+    const reviewsHtml = reviews.map(review => `
+        <div class="review-item">
+            <div class="review-header">
+                <span class="reviewer-name">${review.name}</span>
+                <span class="review-stars">${'★'.repeat(review.rating)}${'☆'.repeat(5-review.rating)}</span>
+            </div>
+            <p>${review.comment}</p>
+        </div>
+    `).join('');
+
+    return `
+        <div class="review-form">
+            <h4 style="color: #ffd700; margin-bottom: 0.5rem;">Leave a Review</h4>
+            <input type="text" placeholder="Your name" id="reviewName-${product.id}">
+            <div class="stars" id="stars-${product.id}">
+                ${[1,2,3,4,5].map(i => `<span class="star" onclick="setRating('${product.id}', ${i})">★</span>`).join('')}
+            </div>
+            <textarea placeholder="Your review" rows="3" id="reviewText-${product.id}"></textarea>
+            <button class="btn" onclick="submitReview('${product.id}')">Submit Review</button>
+        </div>
+        <div class="reviews-list">
+            ${reviewsHtml}
+        </div>
+    `;
+}
+
+function addToCart(productId) {
+    const product = products.find(p => p.id === productId);
+    const existingItem = cart.find(item => item.id === productId);
+    
+    if (existingItem) {
+        existingItem.quantity += 1;
+    } else {
+        cart.push({ ...product, quantity: 1 });
+    }
+    
+    updateCartCount();
+    showCartNotification(product.name);
+}
+
+function submitReview(productId) {
+    const name = document.getElementById(`reviewName-${productId}`).value;
+    const text = document.getElementById(`reviewText-${productId}`).value;
+    const rating = window[`selectedRating-${productId}`] || 5;
+
+    if (!name || !text) {
+        alert('Please fill in all fields');
+        return;
+    }
+
+    const newReview = {
+        name: name,
+        rating: rating,
+        comment: text,
+        date: new Date().toISOString()
+    };
+
+    db.collection('products').doc(productId).update({
+        reviews: firebase.firestore.FieldValue.arrayUnion(newReview)
+    }).then(() => {
+        alert('Review submitted successfully!');
+        // Clear form
+        document.getElementById(`reviewName-${productId}`).value = '';
+        document.getElementById(`reviewText-${productId}`).value = '';
+    });
+}
+
+// Keep all other existing functions (toggleMenu, setRating, updateCartCount, showCart, etc.)
+function toggleMenu() {
+    const sidebar = document.getElementById('sidebar');
+    sidebar.classList.toggle('open');
+}
+
+function toggleReviews(productId) {
+    const reviewsSection = document.getElementById(`reviews-${productId}`);
+    reviewsSection.classList.toggle('active');
+}
+
+function setRating(productId, rating) {
+    const stars = document.querySelectorAll(`#stars-${productId} .star`);
+    stars.forEach((star, index) => {
+        star.classList.toggle('active', index < rating);
+    });
+    window[`selectedRating-${productId}`] = rating;
+}
+
+function updateCartCount() {
+    const count = cart.reduce((total, item) => total + item.quantity, 0);
+    document.getElementById('cartCount').textContent = count;
+}
+
+function showCartNotification(productName) {
+    const notification = document.createElement('div');
+    notification.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        background: linear-gradient(45deg, #ffd700, #ffed4a);
+        color: #333;
+        padding: 1rem;
+        border-radius: 10px;
+        z-index: 3000;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+    `;
+    notification.textContent = `${productName} added to cart!`;
+    document.body.appendChild(notification);
+    
+    setTimeout(() => {
+        notification.remove();
+    }, 3000);
+}
+
+function showCart() {
+    if (cart.length === 0) {
+        alert('Your cart is empty!');
+        return;
+    }
+    
+    let cartHTML = '<h3>Your Cart:</h3>';
+    let total = 0;
+    
+    cart.forEach(item => {
+        const itemTotal = item.price * item.quantity;
+        total += itemTotal;
+        cartHTML += `
+            <div style="display: flex; justify-content: space-between; padding: 0.5rem 0; border-bottom: 1px solid #ccc;">
+                <span>${item.name} x${item.quantity}</span>
+                <span>$${itemTotal.toFixed(2)}</span>
+            </div>
+        `;
+    });
+    
+    cartHTML += `<br><strong>Total: $${total.toFixed(2)}</strong>`;
+    cartHTML += `<br><br><button onclick="checkout()" class="btn">Checkout with PayPal</button>`;
+    
+    const modal = document.createElement('div');
+    modal.className = 'modal';
+    modal.style.display = 'block';
+    modal.innerHTML = `
+        <div class="modal-content">
+            <span class="close" onclick="this.parentElement.parentElement.remove()">&times;</span>
+            ${cartHTML}
+        </div>
+    `;
+    document.body.appendChild(modal);
+}
+
+function checkout() {
+    const total = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+    alert(`Checkout total: $${total.toFixed(2)}\n\nPayPal integration would be implemented with your actual client ID.`);
+    cart = [];
+    updateCartCount();
+}
+
+function showLogin() {
+    document.getElementById('loginModal').style.display = 'block';
+}
+
+function closeLogin() {
+    document.getElementById('loginModal').style.display = 'none';
+}
+
+function handleLogin(event) {
+    event.preventDefault();
+    currentUser = 'User';
+    closeLogin();
+    alert('Login successful!');
+}
+
+function searchProducts() {
+    const searchInput = document.querySelector('.search-bar');
+    const searchTerm = searchInput.value.toLowerCase();
+    const filteredProducts = products.filter(product => 
+        product.name.toLowerCase().includes(searchTerm) || 
+        product.description.toLowerCase().includes(searchTerm)
+    );
+    
+    const grid = document.getElementById('productsGrid');
+    grid.innerHTML = '';
+    
+    filteredProducts.forEach(product => {
+        const productCard = createProductCard(product);
+        grid.appendChild(productCard);
+    });
+}
+
+function showSection(section) {
+    if (section === 'home') {
+        loadProductsFromFirebase();
+    }
+    toggleMenu();
+}
+
+function showRequestForm() {
+    const modal = document.createElement('div');
+    modal.className = 'modal';
+    modal.style.display = 'block';
+    modal.innerHTML = `
+        <div class="modal-content">
+            <span class="close" onclick="this.parentElement.parentElement.remove()">&times;</span>
+            <h2 style="color: #ffd700; margin-bottom: 1rem;">Request a Product</h2>
+            <form onsubmit="handleProductRequest(event)">
+                <div class="form-group">
+                    <label>Product Name:</label>
+                    <input type="text" required>
+                </div>
+                <div class="form-group">
+                    <label>Description:</label>
+                    <textarea rows="3" required></textarea>
+                </div>
+                <div class="form-group">
+                    <label>Your Email:</label>
+                    <input type="email" required>
+                </div>
+                <button type="submit" class="btn" style="width: 100%;">Submit Request</button>
+            </form>
+        </div>
+    `;
+    document.body.appendChild(modal);
+    toggleMenu();
+}
+
+function handleProductRequest(event) {
+    event.preventDefault();
+    alert('Product request submitted! We\'ll get back to you soon.');
+    event.target.closest('.modal').remove();
+}
+
+window.onclick = function(event) {
+    if (event.target.classList.contains('modal')) {
+        event.target.style.display = 'none';
+    }
+}
+
+document.addEventListener('click', function(event) {
+    const sidebar = document.getElementById('sidebar');
+    const menuToggle = document.querySelector('.menu-toggle');
+    
+    if (!sidebar.contains(event.target) && !menuToggle.contains(event.target)) {
+        sidebar.classList.remove('open');
+    }
+});
+
+
+    </script>
+</body>
+</html>
