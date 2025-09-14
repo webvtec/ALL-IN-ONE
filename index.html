@@ -309,15 +309,18 @@
     text-transform: uppercase;
 }
 
+/* CSS Update for Stars Display */
 .stars {
     display: flex;
     gap: 3px;
     margin-bottom: 0.5rem;
+    align-items: center;
 }
 
 .star {
-    color: #333;
+    color: #ffa500;
     font-size: 1.5rem;
+    line-height: 1;
 }
 
 .star.empty {
@@ -845,7 +848,6 @@ function displayProducts() {
 }
 
 
-        
 function createProductCard(product) {
     const card = document.createElement('div');
     card.className = 'product-card';
@@ -855,9 +857,10 @@ function createProductCard(product) {
         ? reviews.reduce((sum, review) => sum + review.rating, 0) / reviews.length 
         : 0;
     
+    // Generate filled stars for average rating, empty stars for remainder
     const starsHTML = Array.from({length: 5}, (_, i) => {
         const starClass = i < Math.floor(avgRating) ? 'star' : 'star empty';
-        return `<span class="${starClass}">★</span>`;
+        return `<span class="${starClass}">⭐</span>`;
     }).join('');
     
     card.innerHTML = `
@@ -870,8 +873,7 @@ function createProductCard(product) {
                 <p class="product-description">${product.description || 'DESCRIPTION'}</p>
             </div>
             <div class="rating-section">
-                <h4>Star Ratings</h4>
-                <div class="stars">${starsHTML}</div>
+                <div class="stars">${starsHTML} (${reviews.length})</div>
             </div>
             <div class="product-price">$${product.price}</div>
             <button class="add-to-cart" data-product-id="${product.id}">Add to cart</button>
@@ -895,6 +897,7 @@ function createProductCard(product) {
     
     return card;
 }
+
         
 // Also add this function to handle button clicks properly:
 function addToCart(productId) {
