@@ -309,6 +309,13 @@
     text-transform: uppercase;
 }
 
+/* Add this CSS to ensure review count is visible */
+.review-count {
+    color: #333;
+    font-size: 1.2rem;
+    margin-left: 5px;
+}
+        
 /* CSS Update for Stars Display */
 .stars {
     display: flex;
@@ -853,9 +860,13 @@ function createProductCard(product) {
     card.className = 'product-card';
     
     const reviews = product.reviews || [];
+    const reviewCount = reviews.length;
     const avgRating = reviews.length > 0 
         ? reviews.reduce((sum, review) => sum + review.rating, 0) / reviews.length 
         : 0;
+    
+    // Debug: Log the product data
+    console.log('Product:', product.name, 'Reviews:', reviews, 'Count:', reviewCount, 'Avg:', avgRating);
     
     // Generate filled stars for average rating, empty stars for remainder
     const starsHTML = Array.from({length: 5}, (_, i) => {
@@ -876,7 +887,7 @@ function createProductCard(product) {
                 <p class="product-description">${product.description || 'DESCRIPTION'}</p>
             </div>
             <div class="rating-section">
-                <div class="stars">${starsHTML} (${reviews.length})</div>
+                <div class="stars">${starsHTML} <span class="review-count">(${reviewCount})</span></div>
             </div>
             <div class="product-price">$${product.price}</div>
             <button class="add-to-cart" data-product-id="${product.id}">Add to cart</button>
