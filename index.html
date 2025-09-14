@@ -1,6 +1,9 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>WEBVTEC - Products</title>
@@ -567,270 +570,246 @@
             </p>
         </div>
     </div>
-
-    <script src="https://www.paypal.com/sdk/js?client-id=YOUR_PAYPAL_CLIENT_ID&currency=USD"></script>
     <script>
-        // Sample product data
-        let products = [
-            {
-                id: 1,
-                name: "Premium Laptop",
-                description: "High-performance laptop with latest specs",
-                price: 1299.99,
-                image: "💻",
-                reviews: [
-                    { name: "John D.", rating: 5, comment: "Excellent laptop! Very fast and reliable." },
-                    { name: "Sarah M.", rating: 4, comment: "Good value for money. Highly recommended." }
-                ]
-            },
-            {
-                id: 2,
-                name: "Wireless Headphones",
-                description: "Premium quality wireless headphones with noise cancellation",
-                price: 299.99,
-                image: "🎧",
-                reviews: [
-                    { name: "Mike R.", rating: 5, comment: "Amazing sound quality!" }
-                ]
-            },
-            {
-                id: 3,
-                name: "Smart Watch",
-                description: "Feature-rich smartwatch with health monitoring",
-                price: 399.99,
-                image: "⌚",
-                reviews: []
-            },
-            {
-                id: 4,
-                name: "Gaming Mouse",
-                description: "Professional gaming mouse with RGB lighting",
-                price: 79.99,
-                image: "🖱️",
-                reviews: [
-                    { name: "Alex P.", rating: 5, comment: "Perfect for gaming!" },
-                    { name: "Emma T.", rating: 4, comment: "Great precision and comfort." }
-                ]
-            }
-        ];
+    // Firebase configuration
+const firebaseConfig = {
+    // Add your Firebase config here
+    apiKey: "your-api-key",
+    authDomain: "your-project.firebaseapp.com",
+    projectId: "your-project-id",
+    storageBucket: "your-project.appspot.com",
+    messagingSenderId: "your-sender-id",
+    appId: "your-app-id"
+};
 
-        let cart = [];
-        let currentUser = null;
+// Initialize Firebase
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
 
-        // Initialize
-        document.addEventListener('DOMContentLoaded', function() {
-            loadProducts();
-            updateCartCount();
+let cart = [];
+let currentUser = null;
+let products = [];
+
+// Initialize
+document.addEventListener('DOMContentLoaded', function() {
+    loadProductsFromFirebase();
+    updateCartCount();
+});
+
+function loadProductsFromFirebase() {
+    db.collection('products').onSnapshot((snapshot) => {
+        products = [];
+        snapshot.forEach((doc) => {
+            products.push({
+                id: doc.id,
+                ...doc.data()
+            });
         });
+        displayProducts();
+    });
+}
 
-        function toggleMenu() {
-            const sidebar = document.getElementById('sidebar');
-            sidebar.classList.toggle('open');
-        }
+function displayProducts() {
+    const grid = document.getElementById('productsGrid');
+    grid.innerHTML = '';
 
-        function showSection(section) {
-            if (section === 'home') {
-                document.getElementById('homeSection').style.display = 'block';
-                document.getElementById('productsGrid').style.display = 'grid';
-            }
-            toggleMenu();
-        }
+    products.forEach(product => {
+        const productCard = createProductCard(product);
+        grid.appendChild(productCard);
+    });
+}
 
-        function loadProducts() {
-            const grid = document.getElementById('productsGrid');
-            grid.innerHTML = '';
+function createProductCard(product) {
+    const card = document.createElement('div');
+    card.className = 'product-card';
+    card.innerHTML = `
+        <div class="product-image">${product.image}</div>
+        <h3 class="product-title">${product.name}</h3>
+        <p class="product-description">${product.description}</p>
+        <div class="product-price">$${product.price}</div>
+        <div class="product-actions">
+            <button class="add-to-cart" onclick="addToCart('${product.id}')">Add to Cart</button>
+            <button class="view-reviews" onclick="toggleReviews('${product.id}')">Reviews (${(product.reviews || []).length})</button>
+        </div>
+        <div class="reviews-section" id="reviews-${product.id}">
+            ${createReviewsSection(product)}
+        </div>
+    `;
+    return card;
+}
 
-            products.forEach(product => {
-                const productCard = createProductCard(product);
-                grid.appendChild(productCard);
-            });
-        }
+function createReviewsSection(product) {
+    const reviews = product.reviews || [];
+    const reviewsHtml = reviews.map(review => `
+        <div class="review-item">
+            <div class="review-header">
+                <span class="reviewer-name">${review.name}</span>
+                <span class="review-stars">${'★'.repeat(review.rating)}${'☆'.repeat(5-review.rating)}</span>
+            </div>
+            <p>${review.comment}</p>
+        </div>
+    `).join('');
 
-        function createProductCard(product) {
-            const card = document.createElement('div');
-            card.className = 'product-card';
-            card.innerHTML = `
-                <div class="product-image">${product.image}</div>
-                <h3 class="product-title">${product.name}</h3>
-                <p class="product-description">${product.description}</p>
-                <div class="product-price">$${product.price}</div>
-                <div class="product-actions">
-                    <button class="add-to-cart" onclick="addToCart(${product.id})">Add to Cart</button>
-                    <button class="view-reviews" onclick="toggleReviews(${product.id})">Reviews (${product.reviews.length})</button>
-                </div>
-                <div class="reviews-section" id="reviews-${product.id}">
-                    ${createReviewsSection(product)}
-                </div>
-            `;
-            return card;
-        }
+    return `
+        <div class="review-form">
+            <h4 style="color: #ffd700; margin-bottom: 0.5rem;">Leave a Review</h4>
+            <input type="text" placeholder="Your name" id="reviewName-${product.id}">
+            <div class="stars" id="stars-${product.id}">
+                ${[1,2,3,4,5].map(i => `<span class="star" onclick="setRating('${product.id}', ${i})">★</span>`).join('')}
+            </div>
+            <textarea placeholder="Your review" rows="3" id="reviewText-${product.id}"></textarea>
+            <button class="btn" onclick="submitReview('${product.id}')">Submit Review</button>
+        </div>
+        <div class="reviews-list">
+            ${reviewsHtml}
+        </div>
+    `;
+}
 
-        function createReviewsSection(product) {
-            const reviewsHtml = product.reviews.map(review => `
-                <div class="review-item">
-                    <div class="review-header">
-                        <span class="reviewer-name">${review.name}</span>
-                        <span class="review-stars">${'★'.repeat(review.rating)}${'☆'.repeat(5-review.rating)}</span>
-                    </div>
-                    <p>${review.comment}</p>
-                </div>
-            `).join('');
+function addToCart(productId) {
+    const product = products.find(p => p.id === productId);
+    const existingItem = cart.find(item => item.id === productId);
+    
+    if (existingItem) {
+        existingItem.quantity += 1;
+    } else {
+        cart.push({ ...product, quantity: 1 });
+    }
+    
+    updateCartCount();
+    showCartNotification(product.name);
+}
 
-            return `
-                <div class="review-form">
-                    <h4 style="color: #ffd700; margin-bottom: 0.5rem;">Leave a Review</h4>
-                    <input type="text" placeholder="Your name" id="reviewName-${product.id}">
-                    <div class="stars" id="stars-${product.id}">
-                        ${[1,2,3,4,5].map(i => `<span class="star" onclick="setRating(${product.id}, ${i})">★</span>`).join('')}
-                    </div>
-                    <textarea placeholder="Your review" rows="3" id="reviewText-${product.id}"></textarea>
-                    <button class="btn" onclick="submitReview(${product.id})">Submit Review</button>
-                </div>
-                <div class="reviews-list">
-                    ${reviewsHtml}
-                </div>
-            `;
-        }
+function submitReview(productId) {
+    const name = document.getElementById(`reviewName-${productId}`).value;
+    const text = document.getElementById(`reviewText-${productId}`).value;
+    const rating = window[`selectedRating-${productId}`] || 5;
 
-        function toggleReviews(productId) {
-            const reviewsSection = document.getElementById(`reviews-${productId}`);
-            reviewsSection.classList.toggle('active');
-        }
+    if (!name || !text) {
+        alert('Please fill in all fields');
+        return;
+    }
 
-        function setRating(productId, rating) {
-            const stars = document.querySelectorAll(`#stars-${productId} .star`);
-            stars.forEach((star, index) => {
-                star.classList.toggle('active', index < rating);
-            });
-            window[`selectedRating-${productId}`] = rating;
-        }
+    const newReview = {
+        name: name,
+        rating: rating,
+        comment: text,
+        date: new Date().toISOString()
+    };
 
-        function submitReview(productId) {
-            const name = document.getElementById(`reviewName-${productId}`).value;
-            const text = document.getElementById(`reviewText-${productId}`).value;
-            const rating = window[`selectedRating-${productId}`] || 5;
+    db.collection('products').doc(productId).update({
+        reviews: firebase.firestore.FieldValue.arrayUnion(newReview)
+    }).then(() => {
+        alert('Review submitted successfully!');
+        // Clear form
+        document.getElementById(`reviewName-${productId}`).value = '';
+        document.getElementById(`reviewText-${productId}`).value = '';
+    });
+}
 
-            if (!name || !text) {
-                alert('Please fill in all fields');
-                return;
-            }
+// Keep all other existing functions (toggleMenu, setRating, updateCartCount, showCart, etc.)
+function toggleMenu() {
+    const sidebar = document.getElementById('sidebar');
+    sidebar.classList.toggle('open');
+}
 
-            const product = products.find(p => p.id === productId);
-            product.reviews.push({
-                name: name,
-                rating: rating,
-                comment: text
-            });
+function toggleReviews(productId) {
+    const reviewsSection = document.getElementById(`reviews-${productId}`);
+    reviewsSection.classList.toggle('active');
+}
 
-            // Refresh the product card
-            loadProducts();
-            alert('Review submitted successfully!');
-        }
+function setRating(productId, rating) {
+    const stars = document.querySelectorAll(`#stars-${productId} .star`);
+    stars.forEach((star, index) => {
+        star.classList.toggle('active', index < rating);
+    });
+    window[`selectedRating-${productId}`] = rating;
+}
 
-        function addToCart(productId) {
-            const product = products.find(p => p.id === productId);
-            const existingItem = cart.find(item => item.id === productId);
-            
-            if (existingItem) {
-                existingItem.quantity += 1;
-            } else {
-                cart.push({ ...product, quantity: 1 });
-            }
-            
-            updateCartCount();
-            showCartNotification(product.name);
-        }
+function updateCartCount() {
+    const count = cart.reduce((total, item) => total + item.quantity, 0);
+    document.getElementById('cartCount').textContent = count;
+}
 
-        function updateCartCount() {
-            const count = cart.reduce((total, item) => total + item.quantity, 0);
-            document.getElementById('cartCount').textContent = count;
-        }
+function showCartNotification(productName) {
+    const notification = document.createElement('div');
+    notification.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        background: linear-gradient(45deg, #ffd700, #ffed4a);
+        color: #333;
+        padding: 1rem;
+        border-radius: 10px;
+        z-index: 3000;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+    `;
+    notification.textContent = `${productName} added to cart!`;
+    document.body.appendChild(notification);
+    
+    setTimeout(() => {
+        notification.remove();
+    }, 3000);
+}
 
-        function showCartNotification(productName) {
-            // Simple notification
-            const notification = document.createElement('div');
-            notification.style.cssText = `
-                position: fixed;
-                top: 20px;
-                right: 20px;
-                background: linear-gradient(45deg, #ffd700, #ffed4a);
-                color: #333;
-                padding: 1rem;
-                border-radius: 10px;
-                z-index: 3000;
-                box-shadow: 0 5px 15px rgba(0,0,0,0.3);
-            `;
-            notification.textContent = `${productName} added to cart!`;
-            document.body.appendChild(notification);
-            
-            setTimeout(() => {
-                notification.remove();
-            }, 3000);
-        }
+function showCart() {
+    if (cart.length === 0) {
+        alert('Your cart is empty!');
+        return;
+    }
+    
+    let cartHTML = '<h3>Your Cart:</h3>';
+    let total = 0;
+    
+    cart.forEach(item => {
+        const itemTotal = item.price * item.quantity;
+        total += itemTotal;
+        cartHTML += `
+            <div style="display: flex; justify-content: space-between; padding: 0.5rem 0; border-bottom: 1px solid #ccc;">
+                <span>${item.name} x${item.quantity}</span>
+                <span>$${itemTotal.toFixed(2)}</span>
+            </div>
+        `;
+    });
+    
+    cartHTML += `<br><strong>Total: $${total.toFixed(2)}</strong>`;
+    cartHTML += `<br><br><button onclick="checkout()" class="btn">Checkout with PayPal</button>`;
+    
+    const modal = document.createElement('div');
+    modal.className = 'modal';
+    modal.style.display = 'block';
+    modal.innerHTML = `
+        <div class="modal-content">
+            <span class="close" onclick="this.parentElement.parentElement.remove()">&times;</span>
+            ${cartHTML}
+        </div>
+    `;
+    document.body.appendChild(modal);
+}
 
-        function showCart() {
-            if (cart.length === 0) {
-                alert('Your cart is empty!');
-                return;
-            }
-            
-            let cartHTML = '<h3>Your Cart:</h3>';
-            let total = 0;
-            
-            cart.forEach(item => {
-                const itemTotal = item.price * item.quantity;
-                total += itemTotal;
-                cartHTML += `
-                    <div style="display: flex; justify-content: space-between; padding: 0.5rem 0; border-bottom: 1px solid #ccc;">
-                        <span>${item.name} x${item.quantity}</span>
-                        <span>$${itemTotal.toFixed(2)}</span>
-                    </div>
-                `;
-            });
-            
-            cartHTML += `<br><strong>Total: $${total.toFixed(2)}</strong>`;
-            cartHTML += `<br><br><button onclick="checkout()" class="btn">Checkout with PayPal</button>`;
-            
-            const modal = document.createElement('div');
-            modal.className = 'modal';
-            modal.style.display = 'block';
-            modal.innerHTML = `
-                <div class="modal-content">
-                    <span class="close" onclick="this.parentElement.parentElement.remove()">&times;</span>
-                    ${cartHTML}
-                </div>
-            `;
-            document.body.appendChild(modal);
-        }
+function checkout() {
+    const total = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+    alert(`Checkout total: $${total.toFixed(2)}\n\nPayPal integration would be implemented with your actual client ID.`);
+    cart = [];
+    updateCartCount();
+}
 
-        function checkout() {
-            const total = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-            
-            // PayPal checkout integration would go here
-            alert(`Checkout total: $${total.toFixed(2)}\n\nPayPal integration would be implemented with your actual client ID.`);
-            
-            // Clear cart after successful checkout
-            cart = [];
-            updateCartCount();
-        }
+function showLogin() {
+    document.getElementById('loginModal').style.display = 'block';
+}
 
-        function showLogin() {
-            document.getElementById('loginModal').style.display = 'block';
-        }
+function closeLogin() {
+    document.getElementById('loginModal').style.display = 'none';
+}
 
-        function closeLogin() {
-            document.getElementById('loginModal').style.display = 'none';
-        }
+function handleLogin(event) {
+    event.preventDefault();
+    currentUser = 'User';
+    closeLogin();
+    alert('Login successful!');
+}
 
-        function handleLogin(event) {
-            event.preventDefault();
-            // Simple login simulation
-            currentUser = 'User';
-            closeLogin();
-            alert('Login successful!');
-        }
-
-        function searchProducts() {
+function searchProducts() {
     const searchInput = document.querySelector('.search-bar');
     const searchTerm = searchInput.value.toLowerCase();
     const filteredProducts = products.filter(product => 
@@ -845,59 +824,65 @@
         const productCard = createProductCard(product);
         grid.appendChild(productCard);
     });
-        }
+}
 
-        function showRequestForm() {
-            const modal = document.createElement('div');
-            modal.className = 'modal';
-            modal.style.display = 'block';
-            modal.innerHTML = `
-                <div class="modal-content">
-                    <span class="close" onclick="this.parentElement.parentElement.remove()">&times;</span>
-                    <h2 style="color: #ffd700; margin-bottom: 1rem;">Request a Product</h2>
-                    <form onsubmit="handleProductRequest(event)">
-                        <div class="form-group">
-                            <label>Product Name:</label>
-                            <input type="text" required>
-                        </div>
-                        <div class="form-group">
-                            <label>Description:</label>
-                            <textarea rows="3" required></textarea>
-                        </div>
-                        <div class="form-group">
-                            <label>Your Email:</label>
-                            <input type="email" required>
-                        </div>
-                        <button type="submit" class="btn" style="width: 100%;">Submit Request</button>
-                    </form>
+function showSection(section) {
+    if (section === 'home') {
+        loadProductsFromFirebase();
+    }
+    toggleMenu();
+}
+
+function showRequestForm() {
+    const modal = document.createElement('div');
+    modal.className = 'modal';
+    modal.style.display = 'block';
+    modal.innerHTML = `
+        <div class="modal-content">
+            <span class="close" onclick="this.parentElement.parentElement.remove()">&times;</span>
+            <h2 style="color: #ffd700; margin-bottom: 1rem;">Request a Product</h2>
+            <form onsubmit="handleProductRequest(event)">
+                <div class="form-group">
+                    <label>Product Name:</label>
+                    <input type="text" required>
                 </div>
-            `;
-            document.body.appendChild(modal);
-            toggleMenu();
-        }
+                <div class="form-group">
+                    <label>Description:</label>
+                    <textarea rows="3" required></textarea>
+                </div>
+                <div class="form-group">
+                    <label>Your Email:</label>
+                    <input type="email" required>
+                </div>
+                <button type="submit" class="btn" style="width: 100%;">Submit Request</button>
+            </form>
+        </div>
+    `;
+    document.body.appendChild(modal);
+    toggleMenu();
+}
 
-        function handleProductRequest(event) {
-            event.preventDefault();
-            alert('Product request submitted! We\'ll get back to you soon.');
-            event.target.closest('.modal').remove();
-        }
+function handleProductRequest(event) {
+    event.preventDefault();
+    alert('Product request submitted! We\'ll get back to you soon.');
+    event.target.closest('.modal').remove();
+}
 
-        // Close modals when clicking outside
-        window.onclick = function(event) {
-            if (event.target.classList.contains('modal')) {
-                event.target.style.display = 'none';
-            }
-        }
+window.onclick = function(event) {
+    if (event.target.classList.contains('modal')) {
+        event.target.style.display = 'none';
+    }
+}
 
-        // Close sidebar when clicking outside
-        document.addEventListener('click', function(event) {
-            const sidebar = document.getElementById('sidebar');
-            const menuToggle = document.querySelector('.menu-toggle');
+document.addEventListener('click', function(event) {
+    const sidebar = document.getElementById('sidebar');
+    const menuToggle = document.querySelector('.menu-toggle');
+    
+    if (!sidebar.contains(event.target) && !menuToggle.contains(event.target)) {
+        sidebar.classList.remove('open');
+    }
+});
             
-            if (!sidebar.contains(event.target) && !menuToggle.contains(event.target)) {
-                sidebar.classList.remove('open');
-            }
-        });
     </script>
 </body>
 </html>
