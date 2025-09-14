@@ -583,11 +583,17 @@
         padding: 0.6rem 1.5rem;
         font-size: 1rem;
         margin-top: auto;
-        user-select: none;
-        -webkit-user-select: none;
-        -moz-user-select: none;
-        -ms-user-select: none;
-        outline: none;
+        user-select: none !important;
+        -webkit-user-select: none !important;
+        -moz-user-select: none !important;
+        -ms-user-select: none !important;
+        outline: none !important;
+        -webkit-tap-highlight-color: transparent !important;
+    }
+
+    *, *::before, *::after {
+    -webkit-tap-highlight-color: transparent;
+    -webkit-touch-callout: none;
     }
 
     .main-content {
@@ -840,64 +846,56 @@ function displayProducts() {
 
 
         
-// Replace your entire createProductCard function with this:
 function createProductCard(product) {
     const card = document.createElement('div');
     card.className = 'product-card';
     
-    // Calculate average rating
     const reviews = product.reviews || [];
     const avgRating = reviews.length > 0 
         ? reviews.reduce((sum, review) => sum + review.rating, 0) / reviews.length 
         : 0;
     
-    // Generate star rating HTML
     const starsHTML = Array.from({length: 5}, (_, i) => {
         const starClass = i < Math.floor(avgRating) ? 'star' : 'star empty';
         return `<span class="${starClass}">★</span>`;
     }).join('');
     
     card.innerHTML = `
-    <div class="product-image">
-        <img src="${product.image}" alt="${product.name}">
-    </div>
-    
-    <div class="product-details">
-        <div class="product-header">
-            <h3 class="product-title">${product.name}</h3>
-            <p class="product-description">${product.description || 'DESCRIPTION'}</p>
+        <div class="product-image">
+            <img src="${product.image}" alt="${product.name}">
         </div>
-        
-        <div class="rating-section">
-            <h4>Star Ratings</h4>
-            <div class="stars">${starsHTML}</div>
+        <div class="product-details">
+            <div class="product-header">
+                <h3 class="product-title">${product.name}</h3>
+                <p class="product-description">${product.description || 'DESCRIPTION'}</p>
+            </div>
+            <div class="rating-section">
+                <h4>Star Ratings</h4>
+                <div class="stars">${starsHTML}</div>
+            </div>
+            <div class="product-price">$${product.price}</div>
+            <button class="add-to-cart" data-product-id="${product.id}">Add to cart</button>
         </div>
-        
-        <div class="product-price">$${product.price}</div>
-        
-        <button class="add-to-cart">Add to cart</button>
-    </div>
-`;
+    `;
     
-    // Add separate event listeners
+    // Add event listeners
+    const addToCartBtn = card.querySelector('.add-to-cart');
+    addToCartBtn.addEventListener('click', function(e) {
+        e.stopPropagation();
+        e.preventDefault();
+        addToCart(product.id);
+        return false;
+    });
+    
     card.addEventListener('click', function(e) {
         if (!e.target.classList.contains('add-to-cart')) {
             showProductDetail(product);
         }
     });
     
-    // Add button click handler
-    const addToCartBtn = card.querySelector('.add-to-cart');
-    addToCartBtn.addEventListener('click', function(e) {
-        e.stopPropagation();
-        e.preventDefault();
-        addToCart(product.id);
-    });
-    
     return card;
 }
-
-
+        
 // Also add this function to handle button clicks properly:
 function addToCart(productId) {
     const product = products.find(p => p.id === productId);
