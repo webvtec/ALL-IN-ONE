@@ -333,34 +333,7 @@
                 </form>
             </div>
 
-            <!-- Quick Actions -->
-            <div class="admin-section">
-                <h2 class="section-title">Quick Actions</h2>
-                <button class="btn" onclick="exportProducts()">📊 Export Products</button>
-                <button class="btn" onclick="importProducts()">📥 Import Products</button>
-                <button class="btn" onclick="clearAllProducts()">🗑️ Clear All Products</button>
-                <button class="btn" onclick="generateSampleData()">🔄 Generate Sample Data</button>
-                
-                <h3 style="color: #ffd700; margin-top: 2rem; margin-bottom: 1rem;">Store Settings</h3>
-                <div class="form-group">
-                    <label>Store Name:</label>
-                    <input type="text" id="storeName" value="WEBVTEC" onchange="updateStoreName()">
-                </div>
-                <div class="form-group">
-                    <label>Tax Rate (%):</label>
-                    <input type="number" id="taxRate" value="8.25" step="0.01" min="0" max="100">
-                </div>
-                <div class="form-group">
-                    <label>Currency:</label>
-                    <select id="currency">
-                        <option value="USD">USD ($)</option>
-                        <option value="EUR">EUR (€)</option>
-                        <option value="GBP">GBP (£)</option>
-                        <option value="CAD">CAD (C$)</option>
-                    </select>
-                </div>
-            </div>
-        </div>
+
 
         <!-- Products Management Table -->
         <div class="admin-section products-table">
