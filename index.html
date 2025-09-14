@@ -221,40 +221,68 @@
     }
 
     /* Products grid: 2 columns, thin gray gaps */
-    .products-grid {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 1px;
-        background: #e0e0e0;
-        margin: 0;
-    }
+    /* Products grid: single column, horizontal layout */
+.products-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+    background: #e0e0e0;
+    margin: 0;
+    max-width: 1200px;
+    margin: 0 auto;
+}
 
-    /* Product card */
-    .product-card {
-        background: white;
-        padding: 1rem;
-        border: none;
-        border-radius: 0;
-        display: flex;
-        flex-direction: column;
-        text-align: left;
-        transition: transform 0.2s ease;
-    }
-    .product-card:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-    }
+/* Product card - horizontal layout */
+.product-card {
+    background: white;
+    padding: 1rem;
+    border: none;
+    border-radius: 8px;
+    display: flex;
+    flex-direction: row;
+    text-align: left;
+    transition: transform 0.2s ease;
+    margin-bottom: 1px;
+    align-items: flex-start;
+    gap: 1rem;
+}
+.product-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
 
-    /* Product image */
-    .product-image {
-        width: 100%;
-        height: 140px;
-        margin-bottom: 0.5rem;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        overflow: hidden;
-    }
+/* Product image - fixed size on left */
+.product-image {
+    width: 200px;
+    height: 200px;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    background: #f8f8f8;
+    border-radius: 8px;
+}
+.product-image img {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+}
+
+/* Product details container */
+.product-details {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    min-height: 200px;
+}
+
+/* Product info section */
+.product-info {
+    flex: 1;
+}
+        
     .product-image img {
         max-width: 100%;
         max-height: 100%;
@@ -517,16 +545,26 @@
     }
 
     /* Responsive */
-    @media (max-width: 768px) {
-        .header-top {
-            flex-direction: column;
-            gap: 1rem;
-        }
-
-        .products-grid {
-            grid-template-columns: 1fr;
-        }
+@media (max-width: 768px) {
+    .header-top {
+        flex-direction: column;
+        gap: 1rem;
     }
+
+    .product-card {
+        flex-direction: column;
+        text-align: center;
+    }
+    
+    .product-image {
+        width: 100%;
+        height: 200px;
+    }
+    
+    .product-details {
+        min-height: auto;
+    }
+}
 
     .search-btn {
         position: absolute;
@@ -671,34 +709,35 @@ function createProductCard(product) {
     const card = document.createElement('div');
     card.className = 'product-card';
     card.innerHTML = `
-        <div class="product-box">
-
-            <div class="product-image">
-                <img src="${product.image}" alt="${product.name}">
+        <div class="product-image">
+            <img src="${product.image}" alt="${product.name}">
+        </div>
+        
+        <div class="product-details">
+            <div class="product-info">
+                <div class="product-brand">${product.brand || ''}</div>
+                <div class="product-title">${product.name}</div>
+                
+                <div class="product-rating">
+                    ${'★'.repeat(Math.floor(product.rating || 0))}
+                    ${'☆'.repeat(5 - Math.floor(product.rating || 0))}
+                    <span class="rating-count">(${product.ratingCount || 0})</span>
+                </div>
+                
+                <div class="product-price">
+                    $${whole}<sup>${fraction}</sup>
+                </div>
             </div>
-
-            <div class="product-brand">${product.brand || ''}</div>
-            <div class="product-title">${product.name}</div>
-
-            <div class="product-rating">
-                ${'★'.repeat(Math.floor(product.rating || 0))}
-                ${'☆'.repeat(5 - Math.floor(product.rating || 0))}
-                <span class="rating-count">(${product.ratingCount || 0})</span>
+            
+            <div class="product-actions">
+                <button class="add-to-cart-btn" onclick="addToCart('${product.id}')">
+                    Add to cart
+                </button>
             </div>
-
-            <div class="product-price">
-                $${whole}<sup>${fraction}</sup>
-            </div>
-
-            <button class="add-to-cart-btn" onclick="addToCart('${product.id}')">
-                Add to cart
-            </button>
         </div>
     `;
     return card;
 }
-
-
 
 function createReviewsSection(product) {
     const reviews = product.reviews || [];
