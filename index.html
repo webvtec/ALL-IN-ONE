@@ -1163,7 +1163,7 @@ function showProductDetail(product) {
         </header>
         
         <!-- Second header that scrolls with content -->
-        <header class="header" style="position: relative; width: 100%; z-index: 1003; margin: 0; top: 70px;">
+        <header class="header" style="position: relative; width: 100%; z-index: 999; margin: 0; top: 70px;">
             <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
                 <button class="btn" onclick="showLogin()">👤 Sign In</button>
                 <button class="btn" onclick="showCart()" style="position: relative;">
@@ -1177,7 +1177,7 @@ function showProductDetail(product) {
         </header>
 
         <!-- Product content starts immediately after second header -->
-        <div style="padding: 20px;">            
+        <div style="padding: 20px; margin-top: 120px;">
             <div class="product-gallery">
                 <img src="${product.image}" alt="${product.name}">
             </div>
