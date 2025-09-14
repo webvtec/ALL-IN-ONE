@@ -1156,8 +1156,22 @@ function showProductDetail(product) {
     }).join('');
     
     detailView.innerHTML = `
-        <!-- Single scrollable content area with no duplicate headers -->
-        <div style="padding: 20px; padding-top: 40px;">
+        <!-- Second header as part of scrollable content (not fixed) -->
+        <header class="header" style="position: relative; width: 100%; z-index: 1; margin: 0; top: 0;">
+            <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
+                <button class="btn" onclick="showLogin()">👤 Sign In</button>
+                <button class="btn" onclick="showCart()" style="position: relative;">
+                    🛒 Cart <span class="cart-count">${document.getElementById('cartCount').textContent}</span>
+                </button>
+            </div>
+            <div class="search-container">
+                <input type="text" class="search-bar" placeholder="Search for products..." onkeyup="searchProducts()">
+                <button class="search-btn" onclick="searchProducts()">🔍</button>
+            </div>
+        </header>
+
+        <!-- Product content continues immediately after header -->
+        <div style="padding: 20px;">
             <div style="text-align: center; margin-bottom: 20px;">
                 <button onclick="closeProductDetail()" style="background: #ff4757; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; font-size: 16px;">← Back to Products</button>
             </div>
