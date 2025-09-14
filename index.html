@@ -12,11 +12,53 @@
         }
 
         body {
-            font-family: 'Arial', sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            color: white;
+    font-family: 'Arial', sans-serif;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    min-height: 100vh;
+    color: white;
+    padding-top: 80px;
         }
+
+
+
+        .top-header {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    background: #261A4C;
+    padding: 1rem;
+    z-index: 1002;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.top-header .logo {
+    font-size: 2rem;
+    font-weight: bold;
+    color: black;
+    text-shadow: 
+        -2px -2px 0 #ffd700,
+        2px -2px 0 #ffd700,
+        -2px 2px 0 #ffd700,
+        2px 2px 0 #ffd700,
+        -2px 0 0 #ffd700,
+        2px 0 0 #ffd700,
+        0 -2px 0 #ffd700,
+        0 2px 0 #ffd700;
+}
+
+.top-header .menu-toggle {
+    position: static;
+    background: rgba(255, 215, 0, 0.9);
+    color: #333;
+    border: none;
+    padding: 0.5rem;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 1.2rem;
+}
 
         /* Header */
         .header {
@@ -462,6 +504,15 @@
     </style>
 </head>
 <body>
+
+
+    <!-- Top Header -->
+<header class="top-header">
+    <div class="logo">WEBVTEC</div>
+    <button class="menu-toggle" onclick="toggleMenu()">☰</button>
+</header>
+
+    
     <!-- Menu Toggle -->
     <button class="menu-toggle" onclick="toggleMenu()">☰</button>
 
