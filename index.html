@@ -643,16 +643,16 @@
 .product-detail-view {
     display: none;
     position: fixed;
-    top: 0;
+    top: 70px; /* Start right under the top header */
     left: 0;
     width: 100%;
-    height: 100vh;
+    height: calc(100vh - 70px); /* Full height minus top header */
     background: white;
     z-index: 1000;
     overflow-y: auto;
-    padding: 70px 20px 20px 20px; /* Only account for top header */
+    padding: 0; /* Remove padding since header is now inside */
 }
-
+        
 .product-detail-view.active {
     display: block;
 }
@@ -1156,46 +1156,63 @@ function showProductDetail(product) {
     }).join('');
     
     detailView.innerHTML = `
-        <div class="product-gallery">
-            <img src="${product.image}" alt="${product.name}">
-        </div>
-        
-        <h2 style="text-align: center; color: #333; margin: 1rem 0;">${product.name}</h2>
-        
-        <div class="stars" style="justify-content: center; margin-bottom: 1rem;">
-            ${starsHTML} (${reviews.length} reviews)
-        </div>
-        
-        <div class="detail-price">$${product.price}</div>
-        
-        <div class="product-options">
-            <button class="option-button selected">Standard</button>
-            <button class="option-button">Premium</button>
-            <button class="option-button">Deluxe</button>
-        </div>
-        
-        <div class="detail-actions">
-            <button class="detail-add-to-cart" onclick="addToCart('${product.id}'); closeProductDetail();">Add to Cart</button>
-            <button class="detail-buy-now">Buy Now</button>
-        </div>
-        
-        <div style="margin-top: 2rem;">
-            <h3>Product Details</h3>
-            <p>${product.description || 'Detailed product information goes here.'}</p>
-        </div>
-        
-        <div style="margin-top: 2rem;">
-            <h3>Customer Reviews</h3>
-            <div class="reviews-list">
-                ${reviews.map(review => `
-                    <div class="review-item" style="background: #f9f9f9; color: #333;">
-                        <div class="review-header">
-                            <span class="reviewer-name" style="color: #333;">${review.name}</span>
-                            <span class="review-stars" style="color: #ffa500;">${'★'.repeat(review.rating)}${'☆'.repeat(5-review.rating)}</span>
+        <!-- Include the second header as scrollable content -->
+        <header class="header" style="position: static; width: 100%;">
+            <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
+                <button class="btn" onclick="showLogin()">👤 Sign In</button>
+                <button class="btn" onclick="showCart()" style="position: relative;">
+                    🛒 Cart <span class="cart-count" id="cartCount">0</span>
+                </button>
+            </div>
+            <div class="search-container">
+                <input type="text" class="search-bar" placeholder="Search for products..." onkeyup="searchProducts()">
+                <button class="search-btn" onclick="searchProducts()">🔍</button>
+            </div>
+        </header>
+
+        <!-- Product content starts here -->
+        <div style="padding: 20px;">
+            <div class="product-gallery">
+                <img src="${product.image}" alt="${product.name}">
+            </div>
+            
+            <h2 style="text-align: center; color: #333; margin: 1rem 0;">${product.name}</h2>
+            
+            <div class="stars" style="justify-content: center; margin-bottom: 1rem;">
+                ${starsHTML} (${reviews.length} reviews)
+            </div>
+            
+            <div class="detail-price">$${product.price}</div>
+            
+            <div class="product-options">
+                <button class="option-button selected">Standard</button>
+                <button class="option-button">Premium</button>
+                <button class="option-button">Deluxe</button>
+            </div>
+            
+            <div class="detail-actions">
+                <button class="detail-add-to-cart" onclick="addToCart('${product.id}'); closeProductDetail();">Add to Cart</button>
+                <button class="detail-buy-now">Buy Now</button>
+            </div>
+            
+            <div style="margin-top: 2rem;">
+                <h3>Product Details</h3>
+                <p>${product.description || 'Detailed product information goes here.'}</p>
+            </div>
+            
+            <div style="margin-top: 2rem;">
+                <h3>Customer Reviews</h3>
+                <div class="reviews-list">
+                    ${reviews.map(review => `
+                        <div class="review-item" style="background: #f9f9f9; color: #333;">
+                            <div class="review-header">
+                                <span class="reviewer-name" style="color: #333;">${review.name}</span>
+                                <span class="review-stars" style="color: #ffa500;">${'★'.repeat(review.rating)}${'☆'.repeat(5-review.rating)}</span>
+                            </div>
+                            <p>${review.comment}</p>
                         </div>
-                        <p>${review.comment}</p>
-                    </div>
-                `).join('')}
+                    `).join('')}
+                </div>
             </div>
         </div>
     `;
