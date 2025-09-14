@@ -73,7 +73,7 @@
     margin-top: 0px !important;
     margin-bottom: 0px !important;
     position: relative;
-    z-index: 1500; /* Add this line */
+    z-index: 1001; /* Changed from 1500 to 1001 */
         }
 
         .header-top {
@@ -1156,12 +1156,13 @@ function showProductDetail(product) {
     }).join('');
     
     detailView.innerHTML = `
-        <!-- Include the second header as scrollable content -->
-        <header class="header" style="position: static; width: 100%;">
+        <!-- Fixed header that stays under top header -->
+        <header class="header" style="position: fixed; top: 70px; left: 0; width: 100%; z-index: 1001; margin: 0;">
             <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
                 <button class="btn" onclick="showLogin()">👤 Sign In</button>
+                <button class="btn" onclick="closeProductDetail()" style="background: #ff4757;">← Back</button>
                 <button class="btn" onclick="showCart()" style="position: relative;">
-                    🛒 Cart <span class="cart-count" id="cartCount">0</span>
+                    🛒 Cart <span class="cart-count">${document.getElementById('cartCount').textContent}</span>
                 </button>
             </div>
             <div class="search-container">
@@ -1170,8 +1171,8 @@ function showProductDetail(product) {
             </div>
         </header>
 
-        <!-- Product content starts here -->
-        <div style="padding: 20px;">
+        <!-- Scrollable content with proper top margin -->
+        <div style="padding: 20px; margin-top: 120px;">
             <div class="product-gallery">
                 <img src="${product.image}" alt="${product.name}">
             </div>
@@ -1196,12 +1197,12 @@ function showProductDetail(product) {
             </div>
             
             <div style="margin-top: 2rem;">
-                <h3>Product Details</h3>
-                <p>${product.description || 'Detailed product information goes here.'}</p>
+                <h3 style="color: #333;">Product Details</h3>
+                <p style="color: #666;">${product.description || 'Detailed product information goes here.'}</p>
             </div>
             
             <div style="margin-top: 2rem;">
-                <h3>Customer Reviews</h3>
+                <h3 style="color: #333;">Customer Reviews</h3>
                 <div class="reviews-list">
                     ${reviews.map(review => `
                         <div class="review-item" style="background: #f9f9f9; color: #333;">
@@ -1219,7 +1220,7 @@ function showProductDetail(product) {
     
     detailView.classList.add('active');
 }
-
+        
 function closeProductDetail() {
     const detailView = document.getElementById('productDetailView');
     if (detailView) {
