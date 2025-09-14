@@ -643,12 +643,12 @@
 .product-detail-view {
     display: none;
     position: fixed;
-    top: 70px;
+    top: 0;
     left: 0;
     width: 100%;
-    height: calc(100vh - 70px);
+    height: 100vh;
     background: white;
-    z-index: 999;
+    z-index: 1003;
     overflow-y: auto;
     padding: 0;
 }
@@ -1156,8 +1156,28 @@ function showProductDetail(product) {
     }).join('');
     
     detailView.innerHTML = `
-        <!-- Product content with proper top margin to appear below existing second header -->
-        <div style="padding: 20px; margin-top: 120px;">            
+        <!-- Top header that stays at top -->
+        <header class="top-header">
+            <div class="logo">WEBVTEC</div>
+            <button class="menu-toggle" onclick="toggleMenu()">☰</button>
+        </header>
+        
+        <!-- Second header that scrolls with content -->
+        <header class="header" style="position: static; width: 100%; z-index: 1; margin: 0; margin-top: 70px;">
+            <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
+                <button class="btn" onclick="showLogin()">👤 Sign In</button>
+                <button class="btn" onclick="showCart()" style="position: relative;">
+                    🛒 Cart <span class="cart-count">${document.getElementById('cartCount').textContent}</span>
+                </button>
+            </div>
+            <div class="search-container">
+                <input type="text" class="search-bar" placeholder="Search for products..." onkeyup="searchProducts()">
+                <button class="search-btn" onclick="searchProducts()">🔍</button>
+            </div>
+        </header>
+
+        <!-- Product content starts immediately after second header -->
+        <div style="padding: 20px;">            
             <div class="product-gallery">
                 <img src="${product.image}" alt="${product.name}">
             </div>
