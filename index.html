@@ -572,24 +572,22 @@
     </div>
     <script>
     // Firebase configuration
+// Replace the hardcoded products array with this:
 const firebaseConfig = {
-  apiKey: "AIzaSyD01uGyvyD9vyXa6SFAqxqEdEFuedc-b5M",
-  authDomain: "e-commerce-f2233.firebaseapp.com",
-  projectId: "e-commerce-f2233",
-  storageBucket: "e-commerce-f2233.firebasestorage.app",
-  messagingSenderId: "363586978941",
-  appId: "1:363586978941:web:35b3b34237bca75b405d14"
+    apiKey: "AIzaSyD01uGyvyD9vyXa6SFAqxqEdEFuedc-b5M",
+    authDomain: "e-commerce-f2233.firebaseapp.com",
+    projectId: "e-commerce-f2233",
+    storageBucket: "e-commerce-f2233.firebasestorage.app",
+    messagingSenderId: "363586978941",
+    appId: "1:363586978941:web:35b3b34237bca75b405d14"
 };
 
-// Initialize Firebase
 firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
 
-let cart = [];
-let currentUser = null;
 let products = [];
 
-// Initialize
+// Replace your DOMContentLoaded listener with this:
 document.addEventListener('DOMContentLoaded', function() {
     loadProductsFromFirebase();
     updateCartCount();
@@ -604,7 +602,7 @@ function loadProductsFromFirebase() {
                 ...doc.data()
             });
         });
-        displayProducts();
+        loadProducts(); // This will refresh the display
     });
 }
 
