@@ -745,6 +745,18 @@
     cursor: pointer;
     font-size: 16px;
 }
+
+
+    .detail-share {
+    background: #25D366;
+    color: white;
+    border: none;
+    padding: 12px;
+    border-radius: 8px;
+    font-weight: bold;
+    cursor: pointer;
+    font-size: 16px;
+    }
     </style>
 </head>
 <body>
@@ -1191,9 +1203,10 @@ function showProductDetail(product) {
             </div>
             
             <div class="detail-actions">
-                <button class="detail-add-to-cart" onclick="addToCart('${product.id}'); closeProductDetail();">Add to Cart</button>
-                <button class="detail-buy-now">Buy Now</button>
-            </div>
+    <button class="detail-add-to-cart" onclick="addToCart('${product.id}'); closeProductDetail();">Add to Cart</button>
+    <button class="detail-buy-now">Buy Now</button>
+    <button class="detail-share" onclick="shareProduct('${product.id}', '${product.name}')">Share Product</button>
+</div>
             
             <div style="margin-top: 2rem;">
                 <h3 style="color: #333;">Product Details</h3>
@@ -1226,6 +1239,29 @@ function closeProductDetail() {
         detailView.classList.remove('active');
     }
 }
+
+
+    function shareProduct(productId, productName) {
+    const productUrl = `${window.location.origin}${window.location.pathname}?product=${productId}`;
+    const shareText = `Check out ${productName} on WEBVTEC!`;
+    
+    if (navigator.share) {
+        // Use native share API (mobile devices)
+        navigator.share({
+            title: productName,
+            text: shareText,
+            url: productUrl
+        });
+    } else {
+        // Fallback: copy link to clipboard
+        navigator.clipboard.writeText(productUrl).then(() => {
+            alert('Product link copied to clipboard!');
+        }).catch(() => {
+            // If clipboard fails, show the link
+            prompt('Copy this link to share:', productUrl);
+        });
+    }
+    }
         
     </script>
 </body>
