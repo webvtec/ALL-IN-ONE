@@ -881,6 +881,125 @@ document.addEventListener('click', function(event) {
         sidebar.classList.remove('open');
     }
 });
+
+
+
+        function addToCart(productId) {
+    const product = products.find(p => p.id === productId);
+    if (!product) return;
+    
+    const existingItem = cart.find(item => item.id === productId);
+    
+    if (existingItem) {
+        existingItem.quantity += 1;
+    } else {
+        cart.push({ ...product, quantity: 1 });
+    }
+    
+    updateCartCount();
+    showCartNotification(product.name);
+}
+
+function updateCartCount() {
+    const count = cart.reduce((total, item) => total + item.quantity, 0);
+    document.getElementById('cartCount').textContent = count;
+}
+
+function showCartNotification(productName) {
+    const notification = document.createElement('div');
+    notification.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        background: linear-gradient(45deg, #ffd700, #ffed4a);
+        color: #333;
+        padding: 1rem;
+        border-radius: 10px;
+        z-index: 3000;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+    `;
+    notification.textContent = `${productName} added to cart!`;
+    document.body.appendChild(notification);
+    
+    setTimeout(() => {
+        notification.remove();
+    }, 3000);
+}
+
+function toggleReviews(productId) {
+    const reviewsSection = document.getElementById(`reviews-${productId}`);
+    reviewsSection.classList.toggle('active');
+}
+
+function showCart() {
+    if (cart.length === 0) {
+        alert('Your cart is empty!');
+        return;
+    }
+    
+    let cartHTML = '<h3>Your Cart:</h3>';
+    let total = 0;
+    
+    cart.forEach(item => {
+        const itemTotal = item.price * item.quantity;
+        total += itemTotal;
+        cartHTML += `
+            <div style="display: flex; justify-content: space-between; padding: 0.5rem 0; border-bottom: 1px solid #ccc;">
+                <span>${item.name} x${item.quantity}</span>
+                <span>$${itemTotal.toFixed(2)}</span>
+            </div>
+        `;
+    });
+    
+    cartHTML += `<br><strong>Total: $${total.toFixed(2)}</strong>`;
+    cartHTML += `<br><br><button onclick="checkout()" class="btn">Checkout</button>`;
+    
+    const modal = document.createElement('div');
+    modal.className = 'modal';
+    modal.style.display = 'block';
+    modal.innerHTML = `
+        <div class="modal-content">
+            <span class="close" onclick="this.parentElement.parentElement.remove()">&times;</span>
+            ${cartHTML}
+        </div>
+    `;
+    document.body.appendChild(modal);
+}
+
+function checkout() {
+    const total = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+    alert(`Checkout total: $${total.toFixed(2)}`);
+    cart = [];
+    updateCartCount();
+}
+
+
+function createReviewsSection(product) {
+    const reviewsHtml = (product.reviews || []).map(review => `
+        <div class="review-item">
+            <div class="review-header">
+                <span class="reviewer-name">${review.name}</span>
+                <span class="review-stars">${'★'.repeat(review.rating)}${'☆'.repeat(5-review.rating)}</span>
+            </div>
+            <p>${review.comment}</p>
+        </div>
+    `).join('');
+
+    return `
+        <div class="review-form">
+            <h4 style="color: #ffd700; margin-bottom: 0.5rem;">Leave a Review</h4>
+            <input type="text" placeholder="Your name" id="reviewName-${product.id}">
+            <div class="stars" id="stars-${product.id}">
+                ${[1,2,3,4,5].map(i => `<span class="star" onclick="setRating('${product.id}', ${i})">★</span>`).join('')}
+            </div>
+            <textarea placeholder="Your review" rows="3" id="reviewText-${product.id}"></textarea>
+            <button class="btn" onclick="submitReview('${product.id}')">Submit Review</button>
+        </div>
+        <div class="reviews-list">
+            ${reviewsHtml}
+        </div>
+    `;
+}
             
     </script>
 </body>
