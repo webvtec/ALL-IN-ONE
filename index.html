@@ -243,11 +243,12 @@
         }
 
         
-.product-card:hover {
+.product-card:hover:not(:has(.add-to-cart:hover)) {
     transform: translateY(-2px);
     box-shadow: 0 4px 12px rgba(0,0,0,0.15);
 }
 
+        
 .product-image {
     width: 200px;
     min-height: 250px;
@@ -488,6 +489,32 @@
             0% { transform: translateX(-100%) translateY(-100%) rotate(45deg); }
             100% { transform: translateX(100%) translateY(100%) rotate(45deg); }
         }
+
+
+        .add-to-cart {
+    background: #ffd814;
+    color: #333;
+    border: none;
+    padding: 0.3rem 2rem;
+    border-radius: 50px;
+    font-weight: bold;
+    font-size: 1.1rem;
+    cursor: pointer;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-top: auto;
+    position: relative;
+    z-index: 10;
+}
+
+.add-to-cart:hover {
+    background: #f7ca00;
+    transform: scale(1.02);
+}
+
+.add-to-cart:active {
+    transform: scale(0.98);
+}
 
         /* Responsive */
 @media (max-width: 768px) {
@@ -882,7 +909,7 @@ function createProductCard(product) {
         
         <div class="product-price">$${product.price}</div>
         
-        <button class="add-to-cart" onclick="event.stopPropagation(); addToCart('${product.id}')">Add to cart</button>
+        <button class="add-to-cart" onclick="event.stopPropagation(); event.preventDefault(); addToCart('${product.id}')">Add to cart</button>
     </div>
 `;
     
