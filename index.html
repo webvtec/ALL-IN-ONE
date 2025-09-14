@@ -776,19 +776,20 @@
         }
 
         function searchProducts() {
-            const searchTerm = event.target.value.toLowerCase();
-            const filteredProducts = products.filter(product => 
-                product.name.toLowerCase().includes(searchTerm) || 
-                product.description.toLowerCase().includes(searchTerm)
-            );
-            
-            const grid = document.getElementById('productsGrid');
-            grid.innerHTML = '';
-            
-            filteredProducts.forEach(product => {
-                const productCard = createProductCard(product);
-                grid.appendChild(productCard);
-            });
+    const searchInput = document.querySelector('.search-bar');
+    const searchTerm = searchInput.value.toLowerCase();
+    const filteredProducts = products.filter(product => 
+        product.name.toLowerCase().includes(searchTerm) || 
+        product.description.toLowerCase().includes(searchTerm)
+    );
+    
+    const grid = document.getElementById('productsGrid');
+    grid.innerHTML = '';
+    
+    filteredProducts.forEach(product => {
+        const productCard = createProductCard(product);
+        grid.appendChild(productCard);
+    });
         }
 
         function showRequestForm() {
