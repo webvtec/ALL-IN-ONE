@@ -63,10 +63,11 @@
 
         /* Header */
         .header {
-            background: rgba(0, 0, 0, 0.3);
-            padding: 1rem;
-            backdrop-filter: blur(10px);
-            border-bottom: 2px solid #ffd700;
+    background: rgba(0, 0, 0, 0.3);
+    padding: 0.5rem 1rem;
+    backdrop-filter: blur(10px);
+    border-bottom: 2px solid #ffd700;
+    margin-top: 0;
         }
 
         .header-top {
@@ -125,8 +126,8 @@
     position: relative;
     max-width: 600px;
     margin: 0 auto;
-    margin-top: 60px;
         }
+        
         .search-bar {
             width: 100%;
             padding: 1rem;
@@ -525,17 +526,15 @@
 
     <!-- Header -->
     <header class="header">
-        <div class="header-top">
-</div>
-<div class="search-container">
-    <input type="text" class="search-bar" placeholder="Search for products..." onkeyup="searchProducts()">
-    <button class="search-btn" onclick="searchProducts()">🔍</button>
-</div>
-<div style="display: flex; justify-content: space-between; margin-top: 5px;">
+        <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
     <button class="btn" onclick="showLogin()">👤 Sign In</button>
     <button class="btn" onclick="showCart()" style="position: relative;">
         🛒 Cart <span class="cart-count" id="cartCount">0</span>
     </button>
+</div>
+<div class="search-container">
+    <input type="text" class="search-bar" placeholder="Search for products..." onkeyup="searchProducts()">
+    <button class="search-btn" onclick="searchProducts()">🔍</button>
 </div>
     </header>
 
