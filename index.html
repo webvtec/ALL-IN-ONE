@@ -228,7 +228,8 @@
     padding: 0 5px;
         }
 
-        .product-card {
+        /* REPLACE THIS SECTION - Find .product-card in your CSS and replace with: */
+.product-card {
     background: white;
     border-radius: 12px;
     padding: 8px;
@@ -240,8 +241,11 @@
     overflow: hidden;
     cursor: pointer;
     min-height: 200px;
-        }
-
+    user-select: none;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+}
         
 .product-card:hover:not(:has(.add-to-cart:hover)) {
     transform: translateY(-2px);
@@ -491,7 +495,8 @@
         }
 
 
-        .add-to-cart {
+/* REPLACE THIS SECTION - Find .add-to-cart in your CSS and replace with: */
+.add-to-cart {
     background: #ffd814;
     color: #333;
     border: none;
@@ -505,6 +510,11 @@
     margin-top: auto;
     position: relative;
     z-index: 10;
+    user-select: none;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    outline: none;
 }
 
 .add-to-cart:hover {
@@ -514,8 +524,13 @@
 
 .add-to-cart:active {
     transform: scale(0.98);
+    background: #f7ca00;
 }
 
+.add-to-cart:focus {
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(255, 216, 20, 0.5);
+}
         /* Responsive */
 @media (max-width: 768px) {
     .header-top {
@@ -829,51 +844,9 @@ function displayProducts() {
     });
 }
 
-function createProductCard(product) {
-    const card = document.createElement('div');
-    card.className = 'product-card';
-    
-    // Calculate average rating
-    const reviews = product.reviews || [];
-    const avgRating = reviews.length > 0 
-        ? reviews.reduce((sum, review) => sum + review.rating, 0) / reviews.length 
-        : 0;
-    
-    // Generate star rating HTML
-    const starsHTML = Array.from({length: 5}, (_, i) => {
-        const starClass = i < Math.floor(avgRating) ? 'star' : 'star empty';
-        return `<span class="${starClass}">★</span>`;
-    }).join('');
-    
-    card.innerHTML = `
-    <div class="product-image">
-        <img src="${product.image}" alt="${product.name}">
-    </div>
-    
-    <div class="product-details">
-        <div class="product-header">
-            <h3 class="product-title">${product.name}</h3>
-            <p class="product-description">${product.description || 'DESCRIPTION'}</p>
-        </div>
+
         
-        <div class="rating-section">
-            <h4>Star Ratings</h4>
-            <div class="stars">${starsHTML}</div>
-        </div>
-        
-        <div class="product-price">$${product.price}</div>
-        
-        <button class="add-to-cart" onclick="addToCart('${product.id}')">Add to cart</button>
-        
-        <div class="reviews-section" id="reviews-${product.id}" style="display:none;">
-            ${createReviewsSection(product)}
-        </div>
-    </div>
-`;
-    
-    return card;
-}
-        
+// Replace your createProductCard function with this:
 function createProductCard(product) {
     const card = document.createElement('div');
     card.className = 'product-card';
@@ -909,12 +882,31 @@ function createProductCard(product) {
         
         <div class="product-price">$${product.price}</div>
         
-        <button class="add-to-cart" onclick="event.stopPropagation(); event.preventDefault(); addToCart('${product.id}')">Add to cart</button>
+        <button class="add-to-cart" onclick="event.stopPropagation(); event.preventDefault(); addToCart('${product.id}'); return false;">Add to cart</button>
     </div>
 `;
     
     return card;
 }
+
+// Also add this function to handle button clicks properly:
+function addToCart(productId) {
+    const product = products.find(p => p.id === productId);
+    const existingItem = cart.find(item => item.id === productId);
+    
+    if (existingItem) {
+        existingItem.quantity += 1;
+    } else {
+        cart.push({ ...product, quantity: 1 });
+    }
+    
+    updateCartCount();
+    showCartNotification(product.name);
+    
+    // Prevent any further event bubbling
+    return false;
+}
+        
 
 function addToCart(productId) {
     const product = products.find(p => p.id === productId);
