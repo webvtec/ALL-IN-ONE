@@ -3,6 +3,7 @@
 <head>
     <!-- Firebase SDK -->
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -798,9 +799,9 @@
         <h2 style="color: #ffd700; margin-bottom: 1rem;" id="modalTitle">Sign In</h2>
         
         <!-- Google Sign In Button -->
-        <button onclick="signInWithGoogle()" class="google-btn" style="width: 100%; margin-bottom: 1rem; padding: 0.7rem; border: 1px solid #ddd; border-radius: 8px; background: white; color: #333; font-size: 1rem; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px;">
-            <img src="https://developers.google.com/identity/images/g-logo.png" alt="Google" style="width: 18px; height: 18px;">
-            Continue with Google
+        <button type="button" onclick="signInWithGoogle()" class="google-btn" style="width: 100%; margin-bottom: 1rem; padding: 0.7rem; border: 1px solid #ddd; border-radius: 8px; background: white; color: #333; font-size: 1rem; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px;">
+    <img src="https://developers.google.com/identity/images/g-logo.png" alt="Google" style="width: 18px; height: 18px;">
+    Continue with Google
         </button>
         
         <div style="text-align: center; margin: 1rem 0; color: #ccc;">OR</div>
@@ -830,11 +831,20 @@
         </div>
     </div>
 </div>
+<script>
+
+
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('DOM loaded');
+    console.log('Firebase available:', typeof firebase !== 'undefined');
+    console.log('Firebase Auth available:', typeof firebase !== 'undefined' && !!firebase.auth);
+    console.log('Auth instance:', auth);
     
-    <script>
-        let cart = [];
-        
-    // Firebase configuration
+    loadProductsFromFirebase();
+    updateCartCount();
+});
+    
+// Firebase configuration - MOVE THIS TO THE TOP
 const firebaseConfig = {
     apiKey: "AIzaSyD01uGyvyD9vyXa6SFAqxqEdEFuedc-b5M",
     authDomain: "e-commerce-f2233.firebaseapp.com",
@@ -844,41 +854,67 @@ const firebaseConfig = {
     appId: "1:363586978941:web:35b3b34237bca75b405d14"
 };
 
+// Initialize Firebase FIRST
 firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
-
-let products = [];
-
-// Replace your DOMContentLoaded listener with this:
-document.addEventListener('DOMContentLoaded', function() {
-    loadProductsFromFirebase();
-    updateCartCount();
-});
-
-
-// Add these variables at the top of your script section
-let currentUser = null;
-let isSignUpMode = false;
 const auth = firebase.auth();
 
-// Add Google Auth Provider
+// Initialize Google provider
 const googleProvider = new firebase.auth.GoogleAuthProvider();
+googleProvider.addScope('email');
+googleProvider.addScope('profile');
 
+// THEN declare other variables
+let cart = [];
+let products = [];
+let currentUser = null;
+let isSignUpMode = false;
+
+// Rest of your code...
 // Authentication Functions
 function signInWithGoogle() {
+    console.log('Google sign-in button clicked');
+    
+    // Check if Firebase Auth is loaded
+    if (typeof firebase === 'undefined' || !firebase.auth) {
+        console.error('Firebase Auth not loaded');
+        alert('Authentication system not ready. Please refresh the page.');
+        return;
+    }
+    
+    console.log('Attempting Google sign-in...');
+    
     auth.signInWithPopup(googleProvider)
         .then((result) => {
             currentUser = result.user;
             console.log('Google sign-in successful:', currentUser);
             updateAuthUI();
             closeLogin();
+            alert(`Welcome ${currentUser.displayName || currentUser.email}!`);
         })
         .catch((error) => {
             console.error('Google sign-in error:', error);
-            alert('Error signing in with Google: ' + error.message);
+            console.error('Error code:', error.code);
+            console.error('Error message:', error.message);
+            
+            let errorMessage = 'Error signing in with Google: ';
+            switch(error.code) {
+                case 'auth/popup-closed-by-user':
+                    errorMessage += 'Sign-in cancelled.';
+                    break;
+                case 'auth/popup-blocked':
+                    errorMessage += 'Pop-up blocked. Please allow pop-ups.';
+                    break;
+                case 'auth/unauthorized-domain':
+                    errorMessage += 'Domain not authorized. Contact support.';
+                    break;
+                default:
+                    errorMessage += error.message;
+            }
+            alert(errorMessage);
         });
 }
-
+        
 function handleEmailAuth(event) {
     event.preventDefault();
     const email = document.getElementById('email').value;
