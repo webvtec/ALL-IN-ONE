@@ -746,6 +746,18 @@
     font-size: 16px;
 }
 
+.google-btn {
+    transition: all 0.3s ease;
+}
+
+.google-btn:hover {
+    background: #f8f9fa !important;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.google-btn:active {
+    transform: scale(0.98);
+}
 
     </style>
 </head>
@@ -780,26 +792,45 @@
     </main>
 
     <!-- Login Modal -->
-    <div id="loginModal" class="modal">
-        <div class="modal-content">
-            <span class="close" onclick="closeLogin()">&times;</span>
-            <h2 style="color: #ffd700; margin-bottom: 1rem;">Sign In</h2>
-            <form onsubmit="handleLogin(event)">
-                <div class="form-group">
-                    <label>Email:</label>
-                    <input type="email" required>
-                </div>
-                <div class="form-group">
-                    <label>Password:</label>
-                    <input type="password" required>
-                </div>
-                <button type="submit" class="btn" style="width: 100%;">Sign In</button>
-            </form>
-            <p style="text-align: center; margin-top: 1rem;">
-                Don't have an account? <a href="#" style="color: #ffd700;">Sign Up</a>
-            </p>
+<div id="loginModal" class="modal">
+    <div class="modal-content">
+        <span class="close" onclick="closeLogin()">&times;</span>
+        <h2 style="color: #ffd700; margin-bottom: 1rem;" id="modalTitle">Sign In</h2>
+        
+        <!-- Google Sign In Button -->
+        <button onclick="signInWithGoogle()" class="google-btn" style="width: 100%; margin-bottom: 1rem; padding: 0.7rem; border: 1px solid #ddd; border-radius: 8px; background: white; color: #333; font-size: 1rem; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px;">
+            <img src="https://developers.google.com/identity/images/g-logo.png" alt="Google" style="width: 18px; height: 18px;">
+            Continue with Google
+        </button>
+        
+        <div style="text-align: center; margin: 1rem 0; color: #ccc;">OR</div>
+        
+        <form id="authForm" onsubmit="handleEmailAuth(event)">
+            <div class="form-group">
+                <label>Email:</label>
+                <input type="email" id="email" required>
+            </div>
+            <div class="form-group">
+                <label>Password:</label>
+                <input type="password" id="password" required minlength="6">
+            </div>
+            <button type="submit" class="btn" style="width: 100%;" id="authSubmitBtn">Sign In</button>
+        </form>
+        <p style="text-align: center; margin-top: 1rem;">
+            <span id="switchText">Don't have an account?</span> 
+            <a href="#" style="color: #ffd700;" onclick="toggleAuthMode()" id="switchLink">Sign Up</a>
+        </p>
+        
+        <!-- User Info Display (hidden by default) -->
+        <div id="userInfo" style="display: none; text-align: center; margin-top: 1rem;">
+            <img id="userPhoto" style="width: 50px; height: 50px; border-radius: 50%; margin-bottom: 10px;">
+            <p id="userName" style="color: #ffd700;"></p>
+            <p id="userEmail" style="color: #ccc; font-size: 0.9rem;"></p>
+            <button onclick="signOut()" class="btn" style="margin-top: 1rem;">Sign Out</button>
         </div>
     </div>
+</div>
+    
     <script>
         let cart = [];
         
@@ -822,6 +853,175 @@ let products = [];
 document.addEventListener('DOMContentLoaded', function() {
     loadProductsFromFirebase();
     updateCartCount();
+});
+
+
+// Add these variables at the top of your script section
+let currentUser = null;
+let isSignUpMode = false;
+const auth = firebase.auth();
+
+// Add Google Auth Provider
+const googleProvider = new firebase.auth.GoogleAuthProvider();
+
+// Authentication Functions
+function signInWithGoogle() {
+    auth.signInWithPopup(googleProvider)
+        .then((result) => {
+            currentUser = result.user;
+            console.log('Google sign-in successful:', currentUser);
+            updateAuthUI();
+            closeLogin();
+        })
+        .catch((error) => {
+            console.error('Google sign-in error:', error);
+            alert('Error signing in with Google: ' + error.message);
+        });
+}
+
+function handleEmailAuth(event) {
+    event.preventDefault();
+    const email = document.getElementById('email').value;
+    const password = document.getElementById('password').value;
+    
+    if (isSignUpMode) {
+        // Sign Up
+        auth.createUserWithEmailAndPassword(email, password)
+            .then((result) => {
+                currentUser = result.user;
+                console.log('Sign up successful:', currentUser);
+                updateAuthUI();
+                closeLogin();
+                alert('Account created successfully!');
+            })
+            .catch((error) => {
+                console.error('Sign up error:', error);
+                alert('Error creating account: ' + error.message);
+            });
+    } else {
+        // Sign In
+        auth.signInWithEmailAndPassword(email, password)
+            .then((result) => {
+                currentUser = result.user;
+                console.log('Sign in successful:', currentUser);
+                updateAuthUI();
+                closeLogin();
+            })
+            .catch((error) => {
+                console.error('Sign in error:', error);
+                alert('Error signing in: ' + error.message);
+            });
+    }
+}
+
+function signOut() {
+    auth.signOut().then(() => {
+        currentUser = null;
+        updateAuthUI();
+        closeLogin();
+        console.log('User signed out');
+    }).catch((error) => {
+        console.error('Sign out error:', error);
+    });
+}
+
+function toggleAuthMode() {
+    isSignUpMode = !isSignUpMode;
+    const modalTitle = document.getElementById('modalTitle');
+    const submitBtn = document.getElementById('authSubmitBtn');
+    const switchText = document.getElementById('switchText');
+    const switchLink = document.getElementById('switchLink');
+    
+    if (isSignUpMode) {
+        modalTitle.textContent = 'Sign Up';
+        submitBtn.textContent = 'Sign Up';
+        switchText.textContent = 'Already have an account?';
+        switchLink.textContent = 'Sign In';
+    } else {
+        modalTitle.textContent = 'Sign In';
+        submitBtn.textContent = 'Sign In';
+        switchText.textContent = "Don't have an account?";
+        switchLink.textContent = 'Sign Up';
+    }
+}
+
+function updateAuthUI() {
+    const signInBtn = document.querySelector('.btn[onclick="showLogin()"]');
+    
+    if (currentUser) {
+        // User is signed in
+        const displayName = currentUser.displayName || 'User';
+        signInBtn.innerHTML = `👤 ${displayName}`;
+        signInBtn.onclick = showUserProfile;
+    } else {
+        // User is signed out
+        signInBtn.innerHTML = '👤 Sign In';
+        signInBtn.onclick = showLogin;
+    }
+}
+
+function showUserProfile() {
+    if (currentUser) {
+        const modal = document.getElementById('loginModal');
+        const userInfo = document.getElementById('userInfo');
+        const authForm = document.getElementById('authForm');
+        const modalTitle = document.getElementById('modalTitle');
+        
+        // Hide form, show user info
+        authForm.style.display = 'none';
+        document.querySelector('#loginModal p').style.display = 'none'; // Hide switch text
+        userInfo.style.display = 'block';
+        modalTitle.textContent = 'Profile';
+        
+        // Update user info
+        document.getElementById('userName').textContent = currentUser.displayName || 'User';
+        document.getElementById('userEmail').textContent = currentUser.email;
+        
+        if (currentUser.photoURL) {
+            document.getElementById('userPhoto').src = currentUser.photoURL;
+            document.getElementById('userPhoto').style.display = 'block';
+        } else {
+            document.getElementById('userPhoto').style.display = 'none';
+        }
+        
+        modal.style.display = 'block';
+    }
+}
+
+// Replace your existing handleLogin function with this:
+function handleLogin(event) {
+    event.preventDefault();
+    // This function is now handled by handleEmailAuth
+}
+
+// Update your existing showLogin function:
+function showLogin() {
+    // Reset modal to sign-in mode
+    isSignUpMode = false;
+    toggleAuthMode();
+    
+    // Show form, hide user info
+    document.getElementById('authForm').style.display = 'block';
+    document.querySelector('#loginModal p').style.display = 'block';
+    document.getElementById('userInfo').style.display = 'none';
+    document.getElementById('modalTitle').textContent = 'Sign In';
+    
+    // Clear form
+    document.getElementById('email').value = '';
+    document.getElementById('password').value = '';
+    
+    document.getElementById('loginModal').style.display = 'block';
+}
+
+// Add Firebase Auth State Observer
+auth.onAuthStateChanged((user) => {
+    currentUser = user;
+    updateAuthUI();
+    if (user) {
+        console.log('User is signed in:', user);
+    } else {
+        console.log('User is signed out');
+    }
 });
 
 function loadProductsFromFirebase() {
@@ -1040,20 +1240,6 @@ function checkout() {
     updateCartCount();
 }
 
-function showLogin() {
-    document.getElementById('loginModal').style.display = 'block';
-}
-
-function closeLogin() {
-    document.getElementById('loginModal').style.display = 'none';
-}
-
-function handleLogin(event) {
-    event.preventDefault();
-    currentUser = 'User';
-    closeLogin();
-    alert('Login successful!');
-}
 
 function searchProducts() {
     const searchInput = document.querySelector('.search-bar');
