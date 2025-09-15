@@ -1028,6 +1028,9 @@ function updateAuthUI() {
         signInBtn.innerHTML = '👤 Sign In';
         signInBtn.onclick = showLogin;
     }
+    
+    // Also update detail page if it exists
+    updateDetailPageAuth();
 }
 
 function showLogin() {
@@ -1426,7 +1429,7 @@ function showProductDetail(product) {
         <!-- Second header that scrolls with content -->
         <header class="header" style="position: relative; width: 100%; z-index: 999; margin: 0; top: 70px;">
             <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
-                <button class="btn" onclick="showLogin()">👤 Sign In</button>
+                <button class="btn" onclick="showLogin()" id="detailSignInBtn">👤 Sign In</button>
                 <button class="btn" onclick="showCart()" style="position: relative;">
                     🛒 Cart <span class="cart-count">${document.getElementById('cartCount').textContent}</span>
                 </button>
@@ -1499,6 +1502,8 @@ function showProductDetail(product) {
     `;
     
     detailView.classList.add('active');
+    // Update auth state for detail page
+setTimeout(() => updateDetailPageAuth(), 100);
 }
         
 function closeProductDetail() {
@@ -1527,6 +1532,22 @@ function shareProduct(productId, productName) {
             // If clipboard fails, show the link
             prompt('Copy this link to share:', productUrl);
         });
+    }
+}
+
+
+function updateDetailPageAuth() {
+    const detailSignInBtn = document.getElementById('detailSignInBtn');
+    if (detailSignInBtn) {
+        if (currentUser) {
+            const displayName = currentUser.displayName || 'User';
+            const firstName = displayName.split(' ')[0];
+            detailSignInBtn.innerHTML = `👤 ${firstName}`;
+            detailSignInBtn.onclick = showUserProfile;
+        } else {
+            detailSignInBtn.innerHTML = '👤 Sign In';
+            detailSignInBtn.onclick = showLogin;
+        }
     }
 }
 </script>
