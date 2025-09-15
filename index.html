@@ -816,15 +816,6 @@
         <span class="close" onclick="closeLogin()">&times;</span>
         <h2 style="color: #ffd700; margin-bottom: 1rem;" id="modalTitle">Sign In</h2>
         
-        <!-- Google Sign In Button (only show when not signed in) -->
-        <div id="googleSignInSection">
-            <button type="button" onclick="signInWithGoogle()" class="google-btn" style="width: 100%; margin-bottom: 1rem; padding: 0.7rem; border: 1px solid #ddd; border-radius: 8px; background: white; color: #333; font-size: 1rem; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px;">
-                <img src="https://developers.google.com/identity/images/g-logo.png" alt="Google" style="width: 18px; height: 18px;">
-                Continue with Google
-            </button>
-            <div style="text-align: center; margin: 1rem 0; color: #ccc;">OR</div>
-        </div>
-        
         <!-- Email/Password Form -->
         <div id="authFormSection">
             <form id="authForm" onsubmit="handleEmailAuth(event)">
@@ -836,6 +827,16 @@
                     <label>Password:</label>
                     <input type="password" id="password" required minlength="6">
                 </div>
+
+                <!-- Google Sign In Button (only show when not signed in) -->
+        <div id="googleSignInSection">
+            <button type="button" onclick="signInWithGoogle()" class="google-btn" style="width: 100%; margin-bottom: 1rem; padding: 0.7rem; border: 1px solid #ddd; border-radius: 8px; background: white; color: #333; font-size: 1rem; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px;">
+                <img src="https://developers.google.com/identity/images/g-logo.png" alt="Google" style="width: 18px; height: 18px;">
+                Continue with Google
+            </button>
+            <div style="text-align: center; margin: 1rem 0; color: #ccc;">OR</div>
+        </div>
+                
                 <button type="submit" class="btn" style="width: 100%;" id="authSubmitBtn">Sign In</button>
             </form>
             <p style="text-align: center; margin-top: 1rem;" id="switchSection">
