@@ -857,17 +857,9 @@
         </div>
     </div>
 </div>
+
+    
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-    console.log('DOM loaded');
-    console.log('Firebase available:', typeof firebase !== 'undefined');
-    console.log('Firebase Auth available:', typeof firebase !== 'undefined' && !!firebase.auth);
-    console.log('Auth instance:', auth);
-    
-    loadProductsFromFirebase();
-    updateCartCount();
-});
-    
 // Firebase configuration - MOVE THIS TO THE TOP
 const firebaseConfig = {
     apiKey: "AIzaSyD01uGyvyD9vyXa6SFAqxqEdEFuedc-b5M",
@@ -894,7 +886,17 @@ let products = [];
 let currentUser = null;
 let isSignUpMode = false;
 
-// Rest of your code...
+// Replace your DOMContentLoaded listener with this:
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('DOM loaded');
+    console.log('Firebase available:', typeof firebase !== 'undefined');
+    console.log('Firebase Auth available:', typeof firebase !== 'undefined' && !!firebase.auth);
+    console.log('Auth instance:', auth);
+    
+    loadProductsFromFirebase();
+    updateCartCount();
+});
+
 // Authentication Functions
 function signInWithGoogle() {
     console.log('Google sign-in button clicked');
@@ -938,7 +940,7 @@ function signInWithGoogle() {
             alert(errorMessage);
         });
 }
-        
+
 function handleEmailAuth(event) {
     event.preventDefault();
     const email = document.getElementById('email').value;
@@ -978,15 +980,21 @@ function signOut() {
     auth.signOut().then(() => {
         currentUser = null;
         updateAuthUI();
-        closeLogin();
+        closeLogin(); // Close modal after sign out
+        alert('You have been signed out successfully.');
         console.log('User signed out');
     }).catch((error) => {
         console.error('Sign out error:', error);
+        alert('Error signing out. Please try again.');
     });
 }
 
 function toggleAuthMode() {
     isSignUpMode = !isSignUpMode;
+    updateAuthModalUI();
+}
+
+function updateAuthModalUI() {
     const modalTitle = document.getElementById('modalTitle');
     const submitBtn = document.getElementById('authSubmitBtn');
     const switchText = document.getElementById('switchText');
@@ -1011,7 +1019,8 @@ function updateAuthUI() {
     if (currentUser) {
         // User is signed in
         const displayName = currentUser.displayName || 'User';
-        signInBtn.innerHTML = `👤 ${displayName}`;
+        const firstName = displayName.split(' ')[0]; // Get first name only
+        signInBtn.innerHTML = `👤 ${firstName}`;
         signInBtn.onclick = showUserProfile;
     } else {
         // User is signed out
@@ -1020,18 +1029,43 @@ function updateAuthUI() {
     }
 }
 
+function showLogin() {
+    const modal = document.getElementById('loginModal');
+    
+    if (currentUser) {
+        // User is signed in - show profile
+        showUserProfile();
+    } else {
+        // User not signed in - show login form
+        showLoginForm();
+    }
+}
+
+function showLoginForm() {
+    // Reset to sign-in mode
+    isSignUpMode = false;
+    updateAuthModalUI();
+    
+    // Show login elements, hide profile
+    document.getElementById('googleSignInSection').style.display = 'block';
+    document.getElementById('authFormSection').style.display = 'block';
+    document.getElementById('userInfo').style.display = 'none';
+    
+    // Clear form
+    document.getElementById('email').value = '';
+    document.getElementById('password').value = '';
+    
+    // Show modal
+    document.getElementById('loginModal').style.display = 'block';
+}
+
 function showUserProfile() {
     if (currentUser) {
-        const modal = document.getElementById('loginModal');
-        const userInfo = document.getElementById('userInfo');
-        const authForm = document.getElementById('authForm');
-        const modalTitle = document.getElementById('modalTitle');
-        
-        // Hide form, show user info
-        authForm.style.display = 'none';
-        document.querySelector('#loginModal p').style.display = 'none'; // Hide switch text
-        userInfo.style.display = 'block';
-        modalTitle.textContent = 'Profile';
+        // Hide login elements, show profile
+        document.getElementById('googleSignInSection').style.display = 'none';
+        document.getElementById('authFormSection').style.display = 'none';
+        document.getElementById('userInfo').style.display = 'block';
+        document.getElementById('modalTitle').textContent = 'Profile';
         
         // Update user info
         document.getElementById('userName').textContent = currentUser.displayName || 'User';
@@ -1044,33 +1078,19 @@ function showUserProfile() {
             document.getElementById('userPhoto').style.display = 'none';
         }
         
-        modal.style.display = 'block';
+        // Show modal
+        document.getElementById('loginModal').style.display = 'block';
     }
+}
+
+function closeLogin() {
+    document.getElementById('loginModal').style.display = 'none';
 }
 
 // Replace your existing handleLogin function with this:
 function handleLogin(event) {
     event.preventDefault();
     // This function is now handled by handleEmailAuth
-}
-
-// Update your existing showLogin function:
-function showLogin() {
-    // Reset modal to sign-in mode
-    isSignUpMode = false;
-    toggleAuthMode();
-    
-    // Show form, hide user info
-    document.getElementById('authForm').style.display = 'block';
-    document.querySelector('#loginModal p').style.display = 'block';
-    document.getElementById('userInfo').style.display = 'none';
-    document.getElementById('modalTitle').textContent = 'Sign In';
-    
-    // Clear form
-    document.getElementById('email').value = '';
-    document.getElementById('password').value = '';
-    
-    document.getElementById('loginModal').style.display = 'block';
 }
 
 // Add Firebase Auth State Observer
@@ -1106,7 +1126,6 @@ function displayProducts() {
         grid.appendChild(productCard);
     });
 }
-
 
 function createProductCard(product) {
     const card = document.createElement('div');
@@ -1165,8 +1184,6 @@ function createProductCard(product) {
     return card;
 }
 
-
-        
 // Also add this function to handle button clicks properly:
 function addToCart(productId) {
     const product = products.find(p => p.id === productId);
@@ -1184,7 +1201,6 @@ function addToCart(productId) {
     // Prevent any further event bubbling
     return false;
 }
-        
 
 function submitReview(productId) {
     const name = document.getElementById(`reviewName-${productId}`).value;
@@ -1300,7 +1316,6 @@ function checkout() {
     updateCartCount();
 }
 
-
 function searchProducts() {
     const searchInput = document.querySelector('.search-bar');
     const searchTerm = searchInput.value.toLowerCase();
@@ -1361,7 +1376,13 @@ function handleProductRequest(event) {
 }
 
 window.onclick = function(event) {
-    if (event.target.classList.contains('modal')) {
+    const modal = document.getElementById('loginModal');
+    if (event.target === modal) {
+        closeLogin();
+    }
+    
+    // Handle other modals
+    if (event.target.classList.contains('modal') && event.target !== modal) {
         event.target.style.display = 'none';
     }
 }
@@ -1374,7 +1395,6 @@ document.addEventListener('click', function(event) {
         sidebar.classList.remove('open');
     }
 });
-
 
 function showProductDetail(product) {
     // Create or show detailed view
@@ -1479,8 +1499,6 @@ function showProductDetail(product) {
     
     detailView.classList.add('active');
 }
-
-        
         
 function closeProductDetail() {
     const detailView = document.getElementById('productDetailView');
@@ -1489,8 +1507,7 @@ function closeProductDetail() {
     }
 }
 
-
-    function shareProduct(productId, productName) {
+function shareProduct(productId, productName) {
     const productUrl = `${window.location.origin}${window.location.pathname}?product=${productId}`;
     const shareText = `Check out ${productName} on WEBVTEC!`;
     
@@ -1510,8 +1527,7 @@ function closeProductDetail() {
             prompt('Copy this link to share:', productUrl);
         });
     }
-    }
-        
-    </script>
+}
+</script>
 </body>
 </html>
