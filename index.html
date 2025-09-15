@@ -760,6 +760,24 @@
     transform: scale(0.98);
 }
 
+.close {
+    color: #ffd700;
+    float: right;
+    font-size: 28px;
+    font-weight: bold;
+    cursor: pointer;
+    line-height: 1;
+    z-index: 1;
+    position: relative;
+}
+
+.close:hover,
+.close:focus {
+    color: #fff;
+    text-decoration: none;
+    cursor: pointer;
+}
+
     </style>
 </head>
 <body>
@@ -798,42 +816,48 @@
         <span class="close" onclick="closeLogin()">&times;</span>
         <h2 style="color: #ffd700; margin-bottom: 1rem;" id="modalTitle">Sign In</h2>
         
-        <!-- Google Sign In Button -->
-        <button type="button" onclick="signInWithGoogle()" class="google-btn" style="width: 100%; margin-bottom: 1rem; padding: 0.7rem; border: 1px solid #ddd; border-radius: 8px; background: white; color: #333; font-size: 1rem; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px;">
-    <img src="https://developers.google.com/identity/images/g-logo.png" alt="Google" style="width: 18px; height: 18px;">
-    Continue with Google
-        </button>
+        <!-- Google Sign In Button (only show when not signed in) -->
+        <div id="googleSignInSection">
+            <button type="button" onclick="signInWithGoogle()" class="google-btn" style="width: 100%; margin-bottom: 1rem; padding: 0.7rem; border: 1px solid #ddd; border-radius: 8px; background: white; color: #333; font-size: 1rem; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px;">
+                <img src="https://developers.google.com/identity/images/g-logo.png" alt="Google" style="width: 18px; height: 18px;">
+                Continue with Google
+            </button>
+            <div style="text-align: center; margin: 1rem 0; color: #ccc;">OR</div>
+        </div>
         
-        <div style="text-align: center; margin: 1rem 0; color: #ccc;">OR</div>
+        <!-- Email/Password Form -->
+        <div id="authFormSection">
+            <form id="authForm" onsubmit="handleEmailAuth(event)">
+                <div class="form-group">
+                    <label>Email:</label>
+                    <input type="email" id="email" required>
+                </div>
+                <div class="form-group">
+                    <label>Password:</label>
+                    <input type="password" id="password" required minlength="6">
+                </div>
+                <button type="submit" class="btn" style="width: 100%;" id="authSubmitBtn">Sign In</button>
+            </form>
+            <p style="text-align: center; margin-top: 1rem;" id="switchSection">
+                <span id="switchText">Don't have an account?</span> 
+                <a href="#" style="color: #ffd700;" onclick="toggleAuthMode()" id="switchLink">Sign Up</a>
+            </p>
+        </div>
         
-        <form id="authForm" onsubmit="handleEmailAuth(event)">
-            <div class="form-group">
-                <label>Email:</label>
-                <input type="email" id="email" required>
-            </div>
-            <div class="form-group">
-                <label>Password:</label>
-                <input type="password" id="password" required minlength="6">
-            </div>
-            <button type="submit" class="btn" style="width: 100%;" id="authSubmitBtn">Sign In</button>
-        </form>
-        <p style="text-align: center; margin-top: 1rem;">
-            <span id="switchText">Don't have an account?</span> 
-            <a href="#" style="color: #ffd700;" onclick="toggleAuthMode()" id="switchLink">Sign Up</a>
-        </p>
-        
-        <!-- User Info Display (hidden by default) -->
+        <!-- User Profile Display (centered, hidden by default) -->
         <div id="userInfo" style="display: none; text-align: center; margin-top: 1rem;">
-            <img id="userPhoto" style="width: 50px; height: 50px; border-radius: 50%; margin-bottom: 10px;">
-            <p id="userName" style="color: #ffd700;"></p>
-            <p id="userEmail" style="color: #ccc; font-size: 0.9rem;"></p>
-            <button onclick="signOut()" class="btn" style="margin-top: 1rem;">Sign Out</button>
+            <div style="display: flex; flex-direction: column; align-items: center; gap: 1rem;">
+                <img id="userPhoto" style="width: 80px; height: 80px; border-radius: 50%; border: 3px solid #ffd700; display: none;">
+                <div>
+                    <p id="userName" style="color: #ffd700; font-size: 1.2rem; margin: 0;"></p>
+                    <p id="userEmail" style="color: #ccc; font-size: 0.9rem; margin: 0.5rem 0;"></p>
+                </div>
+                <button onclick="signOut()" class="btn" style="margin-top: 1rem;">Sign Out</button>
+            </div>
         </div>
     </div>
 </div>
 <script>
-
-
 document.addEventListener('DOMContentLoaded', function() {
     console.log('DOM loaded');
     console.log('Firebase available:', typeof firebase !== 'undefined');
