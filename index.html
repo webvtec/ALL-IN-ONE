@@ -1768,50 +1768,85 @@
         }
 
         function setupEventListeners() {
-            // Auth Modal
-            elements.accountBtn.addEventListener('click', showAuthModal);
-            document.getElementById('becomeSellerBtn').addEventListener('click', handleBecomeSellerClick);
-            elements.authSwitchBtn.addEventListener('click', switchAuthMode);
-            elements.authForm.addEventListener('submit', handleAuthSubmit);
-            document.getElementById('authModalClose').addEventListener('click', () => hideModal('authModal'));
+    // Auth Modal
+    elements.accountBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        showAuthModal();
+    });
+    
+    document.getElementById('becomeSellerBtn').addEventListener('click', (e) => {
+        e.preventDefault();
+        handleBecomeSellerClick();
+    });
+    
+    elements.authSwitchBtn.addEventListener('click', switchAuthMode);
+    elements.authForm.addEventListener('submit', handleAuthSubmit);
+    document.getElementById('authModalClose').addEventListener('click', () => hideModal('authModal'));
 
-            // Cart
-            elements.cartBtn.addEventListener('click', toggleCart);
-            document.getElementById('cartCloseBtn').addEventListener('click', toggleCart);
-            document.getElementById('checkoutBtn').addEventListener('click', proceedToCheckout);
+    // Cart
+    elements.cartBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        toggleCart();
+    });
+    
+    document.getElementById('cartCloseBtn').addEventListener('click', toggleCart);
+    document.getElementById('checkoutBtn').addEventListener('click', proceedToCheckout);
 
-            // Search
-            elements.searchForm.addEventListener('submit', handleSearch);
+    // Search
+    elements.searchForm.addEventListener('submit', handleSearch);
 
-            // Seller Dashboard
-            elements.sellerBtn.addEventListener('click', toggleSellerDashboard);
-            elements.addProductBtn.addEventListener('click', showProductForm);
-            document.getElementById('cancelProductBtn').addEventListener('click', hideProductForm);
-            elements.productForm.addEventListener('submit', handleAddProduct);
-            document.getElementById('manageSubscriptionBtn').addEventListener('click', showSubscriptionModal);
+    // Seller Dashboard
+    elements.sellerBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        toggleSellerDashboard();
+    });
+    
+    elements.addProductBtn.addEventListener('click', showProductForm);
+    document.getElementById('cancelProductBtn').addEventListener('click', hideProductForm);
+    elements.productForm.addEventListener('submit', handleAddProduct);
+    document.getElementById('manageSubscriptionBtn').addEventListener('click', showSubscriptionModal);
 
-            // Subscription
-            elements.subscribeBtn.addEventListener('click', handleSubscription);
-            document.getElementById('subscriptionClose').addEventListener('click', () => hideModal('subscriptionModal'));
+    // Subscription
+    elements.subscribeBtn.addEventListener('click', handleSubscription);
+    document.getElementById('subscriptionClose').addEventListener('click', () => hideModal('subscriptionModal'));
 
-            // Filters
-            elements.categoryFilter.addEventListener('change', applyFilters);
-            elements.sortFilter.addEventListener('change', applyFilters);
-            elements.priceFilter.addEventListener('change', applyFilters);
+    // Filters
+    elements.categoryFilter.addEventListener('change', applyFilters);
+    elements.sortFilter.addEventListener('change', applyFilters);
+    elements.priceFilter.addEventListener('change', applyFilters);
 
-            // Product actions (event delegation)
-            elements.productsGrid.addEventListener('click', handleProductClick);
+    // Product actions (event delegation)
+    elements.productsGrid.addEventListener('click', handleProductClick);
 
-            // Modal close on outside click
-            window.addEventListener('click', handleModalOutsideClick);
+    // Modal close on outside click
+    window.addEventListener('click', handleModalOutsideClick);
 
-            // Navigation categories
-            document.querySelectorAll('.nav-item[data-category]').forEach(item => {
-                item.addEventListener('click', (e) => {
-                    e.preventDefault();
-                    filterByCategory(item.dataset.category);
-                });
-            });
+    // Navigation categories - FIX THIS
+    document.querySelectorAll('.nav-item[data-category]').forEach(item => {
+        item.addEventListener('click', (e) => {
+            e.preventDefault();
+            // Remove active class from all nav items
+            document.querySelectorAll('.nav-item').forEach(nav => nav.classList.remove('active'));
+            // Add active class to clicked item
+            item.classList.add('active');
+            filterByCategory(item.dataset.category);
+        });
+    });
+    
+    // Home button
+    document.querySelector('.nav-item:not([data-category])').addEventListener('click', (e) => {
+        e.preventDefault();
+        document.querySelectorAll('.nav-item').forEach(nav => nav.classList.remove('active'));
+        e.target.classList.add('active');
+        elements.categoryFilter.value = '';
+        applyFilters();
+    });
+    
+    // Footer links - add functionality
+    setupFooterLinks();
+    
+    // Category cards
+    setupCategoryCards();
         }
 
         async function loadInitialData() {
@@ -1833,11 +1868,11 @@
         // AUTHENTICATION FUNCTIONS
         // ======================
         function showAuthModal() {
-            if (currentUser) {
-                showUserMenu();
-            } else {
-                showModal('authModal');
-            }
+    if (currentUser) {
+        showUserMenu();
+    } else {
+        showModal('authModal');
+    }
         }
 
         function switchAuthMode() {
@@ -1998,71 +2033,74 @@
         }
 
         function showUserMenu() {
-            const menu = document.createElement('div');
-            menu.className = 'user-menu';
-            menu.style.cssText = `
-                position: absolute;
-                top: 100%;
-                right: 0;
-                background: white;
-                border: 1px solid var(--border);
-                border-radius: 8px;
-                box-shadow: var(--shadow-lg);
-                min-width: 200px;
-                z-index: 1000;
-                margin-top: 8px;
-            `;
-            
-            menu.innerHTML = `
-                <div style="padding: 16px; border-bottom: 1px solid var(--border);">
-                    <div style="font-weight: 600;">${userProfile?.displayName || 'User'}</div>
-                    <div style="font-size: 0.9rem; color: var(--text-secondary);">${currentUser?.email}</div>
-                </div>
-                <div style="padding: 8px 0;">
-                    <a href="#" id="viewProfile" style="display: block; padding: 12px 16px; text-decoration: none; color: var(--text-primary);">
-                        <i class="fas fa-user" style="margin-right: 8px;"></i> View Profile
-                    </a>
-                    <a href="#" id="orderHistory" style="display: block; padding: 12px 16px; text-decoration: none; color: var(--text-primary);">
-                        <i class="fas fa-box" style="margin-right: 8px;"></i> Order History
-                    </a>
-                    <a href="#" id="signOutBtn" style="display: block; padding: 12px 16px; text-decoration: none; color: var(--error);">
-                        <i class="fas fa-sign-out-alt" style="margin-right: 8px;"></i> Sign Out
-                    </a>
-                </div>
-            `;
-            
-            // Position relative to account button
-            elements.accountBtn.style.position = 'relative';
-            elements.accountBtn.appendChild(menu);
-            
-            // Add event listeners
-            menu.querySelector('#viewProfile').addEventListener('click', (e) => {
-                e.preventDefault();
-                showProfileModal();
+    // Remove any existing menu
+    const existingMenu = document.querySelector('.user-menu');
+    if (existingMenu) existingMenu.remove();
+    
+    const menu = document.createElement('div');
+    menu.className = 'user-menu';
+    menu.style.cssText = `
+        position: absolute;
+        top: 100%;
+        right: 0;
+        background: white;
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        box-shadow: var(--shadow-lg);
+        min-width: 200px;
+        z-index: 1000;
+        margin-top: 8px;
+    `;
+    
+    menu.innerHTML = `
+        <div style="padding: 16px; border-bottom: 1px solid var(--border);">
+            <div style="font-weight: 600;">${userProfile?.displayName || 'User'}</div>
+            <div style="font-size: 0.9rem; color: var(--text-secondary);">${currentUser?.email}</div>
+        </div>
+        <div style="padding: 8px 0;">
+            <a href="#" id="viewProfile" style="display: block; padding: 12px 16px; text-decoration: none; color: var(--text-primary);">
+                <i class="fas fa-user" style="margin-right: 8px;"></i> View Profile
+            </a>
+            <a href="#" id="orderHistory" style="display: block; padding: 12px 16px; text-decoration: none; color: var(--text-primary);">
+                <i class="fas fa-box" style="margin-right: 8px;"></i> Order History
+            </a>
+            <a href="#" id="signOutBtn" style="display: block; padding: 12px 16px; text-decoration: none; color: var(--error);">
+                <i class="fas fa-sign-out-alt" style="margin-right: 8px;"></i> Sign Out
+            </a>
+        </div>
+    `;
+    
+    elements.accountBtn.style.position = 'relative';
+    elements.accountBtn.appendChild(menu);
+    
+    // Event listeners for menu items
+    menu.querySelector('#viewProfile').addEventListener('click', (e) => {
+        e.preventDefault();
+        showProfileModal();
+        menu.remove();
+    });
+    
+    menu.querySelector('#orderHistory').addEventListener('click', (e) => {
+        e.preventDefault();
+        showOrderHistory();
+        menu.remove();
+    });
+    
+    menu.querySelector('#signOutBtn').addEventListener('click', (e) => {
+        e.preventDefault();
+        signOut();
+        menu.remove();
+    });
+    
+    // Close menu when clicking outside
+    setTimeout(() => {
+        document.addEventListener('click', function closeMenu(e) {
+            if (!menu.contains(e.target) && !elements.accountBtn.contains(e.target)) {
                 menu.remove();
-            });
-            
-            menu.querySelector('#orderHistory').addEventListener('click', (e) => {
-                e.preventDefault();
-                showOrderHistory();
-                menu.remove();
-            });
-            
-            menu.querySelector('#signOutBtn').addEventListener('click', (e) => {
-                e.preventDefault();
-                signOut();
-                menu.remove();
-            });
-            
-            // Close menu when clicking outside
-            setTimeout(() => {
-                document.addEventListener('click', function closeMenu(e) {
-                    if (!menu.contains(e.target) && !elements.accountBtn.contains(e.target)) {
-                        menu.remove();
-                        document.removeEventListener('click', closeMenu);
-                    }
-                });
-            }, 0);
+                document.removeEventListener('click', closeMenu);
+            }
+        });
+    }, 0);
         }
 
         // ======================
@@ -2195,60 +2233,7 @@
             `;
         }
 
-        async function generateSampleProducts() {
-            // This is sample data - in production, products come from Firestore
-            return [
-                {
-                    id: '1',
-                    title: 'Premium Wireless Noise-Canceling Headphones',
-                    price: '299.99',
-                    originalPrice: '399.99',
-                    image: 'https://via.placeholder.com/300x240/1a73e8/ffffff?text=Headphones',
-                    category: 'electronics',
-                    sellerName: 'TechGear Pro',
-                    rating: 4.8,
-                    reviews: 1247,
-                    badge: 'BESTSELLER',
-                    shipping: 'Seller handles shipping',
-                    description: 'Industry-leading noise cancellation with premium audio quality.',
-                    stock: 15,
-                    isActive: true,
-                    createdAt: new Date()
-                },
-                {
-                    id: '2',
-                    title: 'Organic Cotton T-Shirt - Premium Quality',
-                    price: '29.99',
-                    image: 'https://via.placeholder.com/300x240/f59e0b/ffffff?text=T-Shirt',
-                    category: 'fashion',
-                    sellerName: 'EcoWear',
-                    rating: 4.5,
-                    reviews: 523,
-                    shipping: 'Seller handles shipping',
-                    description: '100% organic cotton, ethically sourced and sustainably made.',
-                    stock: 50,
-                    isActive: true,
-                    createdAt: new Date()
-                },
-                {
-                    id: '3',
-                    title: 'Smart Home Security Camera System',
-                    price: '199.99',
-                    originalPrice: '249.99',
-                    image: 'https://via.placeholder.com/300x240/10b981/ffffff?text=Security+Camera',
-                    category: 'electronics',
-                    sellerName: 'SecureHome Solutions',
-                    rating: 4.7,
-                    reviews: 892,
-                    badge: 'SMART CHOICE',
-                    shipping: 'Seller handles shipping',
-                    description: '4K Ultra HD with night vision and mobile app control.',
-                    stock: 25,
-                    isActive: true,
-                    createdAt: new Date()
-                }
-            ];
-        }
+        
 
         function handleProductClick(e) {
             const target = e.target;
@@ -3757,6 +3742,187 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 });
+
+
+
+        // Setup footer link functionality
+function setupFooterLinks() {
+    // Footer links event delegation
+    document.querySelector('.footer').addEventListener('click', (e) => {
+        if (e.target.tagName === 'A' && e.target.textContent.trim()) {
+            e.preventDefault();
+            const linkText = e.target.textContent.trim();
+            
+            switch(linkText) {
+                case 'Help Center':
+                case 'Contact Support':
+                    showHelpModal();
+                    break;
+                case 'Returns & Refunds':
+                    showReturnsModal();
+                    break;
+                case 'Shipping Information':
+                    showShippingModal();
+                    break;
+                case 'Track Your Order':
+                    if (currentUser) {
+                        showOrderHistory();
+                    } else {
+                        showAlert('Please sign in to track orders', 'info');
+                        showAuthModal();
+                    }
+                    break;
+                case 'Start Selling':
+                case 'Seller Dashboard':
+                    handleBecomeSellerClick();
+                    break;
+                case 'About Us':
+                    showAboutModal();
+                    break;
+                default:
+                    showAlert(`${linkText} page coming soon!`, 'info');
+            }
+        }
+    });
+}
+
+// Setup category card clicks
+function setupCategoryCards() {
+    document.addEventListener('click', (e) => {
+        const categoryCard = e.target.closest('.category-card');
+        if (categoryCard) {
+            e.preventDefault();
+            const categoryId = categoryCard.dataset.category;
+            if (categoryId) {
+                // Update nav active state
+                document.querySelectorAll('.nav-item').forEach(nav => nav.classList.remove('active'));
+                document.querySelector(`[data-category="${categoryId}"]`).classList.add('active');
+                filterByCategory(categoryId);
+            }
+        }
+    });
+}
+
+// Modal functions for footer links
+function showHelpModal() {
+    const modal = createModal('Help Center', `
+        <div style="max-height: 400px; overflow-y: auto;">
+            <h4>Frequently Asked Questions</h4>
+            <div style="margin: 16px 0;">
+                <strong>Q: How do I place an order?</strong><br>
+                <p>Browse products, add items to cart, and click checkout to complete your purchase.</p>
+            </div>
+            <div style="margin: 16px 0;">
+                <strong>Q: How do I become a seller?</strong><br>
+                <p>Click "Sell" in the header and subscribe to our seller plan for $25/month.</p>
+            </div>
+            <div style="margin: 16px 0;">
+                <strong>Q: Who handles shipping?</strong><br>
+                <p>Individual sellers handle all shipping and fulfillment directly.</p>
+            </div>
+            <div style="margin: 16px 0;">
+                <strong>Q: How do I contact support?</strong><br>
+                <p>Email us at support@webvtec.com or use the contact form below.</p>
+            </div>
+        </div>
+        <div style="margin-top: 24px; padding-top: 24px; border-top: 1px solid var(--border);">
+            <h4>Contact Us</h4>
+            <form id="contactForm" style="margin-top: 16px;">
+                <div class="form-group">
+                    <input type="email" class="form-input" placeholder="Your email" required>
+                </div>
+                <div class="form-group">
+                    <textarea class="form-textarea" placeholder="Your message" rows="4" required></textarea>
+                </div>
+                <button type="submit" class="btn btn-primary">Send Message</button>
+            </form>
+        </div>
+    `);
+    
+    modal.querySelector('#contactForm').addEventListener('submit', (e) => {
+        e.preventDefault();
+        showAlert('Message sent! We\'ll get back to you within 24 hours.', 'success');
+        modal.remove();
+    });
+}
+
+function showReturnsModal() {
+    createModal('Returns & Refunds', `
+        <div style="max-height: 400px; overflow-y: auto;">
+            <p><strong>Return Policy:</strong> Each seller sets their own return policy. Check the product page for specific return terms.</p>
+            <br>
+            <p><strong>How to Return:</strong></p>
+            <ol>
+                <li>Contact the seller directly through your order page</li>
+                <li>Follow the seller's return instructions</li>
+                <li>Ship the item back as directed</li>
+                <li>Seller will process refund upon receipt</li>
+            </ol>
+            <br>
+            <p><strong>Refund Timeline:</strong> Typically 3-5 business days after seller receives returned item.</p>
+            <br>
+            <p><strong>Need Help?</strong> Contact our support team if you have issues with a return.</p>
+        </div>
+    `);
+}
+
+function showShippingModal() {
+    createModal('Shipping Information', `
+        <div style="max-height: 400px; overflow-y: auto;">
+            <p><strong>Shipping Policy:</strong> All shipping is handled directly by individual sellers.</p>
+            <br>
+            <p><strong>Shipping Times:</strong> Each product shows estimated shipping time from that specific seller.</p>
+            <br>
+            <p><strong>Shipping Costs:</strong> Determined by each seller. Many offer free shipping promotions.</p>
+            <br>
+            <p><strong>Tracking:</strong> You'll receive tracking information from the seller once your order ships.</p>
+            <br>
+            <p><strong>Multiple Items:</strong> If you order from multiple sellers, items may arrive separately.</p>
+        </div>
+    `);
+}
+
+function showAboutModal() {
+    createModal('About WEB VTEC', `
+        <div style="max-height: 400px; overflow-y: auto;">
+            <p>WEB VTEC is a premier online marketplace connecting buyers with independent sellers worldwide.</p>
+            <br>
+            <p><strong>Our Mission:</strong> To provide a platform where anyone can start their own business and reach customers globally.</p>
+            <br>
+            <p><strong>For Buyers:</strong> Discover unique products from independent sellers with competitive prices and personalized service.</p>
+            <br>
+            <p><strong>For Sellers:</strong> Start your online business with our easy-to-use platform and reach millions of potential customers.</p>
+            <br>
+            <p><strong>Founded:</strong> 2024</p>
+            <p><strong>Headquarters:</strong> United States</p>
+        </div>
+    `);
+}
+
+// Helper function to create modals
+function createModal(title, content) {
+    const modal = document.createElement('div');
+    modal.className = 'modal active';
+    modal.innerHTML = `
+        <div class="modal-content">
+            <button class="modal-close">
+                <i class="fas fa-times"></i>
+            </button>
+            <h2 class="modal-title">${title}</h2>
+            <div>${content}</div>
+        </div>
+    `;
+    
+    document.body.appendChild(modal);
+    
+    modal.querySelector('.modal-close').addEventListener('click', () => {
+        modal.remove();
+        document.body.style.overflow = '';
+    });
+    
+    document.body.style.overflow = 'hidden';
+    return modal;
+}
     </script>
 </body>
 </html>
