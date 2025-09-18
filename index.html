@@ -2053,8 +2053,7 @@ function updateDetailPageAuth() {
 }
 
 
-
-    // Add these variables to your existing variables section
+// Add these variables to your existing variables section
 let currentSeller = null;
 let selectedCategory = 'all';
 
@@ -2088,7 +2087,6 @@ function displayFilteredProducts(filteredProducts) {
         grid.appendChild(productCard);
     });
 }
-
 
 // Updated seller functions
 function showSellerDashboard() {
@@ -2155,62 +2153,6 @@ function loginSeller(event) {
         });
 }
 
-function registerSeller(event) {
-    event.preventDefault();
-    
-    // Age verification
-    const dob = new Date(document.getElementById('sellerDOB').value);
-    const today = new Date();
-    const age = today.getFullYear() - dob.getFullYear();
-    const monthDiff = today.getMonth() - dob.getMonth();
-    
-    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < dob.getDate())) {
-        age--;
-    }
-    
-    if (age < 14) {
-        alert('You must be at least 14 years old to become a seller on WEBVTEC.');
-        return;
-    }
-    
-    const sellerData = {
-        firstName: document.getElementById('sellerFirstName').value,
-        lastName: document.getElementById('sellerLastName').value,
-        dateOfBirth: document.getElementById('sellerDOB').value,
-        businessName: document.getElementById('businessName').value,
-        email: document.getElementById('sellerEmail').value,
-        password: document.getElementById('sellerPassword').value,
-        phone: document.getElementById('sellerPhone').value,
-        photoID: document.getElementById('photoID').value,
-        subscriptionStatus: 'active',
-        joinDate: new Date().toISOString(),
-        products: []
-    };
-    
-    // Check if email already exists
-    db.collection('sellers')
-        .where('email', '==', sellerData.email)
-        .get()
-        .then((querySnapshot) => {
-            if (!querySnapshot.empty) {
-                alert('Email already registered. Please use a different email or sign in.');
-                return;
-            }
-            
-            // Save to Firebase
-            db.collection('sellers').add(sellerData)
-                .then((docRef) => {
-                    currentSeller = { id: docRef.id, ...sellerData };
-                    alert('Registration successful! Welcome to WEBVTEC Sellers!');
-                    showSellerDash();
-                })
-                .catch((error) => {
-                    console.error('Error registering seller:', error);
-                    alert('Registration failed. Please try again.');
-                });
-        });
-}
-
 function showSellerDash() {
     document.getElementById('sellerAuth').style.display = 'none';
     document.getElementById('sellerLogin').style.display = 'none';
@@ -2256,7 +2198,6 @@ function loadSellerProfileData() {
     document.getElementById('profileBusinessName').value = currentSeller.businessName || '';
     document.getElementById('profileEmail').value = currentSeller.email || '';
     document.getElementById('profilePhone').value = currentSeller.phone || '';
-    document.getElementById('profilePhotoID').value = currentSeller.photoID || '';
 }
 
 function updateSellerProfile(event) {
@@ -2361,82 +2302,282 @@ function deleteProduct(productId) {
         });
 }
 
+function addSellerProduct(event) {
+    event.preventDefault();
+    
+    if (!currentSeller) {
+        alert('Please log in first');
+        return;
+    }
+    
+    const productData = {
+        name: document.getElementById('productName').value,
+        price: parseFloat(document.getElementById('productPrice').value),
+        category: document.getElementById('productCategory').value,
+        description: document.getElementById('productDescription').value,
+        image: document.getElementById('productImage').value,
+        shippingInfo: document.getElementById('shippingInfo').value,
+        sellerId: currentSeller.id,
+        sellerName: `${currentSeller.firstName} ${currentSeller.lastName}`,
+        businessName: currentSeller.businessName,
+        dateAdded: new Date().toISOString(),
+        reviews: []
+    };
+    
+    db.collection('products').add(productData)
+        .then((docRef) => {
+            alert('Product added successfully!');
+            document.getElementById('addProductForm').reset();
+            showDashboardSection('my-products');
+            updateSellerStats();
+        })
+        .catch((error) => {
+            console.error('Error adding product:', error);
+            alert('Failed to add product. Please try again.');
+        });
+}
+
+function updateSellerStats() {
+    if (!currentSeller) return;
+    
+    const sellerProducts = products.filter(p => p.sellerId === currentSeller.id);
+    document.getElementById('sellerProductCount').textContent = sellerProducts.length;
+}
 
 // Add this to your existing JavaScript
 let uploadedIdData = null;
 
-// Image preview and OCR analysis
-document.addEventListener('change', function(e) {
-    if (e.target.id === 'photoID') {
-        handleIdUpload(e.target.files[0], 'idPreview', 'idPreviewImg', 'idAnalysis');
-    }
-    if (e.target.id === 'profilePhotoID') {
-        handleIdUpload(e.target.files[0], 'profileIdPreview', 'profileIdPreviewImg', null);
-    }
-});
-
-function handleIdUpload(file, previewId, imgId, analysisId) {
+// Enhanced image upload handler with improved OCR
+async function handleIdUpload(file, previewId, imgId, analysisId) {
     if (!file) return;
     
+    console.log('File details:', {
+        name: file.name,
+        size: file.size,
+        type: file.type
+    });
+    
+    // Check file size (limit to 10MB)
+    if (file.size > 10 * 1024 * 1024) {
+        alert('File too large. Please choose an image under 10MB.');
+        return;
+    }
+    
+    // Check file type
+    if (!file.type.startsWith('image/')) {
+        alert('Please select an image file.');
+        return;
+    }
+    
     const reader = new FileReader();
-    reader.onload = function(e) {
-        // Show preview
-        const preview = document.getElementById(previewId);
-        const img = document.getElementById(imgId);
-        img.src = e.target.result;
-        preview.style.display = 'block';
-        
-        // Store the image data
-        uploadedIdData = e.target.result;
-        
-        // Perform OCR analysis if analysis div exists
-        if (analysisId) {
-            performIdVerification(e.target.result, analysisId);
+    reader.onload = async function(e) {
+        try {
+            // Show preview
+            const preview = document.getElementById(previewId);
+            const img = document.getElementById(imgId);
+            img.src = e.target.result;
+            preview.style.display = 'block';
+            
+            // Store the image data
+            uploadedIdData = e.target.result;
+            
+            // Perform OCR analysis if analysis div exists
+            if (analysisId) {
+                setTimeout(() => {
+                    performIdVerification(e.target.result, analysisId);
+                }, 500);
+            }
+        } catch (error) {
+            console.error('Error handling file upload:', error);
+            alert('Error processing the image. Please try a different image.');
         }
     };
+    
+    reader.onerror = function(error) {
+        console.error('FileReader error:', error);
+        alert('Error reading the file. Please try again.');
+    };
+    
     reader.readAsDataURL(file);
 }
 
-// Replace the existing performIdVerification and simulateOCRVerification functions with these:
-
+// Improved OCR verification with better error handling
 async function performIdVerification(imageData, analysisId) {
     const analysisDiv = document.getElementById(analysisId);
-    analysisDiv.innerHTML = '<p style="color: #666;">🔍 Scanning ID document... This may take 30-60 seconds.</p>';
+    analysisDiv.innerHTML = '<p style="color: #666;">🔍 Initializing ID scanner...</p>';
+    
+    let worker = null;
     
     try {
-        // Initialize Tesseract worker
-        const worker = await Tesseract.createWorker('eng');
+        console.log('Starting OCR process...');
+        console.log('Image data type:', typeof imageData);
+        console.log('Image data length:', imageData?.length);
         
-        // Update progress
-        analysisDiv.innerHTML = '<p style="color: #666;">📄 Extracting text from ID...</p>';
+        // Check if Tesseract is loaded
+        if (typeof Tesseract === 'undefined') {
+            throw new Error('Tesseract library not loaded. Please refresh the page.');
+        }
         
-        // Perform OCR
-        const { data: { text } } = await worker.recognize(imageData);
+        analysisDiv.innerHTML = '<p style="color: #666;">📄 Creating OCR worker...</p>';
+        
+        // Create worker with better error handling
+        worker = await Tesseract.createWorker({
+            logger: m => {
+                console.log('Tesseract:', m);
+                if (m.status === 'recognizing text') {
+                    const progress = Math.round(m.progress * 100);
+                    analysisDiv.innerHTML = `<p style="color: #666;">🔄 Processing ID: ${progress}%</p>`;
+                }
+            }
+        });
+        
+        analysisDiv.innerHTML = '<p style="color: #666;">🔧 Configuring OCR settings...</p>';
+        
+        // Initialize with English language
+        await worker.loadLanguage('eng');
+        await worker.initialize('eng');
+        
+        // Configure for better ID recognition
+        await worker.setParameters({
+            tessedit_char_whitelist: 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789 .,-/',
+            tessedit_pageseg_mode: Tesseract.PSM.SPARSE_TEXT,
+        });
+        
+        analysisDiv.innerHTML = '<p style="color: #666;">📸 Analyzing ID document...</p>';
+        
+        // Perform OCR with timeout
+        const timeoutPromise = new Promise((_, reject) => {
+            setTimeout(() => reject(new Error('OCR timeout after 90 seconds')), 90000);
+        });
+        
+        const ocrPromise = worker.recognize(imageData);
+        const result = await Promise.race([ocrPromise, timeoutPromise]);
+        
+        console.log('OCR Result:', result);
+        console.log('Extracted text:', result.data.text);
+        console.log('Confidence:', result.data.confidence);
+        
         await worker.terminate();
+        worker = null;
+        
+        if (!result.data.text || result.data.text.trim().length < 10) {
+            throw new Error('Insufficient text extracted. Please ensure the ID is well-lit and all text is visible.');
+        }
+        
+        if (result.data.confidence < 30) {
+            console.warn('Low confidence OCR result:', result.data.confidence);
+            analysisDiv.innerHTML = `
+                <p style="color: #f39c12;">⚠️ Low confidence scan (${Math.round(result.data.confidence)}%). 
+                Please try with better lighting or a clearer photo.</p>
+                <details style="margin-top: 1rem;">
+                    <summary style="cursor: pointer;">View extracted text anyway</summary>
+                    <pre style="background: #f8f9fa; padding: 0.5rem; margin-top: 0.5rem; font-size: 0.8rem;">${result.data.text}</pre>
+                </details>
+            `;
+            return { overallVerified: false, confidence: result.data.confidence };
+        }
         
         // Process the extracted text
-        const verification = await processIdText(text, analysisDiv);
+        analysisDiv.innerHTML = '<p style="color: #666;">🔍 Verifying information...</p>';
+        const verification = await processIdText(result.data.text, analysisDiv);
         
         // Store verification result
         window.idVerificationResult = verification;
         
+        return verification;
+        
     } catch (error) {
-        console.error('OCR Error:', error);
-        analysisDiv.innerHTML = '<p style="color: #dc3545;">❌ Error analyzing ID. Please ensure the image is clear and try again.</p>';
+        console.error('OCR Error Details:', error);
+        console.error('Error stack:', error.stack);
+        
+        // Clean up worker if it exists
+        if (worker) {
+            try {
+                await worker.terminate();
+            } catch (cleanupError) {
+                console.error('Error cleaning up worker:', cleanupError);
+            }
+        }
+        
+        // Provide specific error messages
+        let errorMessage = 'ID analysis failed: ';
+        
+        if (error.message.includes('timeout')) {
+            errorMessage += 'Processing took too long. Please try with a smaller or clearer image.';
+        } else if (error.message.includes('Tesseract')) {
+            errorMessage += 'OCR service unavailable. Please refresh the page and try again.';
+        } else if (error.message.includes('network')) {
+            errorMessage += 'Network error. Check your internet connection and try again.';
+        } else if (error.message.includes('Insufficient text')) {
+            errorMessage += error.message;
+        } else {
+            errorMessage += 'Please ensure the image is clear, well-lit, and shows the entire ID.';
+        }
+        
+        analysisDiv.innerHTML = `
+            <div style="color: #dc3545; padding: 1rem; background: #f8d7da; border-radius: 4px;">
+                <p style="margin: 0 0 1rem 0;"><strong>❌ ${errorMessage}</strong></p>
+                <div style="font-size: 0.9rem; color: #721c24;">
+                    <p style="margin: 0.5rem 0;"><strong>Tips for better results:</strong></p>
+                    <ul style="margin: 0; padding-left: 1.5rem;">
+                        <li>Ensure good lighting (natural light works best)</li>
+                        <li>Keep the ID flat and fully visible</li>
+                        <li>Make sure the image is not blurry</li>
+                        <li>Try taking the photo from directly above</li>
+                        <li>Ensure the file size is under 5MB</li>
+                    </ul>
+                </div>
+                <details style="margin-top: 1rem;">
+                    <summary style="cursor: pointer; color: #721c24;">Technical Details</summary>
+                    <pre style="background: #f1f1f1; padding: 0.5rem; margin-top: 0.5rem; font-size: 0.7rem; color: #333;">${error.message}\n${error.stack || ''}</pre>
+                </details>
+            </div>
+        `;
+        
+        return { overallVerified: false, error: error.message };
     }
 }
 
+// Enhanced processIdText function with better parsing
 async function processIdText(extractedText, analysisDiv) {
-    const firstName = document.getElementById('sellerFirstName').value.toLowerCase().trim();
-    const lastName = document.getElementById('sellerLastName').value.toLowerCase().trim();
-    const dobInput = document.getElementById('sellerDOB').value;
+    const firstName = document.getElementById('sellerFirstName')?.value?.toLowerCase().trim() || 
+                     document.getElementById('googleSellerFirstName')?.value?.toLowerCase().trim() || '';
+    const lastName = document.getElementById('sellerLastName')?.value?.toLowerCase().trim() || 
+                    document.getElementById('googleSellerLastName')?.value?.toLowerCase().trim() || '';
+    
+    // Get DOB from appropriate form
+    let dobInput = '';
+    if (document.getElementById('birthMonth')) {
+        const month = document.getElementById('birthMonth').value;
+        const day = document.getElementById('birthDay').value;
+        const year = document.getElementById('birthYear').value;
+        if (month && day && year) {
+            dobInput = `${year}-${month}-${day}`;
+        }
+    } else if (document.getElementById('googleBirthMonth')) {
+        const month = document.getElementById('googleBirthMonth').value;
+        const day = document.getElementById('googleBirthDay').value;
+        const year = document.getElementById('googleBirthYear').value;
+        if (month && day && year) {
+            dobInput = `${year}-${month}-${day}`;
+        }
+    }
+    
+    console.log('Processing ID text for:', { firstName, lastName, dobInput });
+    console.log('Extracted text length:', extractedText.length);
     
     // Clean and normalize the extracted text
-    const normalizedText = extractedText.toLowerCase().replace(/[^\w\s\/\-\.]/g, ' ');
+    const normalizedText = extractedText.toLowerCase()
+        .replace(/[^\w\s\/\-\.]/g, ' ')
+        .replace(/\s+/g, ' ')
+        .trim();
     
     // Extract potential names and dates
     const namePatterns = extractNames(normalizedText);
     const datePatterns = extractDates(normalizedText);
+    
+    console.log('Found name patterns:', namePatterns);
+    console.log('Found date patterns:', datePatterns);
     
     // Verify name matching
     const nameMatch = verifyNameMatch(firstName, lastName, namePatterns);
@@ -2458,7 +2599,8 @@ async function processIdText(extractedText, analysisDiv) {
     return {
         nameVerified: nameMatch.verified,
         dobVerified: dateMatch.verified,
-        overallVerified: nameMatch.verified && dateMatch.verified
+        overallVerified: nameMatch.verified && dateMatch.verified,
+        confidence: Math.min(nameMatch.confidence || 0, dateMatch.confidence || 0)
     };
 }
 
@@ -2655,9 +2797,23 @@ function displayVerificationResults(analysisDiv, results) {
 // Add these variables at the top with your other variables
 let googleSellerProvider = null;
 
+// Test function to verify OCR availability
+function testOCRAvailability() {
+    console.log('Testing OCR availability...');
+    console.log('Tesseract available:', typeof Tesseract !== 'undefined');
+    
+    if (typeof Tesseract !== 'undefined') {
+        console.log('Tesseract version:', Tesseract.version || 'Unknown');
+        console.log('Tesseract PSM modes:', Object.keys(Tesseract.PSM || {}));
+    } else {
+        console.error('Tesseract not loaded! Check the CDN link.');
+    }
+}
+
 // Initialize Google provider for sellers
 document.addEventListener('DOMContentLoaded', function() {
-    // Existing DOMContentLoaded code...
+    // Test OCR availability
+    setTimeout(testOCRAvailability, 1000);
     
     // Initialize Google provider for sellers
     if (typeof firebase !== 'undefined' && firebase.auth) {
@@ -2667,15 +2823,40 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     // Populate year dropdown
-    populateYearDropdown();
-    
-    // Add event listener for month change to update days
-    document.getElementById('birthMonth').addEventListener('change', populateDayDropdown);
-    document.getElementById('birthYear').addEventListener('change', populateDayDropdown);
+    setTimeout(() => {
+        populateYearDropdown();
+        
+        // Add event listeners for date dropdowns
+        const birthMonth = document.getElementById('birthMonth');
+        const birthYear = document.getElementById('birthYear');
+        if (birthMonth) birthMonth.addEventListener('change', populateDayDropdown);
+        if (birthYear) birthYear.addEventListener('change', populateDayDropdown);
+        
+        // Add file upload handlers
+        const photoIdInput = document.getElementById('photoID');
+        if (photoIdInput) {
+            photoIdInput.addEventListener('change', function(e) {
+                if (e.target.files[0]) {
+                    handleIdUpload(e.target.files[0], 'idPreview', 'idPreviewImg', 'idAnalysis');
+                }
+            });
+        }
+        
+        const profilePhotoIdInput = document.getElementById('profilePhotoID');
+        if (profilePhotoIdInput) {
+            profilePhotoIdInput.addEventListener('change', function(e) {
+                if (e.target.files[0]) {
+                    handleIdUpload(e.target.files[0], 'profileIdPreview', 'profileIdPreviewImg', null);
+                }
+            });
+        }
+    }, 1000);
 });
 
 function populateYearDropdown() {
     const yearSelect = document.getElementById('birthYear');
+    if (!yearSelect) return;
+    
     const currentYear = new Date().getFullYear();
     const minYear = currentYear - 100; // 100 years back
     const maxYear = currentYear - 14;  // Must be at least 14
@@ -2692,6 +2873,8 @@ function populateDayDropdown() {
     const monthSelect = document.getElementById('birthMonth');
     const yearSelect = document.getElementById('birthYear');
     const daySelect = document.getElementById('birthDay');
+    
+    if (!monthSelect || !yearSelect || !daySelect) return;
     
     const month = parseInt(monthSelect.value);
     const year = parseInt(yearSelect.value);
@@ -2713,9 +2896,9 @@ function populateDayDropdown() {
 }
 
 function getFormattedBirthDate() {
-    const month = document.getElementById('birthMonth').value;
-    const day = document.getElementById('birthDay').value;
-    const year = document.getElementById('birthYear').value;
+    const month = document.getElementById('birthMonth')?.value;
+    const day = document.getElementById('birthDay')?.value;
+    const year = document.getElementById('birthYear')?.value;
     
     if (month && day && year) {
         return `${year}-${month}-${day}`;
@@ -2882,6 +3065,8 @@ function showGoogleSellerCompletion(googleUser) {
 function setupGoogleDateDropdowns() {
     // Populate year dropdown
     const yearSelect = document.getElementById('googleBirthYear');
+    if (!yearSelect) return;
+    
     const currentYear = new Date().getFullYear();
     const minYear = currentYear - 100;
     const maxYear = currentYear - 14;
@@ -2894,12 +3079,14 @@ function setupGoogleDateDropdowns() {
     }
     
     // Add event listeners
-    document.getElementById('googleBirthMonth').addEventListener('change', updateGoogleDayDropdown);
-    document.getElementById('googleBirthYear').addEventListener('change', updateGoogleDayDropdown);
+    document.getElementById('googleBirthMonth')?.addEventListener('change', updateGoogleDayDropdown);
+    document.getElementById('googleBirthYear')?.addEventListener('change', updateGoogleDayDropdown);
     
     // Add ID upload handler
-    document.getElementById('googlePhotoID').addEventListener('change', function(e) {
-        handleIdUpload(e.target.files[0], 'googleIdPreview', 'googleIdPreviewImg', 'googleIdAnalysis');
+    document.getElementById('googlePhotoID')?.addEventListener('change', function(e) {
+        if (e.target.files[0]) {
+            handleIdUpload(e.target.files[0], 'googleIdPreview', 'googleIdPreviewImg', 'googleIdAnalysis');
+        }
     });
 }
 
@@ -2907,6 +3094,8 @@ function updateGoogleDayDropdown() {
     const monthSelect = document.getElementById('googleBirthMonth');
     const yearSelect = document.getElementById('googleBirthYear');
     const daySelect = document.getElementById('googleBirthDay');
+    
+    if (!monthSelect || !yearSelect || !daySelect) return;
     
     const month = parseInt(monthSelect.value);
     const year = parseInt(yearSelect.value);
@@ -2981,7 +3170,7 @@ function completeGoogleSellerRegistration(event) {
             currentSeller = { id: docRef.id, ...sellerData };
             
             // Clean up
-            document.getElementById('googleSellerCompletion').remove();
+            document.getElementById('googleSellerCompletion')?.remove();
             window.pendingGoogleSeller = null;
             
             alert('Registration successful! Welcome to WEBVTEC Sellers!');
@@ -3073,7 +3262,6 @@ function registerSeller(event) {
                 });
         });
 }
-
 
 </script>
 </body>
