@@ -5,6 +5,8 @@
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+    <!-- Add this script tag in your <head> section -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/tesseract.js/4.1.1/tesseract.min.js"></script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>WEB VTEC - Products</title>
@@ -925,6 +927,29 @@
     }
 }
 
+
+/* Fix input visibility in seller forms */
+.seller-section input,
+.seller-section textarea,
+.seller-section select {
+    color: #333 !important;
+    background: #fff !important;
+    border: 1px solid #ddd !important;
+}
+
+.seller-section input::placeholder,
+.seller-section textarea::placeholder {
+    color: #999 !important;
+}
+
+.seller-section input:focus,
+.seller-section textarea:focus,
+.seller-section select:focus {
+    outline: none;
+    border-color: #ffd700 !important;
+    box-shadow: 0 0 0 2px rgba(255, 215, 0, 0.2);
+}
+
     </style>
 </head>
 <body>
@@ -1139,9 +1164,13 @@
                         </div>
                         
                         <div class="form-group">
-                            <label style="color: #333;">Photo ID URL (Driver's License, Passport, etc.):</label>
-                            <input type="url" id="photoID" required style="width: 100%; padding: 0.7rem; border: 1px solid #ddd; border-radius: 8px;" placeholder="https://example.com/your-id-photo.jpg">
-                            <small style="color: #666;">Upload your ID to a service like Imgur or Google Drive and paste the link here</small>
+    <label style="color: #333;">Photo ID (Driver's License, Passport, etc.):</label>
+    <input type="file" id="photoID" accept="image/*" required style="width: 100%; padding: 0.7rem; border: 1px solid #ddd; border-radius: 8px;">
+    <small style="color: #666;">Upload a clear photo of your government-issued ID. We'll verify your name and age automatically.</small>
+    <div id="idPreview" style="margin-top: 1rem; display: none;">
+        <img id="idPreviewImg" style="max-width: 300px; max-height: 200px; border-radius: 8px;">
+        <div id="idAnalysis" style="margin-top: 0.5rem; padding: 0.5rem; background: #f8f9fa; border-radius: 4px;"></div>
+    </div>
                         </div>
                         
                         <button type="submit" class="btn" style="width: 100%;">Register & Pay $25</button>
@@ -1282,8 +1311,12 @@
                     </div>
                     
                     <div class="form-group">
-                        <label style="color: #333;">Photo ID URL:</label>
-                        <input type="url" id="profilePhotoID" style="width: 100%; padding: 0.7rem; border: 1px solid #ddd; border-radius: 8px;">
+    <label style="color: #333;">Update Photo ID:</label>
+    <input type="file" id="profilePhotoID" accept="image/*" style="width: 100%; padding: 0.7rem; border: 1px solid #ddd; border-radius: 8px;">
+    <small style="color: #666;">Upload a new ID photo if needed</small>
+    <div id="profileIdPreview" style="margin-top: 1rem; display: none;">
+        <img id="profileIdPreviewImg" style="max-width: 300px; max-height: 200px; border-radius: 8px;">
+    </div>
                     </div>
                     
                     <button type="submit" class="btn">Update Profile</button>
@@ -2201,17 +2234,19 @@ function updateSellerProfile(event) {
         lastName: document.getElementById('profileLastName').value,
         businessName: document.getElementById('profileBusinessName').value,
         email: document.getElementById('profileEmail').value,
-        phone: document.getElementById('profilePhone').value,
-        photoID: document.getElementById('profilePhotoID').value
+        phone: document.getElementById('profilePhone').value
     };
+    
+    // Include new ID image if uploaded
+    if (uploadedIdData) {
+        updatedData.photoIdData = uploadedIdData;
+    }
     
     db.collection('sellers').doc(currentSeller.id)
         .update(updatedData)
         .then(() => {
-            // Update current seller object
             Object.assign(currentSeller, updatedData);
             alert('Profile updated successfully!');
-            // Update welcome message
             document.getElementById('sellerWelcome').textContent = 
                 `Welcome, ${currentSeller.firstName} ${currentSeller.lastName}`;
         })
@@ -2220,7 +2255,7 @@ function updateSellerProfile(event) {
             alert('Failed to update profile. Please try again.');
         });
 }
-
+    
 function signOutSeller() {
     currentSeller = null;
     closeSellerPage();
@@ -2287,6 +2322,444 @@ function deleteProduct(productId) {
             alert('Failed to delete product. Please try again.');
         });
 }
+
+
+// Add this to your existing JavaScript
+let uploadedIdData = null;
+
+// Image preview and OCR analysis
+document.addEventListener('change', function(e) {
+    if (e.target.id === 'photoID') {
+        handleIdUpload(e.target.files[0], 'idPreview', 'idPreviewImg', 'idAnalysis');
+    }
+    if (e.target.id === 'profilePhotoID') {
+        handleIdUpload(e.target.files[0], 'profileIdPreview', 'profileIdPreviewImg', null);
+    }
+});
+
+function handleIdUpload(file, previewId, imgId, analysisId) {
+    if (!file) return;
+    
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        // Show preview
+        const preview = document.getElementById(previewId);
+        const img = document.getElementById(imgId);
+        img.src = e.target.result;
+        preview.style.display = 'block';
+        
+        // Store the image data
+        uploadedIdData = e.target.result;
+        
+        // Perform OCR analysis if analysis div exists
+        if (analysisId) {
+            performIdVerification(e.target.result, analysisId);
+        }
+    };
+    reader.readAsDataURL(file);
+}
+
+// Replace the existing performIdVerification and simulateOCRVerification functions with these:
+
+async function performIdVerification(imageData, analysisId) {
+    const analysisDiv = document.getElementById(analysisId);
+    analysisDiv.innerHTML = '<p style="color: #666;">🔍 Scanning ID document... This may take 30-60 seconds.</p>';
+    
+    try {
+        // Initialize Tesseract worker
+        const worker = await Tesseract.createWorker('eng');
+        
+        // Update progress
+        analysisDiv.innerHTML = '<p style="color: #666;">📄 Extracting text from ID...</p>';
+        
+        // Perform OCR
+        const { data: { text } } = await worker.recognize(imageData);
+        await worker.terminate();
+        
+        // Process the extracted text
+        const verification = await processIdText(text, analysisDiv);
+        
+        // Store verification result
+        window.idVerificationResult = verification;
+        
+    } catch (error) {
+        console.error('OCR Error:', error);
+        analysisDiv.innerHTML = '<p style="color: #dc3545;">❌ Error analyzing ID. Please ensure the image is clear and try again.</p>';
+    }
+}
+
+async function processIdText(extractedText, analysisDiv) {
+    const firstName = document.getElementById('sellerFirstName').value.toLowerCase().trim();
+    const lastName = document.getElementById('sellerLastName').value.toLowerCase().trim();
+    const dobInput = document.getElementById('sellerDOB').value;
+    
+    // Clean and normalize the extracted text
+    const normalizedText = extractedText.toLowerCase().replace(/[^\w\s\/\-\.]/g, ' ');
+    
+    // Extract potential names and dates
+    const namePatterns = extractNames(normalizedText);
+    const datePatterns = extractDates(normalizedText);
+    
+    // Verify name matching
+    const nameMatch = verifyNameMatch(firstName, lastName, namePatterns);
+    
+    // Verify date matching
+    const dateMatch = verifyDateMatch(dobInput, datePatterns);
+    
+    // Display results
+    displayVerificationResults(analysisDiv, {
+        extractedText,
+        namePatterns,
+        datePatterns,
+        nameMatch,
+        dateMatch,
+        formName: `${firstName} ${lastName}`,
+        formDob: dobInput
+    });
+    
+    return {
+        nameVerified: nameMatch.verified,
+        dobVerified: dateMatch.verified,
+        overallVerified: nameMatch.verified && dateMatch.verified
+    };
+}
+
+function extractNames(text) {
+    // Common patterns for names on IDs
+    const namePatterns = [];
+    const words = text.split(/\s+/);
+    
+    // Look for sequences of capitalized words (likely names)
+    for (let i = 0; i < words.length - 1; i++) {
+        const word1 = words[i];
+        const word2 = words[i + 1];
+        
+        // Skip common ID words
+        if (isCommonIdWord(word1) || isCommonIdWord(word2)) continue;
+        
+        // Look for name-like patterns
+        if (word1.length > 1 && word2.length > 1 && 
+            !containsNumbers(word1) && !containsNumbers(word2)) {
+            namePatterns.push(`${word1} ${word2}`);
+        }
+    }
+    
+    return namePatterns;
+}
+
+function extractDates(text) {
+    const datePatterns = [];
+    
+    // Common date formats: MM/DD/YYYY, DD/MM/YYYY, MM-DD-YYYY, etc.
+    const dateRegexes = [
+        /\b(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})\b/g,
+        /\b(\d{4})[\/\-](\d{1,2})[\/\-](\d{1,2})\b/g,
+        /\b(\d{1,2})\s+(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)\w*\s+(\d{4})\b/gi
+    ];
+    
+    dateRegexes.forEach(regex => {
+        let match;
+        while ((match = regex.exec(text)) !== null) {
+            datePatterns.push(match[0]);
+        }
+    });
+    
+    return datePatterns;
+}
+
+function verifyNameMatch(firstName, lastName, extractedNames) {
+    let bestMatch = { verified: false, confidence: 0, matchedText: '' };
+    
+    extractedNames.forEach(extractedName => {
+        const nameParts = extractedName.toLowerCase().split(/\s+/);
+        
+        // Check if first and last name appear in the extracted text
+        const firstMatch = nameParts.some(part => 
+            part.includes(firstName) || firstName.includes(part)
+        );
+        const lastMatch = nameParts.some(part => 
+            part.includes(lastName) || lastName.includes(part)
+        );
+        
+        if (firstMatch && lastMatch) {
+            bestMatch = {
+                verified: true,
+                confidence: 0.9,
+                matchedText: extractedName
+            };
+        } else if (firstMatch || lastMatch) {
+            if (bestMatch.confidence < 0.5) {
+                bestMatch = {
+                    verified: false,
+                    confidence: 0.5,
+                    matchedText: extractedName
+                };
+            }
+        }
+    });
+    
+    return bestMatch;
+}
+
+function verifyDateMatch(inputDob, extractedDates) {
+    const inputDate = new Date(inputDob);
+    let bestMatch = { verified: false, confidence: 0, matchedText: '' };
+    
+    extractedDates.forEach(dateText => {
+        try {
+            // Try to parse the extracted date
+            const extractedDate = parseExtractedDate(dateText);
+            
+            if (extractedDate && 
+                extractedDate.getFullYear() === inputDate.getFullYear() &&
+                extractedDate.getMonth() === inputDate.getMonth() &&
+                extractedDate.getDate() === inputDate.getDate()) {
+                
+                bestMatch = {
+                    verified: true,
+                    confidence: 1.0,
+                    matchedText: dateText
+                };
+            }
+        } catch (error) {
+            // Continue with next date
+        }
+    });
+    
+    return bestMatch;
+}
+
+function parseExtractedDate(dateText) {
+    // Handle various date formats
+    const formats = [
+        /(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})/, // MM/DD/YYYY or DD/MM/YYYY
+        /(\d{4})[\/\-](\d{1,2})[\/\-](\d{1,2})/, // YYYY/MM/DD
+    ];
+    
+    for (const format of formats) {
+        const match = dateText.match(format);
+        if (match) {
+            // Assume MM/DD/YYYY format for US IDs
+            const [, part1, part2, part3] = match;
+            if (part3.length === 4) { // Year is 4 digits
+                return new Date(parseInt(part3), parseInt(part1) - 1, parseInt(part2));
+            } else if (part1.length === 4) { // YYYY/MM/DD
+                return new Date(parseInt(part1), parseInt(part2) - 1, parseInt(part3));
+            }
+        }
+    }
+    
+    return null;
+}
+
+function isCommonIdWord(word) {
+    const commonWords = [
+        'license', 'driver', 'state', 'id', 'identification', 
+        'expires', 'issued', 'class', 'restrictions', 'endorsements',
+        'address', 'height', 'weight', 'eyes', 'hair', 'sex'
+    ];
+    return commonWords.some(common => word.toLowerCase().includes(common));
+}
+
+function containsNumbers(word) {
+    return /\d/.test(word);
+}
+
+function displayVerificationResults(analysisDiv, results) {
+    const { nameMatch, dateMatch, formName, formDob, extractedText } = results;
+    
+    const nameStatus = nameMatch.verified ? 
+        '✅ Verified' : (nameMatch.confidence > 0 ? '⚠️ Partial Match' : '❌ No Match');
+    const dateStatus = dateMatch.verified ? 
+        '✅ Verified' : '❌ No Match';
+    
+    const overallStatus = nameMatch.verified && dateMatch.verified;
+    
+    analysisDiv.innerHTML = `
+        <div style="color: #333;">
+            <h4 style="margin: 0 0 1rem 0;">
+                ID Verification Results 
+                ${overallStatus ? '✅' : '⚠️'}
+            </h4>
+            
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; font-size: 0.9rem; margin-bottom: 1rem;">
+                <div>
+                    <strong>Name Verification:</strong><br>
+                    <span>${nameStatus}</span><br>
+                    <small>Form: ${formName}</small><br>
+                    <small>Found: ${nameMatch.matchedText || 'None detected'}</small>
+                </div>
+                <div>
+                    <strong>Date of Birth:</strong><br>
+                    <span>${dateStatus}</span><br>
+                    <small>Form: ${formDob}</small><br>
+                    <small>Found: ${dateMatch.matchedText || 'None detected'}</small>
+                </div>
+            </div>
+            
+            <div style="margin-top: 1rem; padding: 0.5rem; border-radius: 4px; ${
+                overallStatus ? 'background: #d4edda; color: #155724;' : 'background: #f8d7da; color: #721c24;'
+            }">
+                ${overallStatus ? 
+                    '✅ ID verification successful! Name and date of birth match.' :
+                    '⚠️ Verification incomplete. Please ensure your ID is clear and matches the information entered.'
+                }
+            </div>
+            
+            <details style="margin-top: 1rem; font-size: 0.8rem;">
+                <summary style="cursor: pointer; color: #666;">View extracted text</summary>
+                <pre style="background: #f8f9fa; padding: 0.5rem; border-radius: 4px; margin-top: 0.5rem; white-space: pre-wrap; font-size: 0.7rem;">${extractedText}</pre>
+            </details>
+        </div>
+    `;
+}
+
+// Update the registerSeller function to check verification
+function registerSeller(event) {
+    event.preventDefault();
+    
+    // Check if ID was uploaded
+    if (!uploadedIdData) {
+        alert('Please upload a photo of your ID');
+        return;
+    }
+    
+    // Check if verification was completed
+    if (!window.idVerificationResult) {
+        alert('Please wait for ID verification to complete before submitting');
+        return;
+    }
+    
+    // Check if verification passed
+    if (!window.idVerificationResult.overallVerified) {
+        const proceed = confirm(
+            'ID verification was not successful. This may be due to image quality or OCR limitations. ' +
+            'Do you want to proceed anyway? (Manual review may be required)'
+        );
+        if (!proceed) return;
+    }
+    
+    // Age verification
+    const dob = new Date(document.getElementById('sellerDOB').value);
+    const today = new Date();
+    let age = today.getFullYear() - dob.getFullYear();
+    const monthDiff = today.getMonth() - dob.getMonth();
+    
+    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < dob.getDate())) {
+        age--;
+    }
+    
+    if (age < 14) {
+        alert('You must be at least 14 years old to become a seller on WEBVTEC.');
+        return;
+    }
+    
+    const sellerData = {
+        firstName: document.getElementById('sellerFirstName').value,
+        lastName: document.getElementById('sellerLastName').value,
+        dateOfBirth: document.getElementById('sellerDOB').value,
+        businessName: document.getElementById('businessName').value,
+        email: document.getElementById('sellerEmail').value,
+        password: document.getElementById('sellerPassword').value,
+        phone: document.getElementById('sellerPhone').value,
+        photoIdData: uploadedIdData,
+        idVerificationResult: window.idVerificationResult,
+        subscriptionStatus: 'active',
+        joinDate: new Date().toISOString(),
+        products: []
+    };
+    
+    // Check if email already exists
+    db.collection('sellers')
+        .where('email', '==', sellerData.email)
+        .get()
+        .then((querySnapshot) => {
+            if (!querySnapshot.empty) {
+                alert('Email already registered. Please use a different email or sign in.');
+                return;
+            }
+            
+            db.collection('sellers').add(sellerData)
+                .then((docRef) => {
+                    currentSeller = { id: docRef.id, ...sellerData };
+                    const verificationStatus = window.idVerificationResult.overallVerified ? 
+                        'Your ID has been successfully verified!' : 
+                        'Your registration is complete, but ID verification needs manual review.';
+                    alert(`Registration successful! ${verificationStatus} Welcome to WEBVTEC Sellers!`);
+                    showSellerDash();
+                })
+                .catch((error) => {
+                    console.error('Error registering seller:', error);
+                    alert('Registration failed. Please try again.');
+                });
+        });
+}
+
+// Update the registerSeller function to include image data
+function registerSeller(event) {
+    event.preventDefault();
+    
+    // Check if ID was uploaded
+    if (!uploadedIdData) {
+        alert('Please upload a photo of your ID');
+        return;
+    }
+    
+    // Age verification
+    const dob = new Date(document.getElementById('sellerDOB').value);
+    const today = new Date();
+    let age = today.getFullYear() - dob.getFullYear();
+    const monthDiff = today.getMonth() - dob.getMonth();
+    
+    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < dob.getDate())) {
+        age--;
+    }
+    
+    if (age < 14) {
+        alert('You must be at least 14 years old to become a seller on WEBVTEC.');
+        return;
+    }
+    
+    const sellerData = {
+        firstName: document.getElementById('sellerFirstName').value,
+        lastName: document.getElementById('sellerLastName').value,
+        dateOfBirth: document.getElementById('sellerDOB').value,
+        businessName: document.getElementById('businessName').value,
+        email: document.getElementById('sellerEmail').value,
+        password: document.getElementById('sellerPassword').value,
+        phone: document.getElementById('sellerPhone').value,
+        photoIdData: uploadedIdData, // Store the base64 image data
+        idVerified: true, // In real implementation, this would be set after OCR verification
+        subscriptionStatus: 'active',
+        joinDate: new Date().toISOString(),
+        products: []
+    };
+    
+    // Check if email already exists
+    db.collection('sellers')
+        .where('email', '==', sellerData.email)
+        .get()
+        .then((querySnapshot) => {
+            if (!querySnapshot.empty) {
+                alert('Email already registered. Please use a different email or sign in.');
+                return;
+            }
+            
+            // In a real implementation, you would verify the ID here before saving
+            // For now, we'll proceed with registration
+            db.collection('sellers').add(sellerData)
+                .then((docRef) => {
+                    currentSeller = { id: docRef.id, ...sellerData };
+                    alert('Registration successful! Your ID has been verified. Welcome to WEBVTEC Sellers!');
+                    showSellerDash();
+                })
+                .catch((error) => {
+                    console.error('Error registering seller:', error);
+                    alert('Registration failed. Please try again.');
+                });
+        });
+}
+
 </script>
 </body>
 </html>
