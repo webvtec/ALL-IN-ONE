@@ -1071,52 +1071,68 @@
 
     <div class="seller-content">
         <!-- Seller Registration/Login -->
-        <div id="sellerAuth" style="display: block;">
-            <div style="max-width: 600px; margin: 0 auto; text-align: center;">
-                <h1 style="color: #333; margin-bottom: 2rem;">Become a WEBVTEC Seller</h1>
-                
-                <div class="seller-section">
-                    <h2 style="color: #ffd700;">Seller Subscription: $25/month</h2>
-                    <p style="color: #666; margin: 1rem 0;">Join thousands of sellers on WEBVTEC and start selling today!</p>
-                    <ul style="margin: 1rem 0; padding-left: 2rem; text-align: left; color: #666;">
-                        <li>Unlimited product listings</li>
-                        <li>Built-in payment processing</li>
-                        <li>Customer review system</li>
-                        <li>Seller analytics dashboard</li>
-                        <li>You handle your own shipping</li>
-                    </ul>
-                    
-                    <div style="display: flex; gap: 1rem; justify-content: center; margin-top: 2rem;">
-                        <button class="btn" onclick="showSellerRegistration()">Start Selling - $25/month</button>
-                        <button class="btn" onclick="showSellerLogin()" style="background: #fff; color: #333; border: 2px solid #ffd700;">Seller Sign In</button>
-                    </div>
-                </div>
+<div id="sellerAuth" style="display: block;">
+    <div style="max-width: 600px; margin: 0 auto; text-align: center;">
+        <h1 style="color: #333; margin-bottom: 2rem;">Become a WEBVTEC Seller</h1>
+        
+        <div class="seller-section">
+            <h2 style="color: #ffd700;">Seller Subscription: $25/month</h2>
+            <p style="color: #666; margin: 1rem 0;">Join thousands of sellers on WEBVTEC and start selling today!</p>
+            <ul style="margin: 1rem 0; padding-left: 2rem; text-align: left; color: #666;">
+                <li>Unlimited product listings</li>
+                <li>Built-in payment processing</li>
+                <li>Customer review system</li>
+                <li>Seller analytics dashboard</li>
+                <li>You handle your own shipping</li>
+            </ul>
+            
+            <!-- Google Sign-In Button -->
+            <button type="button" onclick="sellerGoogleSignIn()" class="google-btn" style="width: 100%; margin-bottom: 1rem; padding: 0.7rem; border: 1px solid #ddd; border-radius: 8px; background: white; color: #333; font-size: 1rem; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px;">
+                <img src="https://developers.google.com/identity/images/g-logo.png" alt="Google" style="width: 18px; height: 18px;">
+                Continue with Google
+            </button>
+            
+            <div style="text-align: center; margin: 1rem 0; color: #ccc;">OR</div>
+            
+            <div style="display: flex; gap: 1rem; justify-content: center; margin-top: 2rem;">
+                <button class="btn" onclick="showSellerRegistration()">Start Selling - $25/month</button>
+                <button class="btn" onclick="showSellerLogin()" style="background: #fff; color: #333; border: 2px solid #ffd700;">Seller Sign In</button>
             </div>
         </div>
+    </div>
+</div>
 
         <!-- Seller Login Form -->
-        <div id="sellerLogin" style="display: none;">
-            <div style="max-width: 500px; margin: 0 auto;">
-                <h2 style="color: #333; text-align: center; margin-bottom: 2rem;">Seller Sign In</h2>
-                
-                <div class="seller-section">
-                    <form id="sellerLoginForm" onsubmit="loginSeller(event)">
-                        <div class="form-group">
-                            <label style="color: #333;">Email:</label>
-                            <input type="email" id="sellerLoginEmail" required style="width: 100%; padding: 0.7rem; border: 1px solid #ddd; border-radius: 8px;">
-                        </div>
-                        <div class="form-group">
-                            <label style="color: #333;">Password:</label>
-                            <input type="password" id="sellerLoginPassword" required minlength="6" style="width: 100%; padding: 0.7rem; border: 1px solid #ddd; border-radius: 8px;">
-                        </div>
-                        <button type="submit" class="btn" style="width: 100%;">Sign In</button>
-                    </form>
-                    <p style="text-align: center; margin-top: 1rem; color: #666;">
-                        New seller? <a href="#" onclick="showSellerRegistration()" style="color: #ffd700;">Register here</a>
-                    </p>
+<div id="sellerLogin" style="display: none;">
+    <div style="max-width: 500px; margin: 0 auto;">
+        <h2 style="color: #333; text-align: center; margin-bottom: 2rem;">Seller Sign In</h2>
+        
+        <div class="seller-section">
+            <!-- Google Sign-In Button -->
+            <button type="button" onclick="sellerGoogleSignIn()" class="google-btn" style="width: 100%; margin-bottom: 1rem; padding: 0.7rem; border: 1px solid #ddd; border-radius: 8px; background: white; color: #333; font-size: 1rem; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px;">
+                <img src="https://developers.google.com/identity/images/g-logo.png" alt="Google" style="width: 18px; height: 18px;">
+                Sign in with Google
+            </button>
+            
+            <div style="text-align: center; margin: 1rem 0; color: #ccc;">OR</div>
+            
+            <form id="sellerLoginForm" onsubmit="loginSeller(event)">
+                <div class="form-group">
+                    <label style="color: #333;">Email:</label>
+                    <input type="email" id="sellerLoginEmail" required style="width: 100%; padding: 0.7rem; border: 1px solid #ddd; border-radius: 8px;">
                 </div>
-            </div>
+                <div class="form-group">
+                    <label style="color: #333;">Password:</label>
+                    <input type="password" id="sellerLoginPassword" required minlength="6" style="width: 100%; padding: 0.7rem; border: 1px solid #ddd; border-radius: 8px;">
+                </div>
+                <button type="submit" class="btn" style="width: 100%;">Sign In</button>
+            </form>
+            <p style="text-align: center; margin-top: 1rem; color: #666;">
+                New seller? <a href="#" onclick="showSellerRegistration()" style="color: #ffd700;">Register here</a>
+            </p>
         </div>
+    </div>
+</div>
 
         <!-- Seller Registration Form -->
         <div id="sellerRegistration" style="display: none;">
@@ -1137,9 +1153,31 @@
                         </div>
                         
                         <div class="form-group">
-                            <label style="color: #333;">Date of Birth:</label>
-                            <input type="date" id="sellerDOB" required style="width: 100%; padding: 0.7rem; border: 1px solid #ddd; border-radius: 8px;">
-                            <small style="color: #666;">You must be at least 14 years old to sell on WEBVTEC</small>
+    <label style="color: #333;">Date of Birth:</label>
+    <div style="display: flex; gap: 0.5rem;">
+        <select id="birthMonth" required style="flex: 1; padding: 0.7rem; border: 1px solid #ddd; border-radius: 8px;">
+            <option value="">Month</option>
+            <option value="01">January</option>
+            <option value="02">February</option>
+            <option value="03">March</option>
+            <option value="04">April</option>
+            <option value="05">May</option>
+            <option value="06">June</option>
+            <option value="07">July</option>
+            <option value="08">August</option>
+            <option value="09">September</option>
+            <option value="10">October</option>
+            <option value="11">November</option>
+            <option value="12">December</option>
+        </select>
+        <select id="birthDay" required style="flex: 1; padding: 0.7rem; border: 1px solid #ddd; border-radius: 8px;">
+            <option value="">Day</option>
+        </select>
+        <select id="birthYear" required style="flex: 1; padding: 0.7rem; border: 1px solid #ddd; border-radius: 8px;">
+            <option value="">Year</option>
+        </select>
+    </div>
+    <small style="color: #666;">You must be at least 14 years old to sell on WEBVTEC</small>
                         </div>
                         
                         <div class="form-group">
@@ -2614,33 +2652,377 @@ function displayVerificationResults(analysisDiv, results) {
     `;
 }
 
-// Update the registerSeller function to check verification
-function registerSeller(event) {
+// Add these variables at the top with your other variables
+let googleSellerProvider = null;
+
+// Initialize Google provider for sellers
+document.addEventListener('DOMContentLoaded', function() {
+    // Existing DOMContentLoaded code...
+    
+    // Initialize Google provider for sellers
+    if (typeof firebase !== 'undefined' && firebase.auth) {
+        googleSellerProvider = new firebase.auth.GoogleAuthProvider();
+        googleSellerProvider.addScope('email');
+        googleSellerProvider.addScope('profile');
+    }
+    
+    // Populate year dropdown
+    populateYearDropdown();
+    
+    // Add event listener for month change to update days
+    document.getElementById('birthMonth').addEventListener('change', populateDayDropdown);
+    document.getElementById('birthYear').addEventListener('change', populateDayDropdown);
+});
+
+function populateYearDropdown() {
+    const yearSelect = document.getElementById('birthYear');
+    const currentYear = new Date().getFullYear();
+    const minYear = currentYear - 100; // 100 years back
+    const maxYear = currentYear - 14;  // Must be at least 14
+    
+    for (let year = maxYear; year >= minYear; year--) {
+        const option = document.createElement('option');
+        option.value = year;
+        option.textContent = year;
+        yearSelect.appendChild(option);
+    }
+}
+
+function populateDayDropdown() {
+    const monthSelect = document.getElementById('birthMonth');
+    const yearSelect = document.getElementById('birthYear');
+    const daySelect = document.getElementById('birthDay');
+    
+    const month = parseInt(monthSelect.value);
+    const year = parseInt(yearSelect.value);
+    
+    // Clear existing options
+    daySelect.innerHTML = '<option value="">Day</option>';
+    
+    if (month && year) {
+        // Get number of days in the selected month
+        const daysInMonth = new Date(year, month, 0).getDate();
+        
+        for (let day = 1; day <= daysInMonth; day++) {
+            const option = document.createElement('option');
+            option.value = day.toString().padStart(2, '0');
+            option.textContent = day;
+            daySelect.appendChild(option);
+        }
+    }
+}
+
+function getFormattedBirthDate() {
+    const month = document.getElementById('birthMonth').value;
+    const day = document.getElementById('birthDay').value;
+    const year = document.getElementById('birthYear').value;
+    
+    if (month && day && year) {
+        return `${year}-${month}-${day}`;
+    }
+    return null;
+}
+
+// Google Sign-In for sellers
+function sellerGoogleSignIn() {
+    console.log('Seller Google sign-in clicked');
+    
+    if (!googleSellerProvider) {
+        console.error('Google provider not initialized');
+        alert('Google sign-in not available. Please try again.');
+        return;
+    }
+    
+    auth.signInWithPopup(googleSellerProvider)
+        .then((result) => {
+            const user = result.user;
+            console.log('Google sign-in successful:', user);
+            
+            // Check if this user is already a seller
+            db.collection('sellers')
+                .where('email', '==', user.email)
+                .get()
+                .then((querySnapshot) => {
+                    if (!querySnapshot.empty) {
+                        // Existing seller
+                        querySnapshot.forEach((doc) => {
+                            currentSeller = { id: doc.id, ...doc.data() };
+                            showSellerDash();
+                            alert(`Welcome back, ${currentSeller.firstName || user.displayName}!`);
+                        });
+                    } else {
+                        // New seller - show completion form
+                        showGoogleSellerCompletion(user);
+                    }
+                })
+                .catch((error) => {
+                    console.error('Error checking seller status:', error);
+                    alert('Error accessing seller account. Please try again.');
+                });
+        })
+        .catch((error) => {
+            console.error('Google sign-in error:', error);
+            let errorMessage = 'Error signing in with Google: ';
+            switch(error.code) {
+                case 'auth/popup-closed-by-user':
+                    errorMessage += 'Sign-in cancelled.';
+                    break;
+                case 'auth/popup-blocked':
+                    errorMessage += 'Pop-up blocked. Please allow pop-ups.';
+                    break;
+                default:
+                    errorMessage += error.message;
+            }
+            alert(errorMessage);
+        });
+}
+
+function showGoogleSellerCompletion(googleUser) {
+    // Hide other sections
+    document.getElementById('sellerAuth').style.display = 'none';
+    document.getElementById('sellerLogin').style.display = 'none';
+    document.getElementById('sellerRegistration').style.display = 'none';
+    document.getElementById('sellerDashboard').style.display = 'none';
+    
+    // Create completion form
+    const completionDiv = document.createElement('div');
+    completionDiv.id = 'googleSellerCompletion';
+    completionDiv.innerHTML = `
+        <div style="max-width: 700px; margin: 0 auto;">
+            <h2 style="color: #333; text-align: center; margin-bottom: 2rem;">Complete Your Seller Profile</h2>
+            
+            <div class="seller-section">
+                <div style="text-align: center; margin-bottom: 2rem;">
+                    <img src="${googleUser.photoURL || ''}" alt="Profile" style="width: 80px; height: 80px; border-radius: 50%; border: 3px solid #ffd700;">
+                    <h3 style="color: #333; margin: 0.5rem 0;">${googleUser.displayName}</h3>
+                    <p style="color: #666;">${googleUser.email}</p>
+                </div>
+                
+                <form id="googleSellerCompletionForm" onsubmit="completeGoogleSellerRegistration(event)">
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label style="color: #333;">First Name:</label>
+                            <input type="text" id="googleSellerFirstName" required style="width: 100%; padding: 0.7rem; border: 1px solid #ddd; border-radius: 8px;" value="${googleUser.displayName ? googleUser.displayName.split(' ')[0] : ''}">
+                        </div>
+                        <div class="form-group">
+                            <label style="color: #333;">Last Name:</label>
+                            <input type="text" id="googleSellerLastName" required style="width: 100%; padding: 0.7rem; border: 1px solid #ddd; border-radius: 8px;" value="${googleUser.displayName ? googleUser.displayName.split(' ').slice(1).join(' ') : ''}">
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label style="color: #333;">Date of Birth:</label>
+                        <div style="display: flex; gap: 0.5rem;">
+                            <select id="googleBirthMonth" required style="flex: 1; padding: 0.7rem; border: 1px solid #ddd; border-radius: 8px;">
+                                <option value="">Month</option>
+                                <option value="01">January</option>
+                                <option value="02">February</option>
+                                <option value="03">March</option>
+                                <option value="04">April</option>
+                                <option value="05">May</option>
+                                <option value="06">June</option>
+                                <option value="07">July</option>
+                                <option value="08">August</option>
+                                <option value="09">September</option>
+                                <option value="10">October</option>
+                                <option value="11">November</option>
+                                <option value="12">December</option>
+                            </select>
+                            <select id="googleBirthDay" required style="flex: 1; padding: 0.7rem; border: 1px solid #ddd; border-radius: 8px;">
+                                <option value="">Day</option>
+                            </select>
+                            <select id="googleBirthYear" required style="flex: 1; padding: 0.7rem; border: 1px solid #ddd; border-radius: 8px;">
+                                <option value="">Year</option>
+                            </select>
+                        </div>
+                        <small style="color: #666;">You must be at least 14 years old to sell on WEBVTEC</small>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label style="color: #333;">Business Name:</label>
+                        <input type="text" id="googleBusinessName" required style="width: 100%; padding: 0.7rem; border: 1px solid #ddd; border-radius: 8px;">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label style="color: #333;">Phone Number:</label>
+                        <input type="tel" id="googleSellerPhone" required style="width: 100%; padding: 0.7rem; border: 1px solid #ddd; border-radius: 8px;">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label style="color: #333;">Photo ID (Driver's License, Passport, etc.):</label>
+                        <input type="file" id="googlePhotoID" accept="image/*" required style="width: 100%; padding: 0.7rem; border: 1px solid #ddd; border-radius: 8px;">
+                        <small style="color: #666;">Upload a clear photo of your government-issued ID. We'll verify your name and age automatically.</small>
+                        <div id="googleIdPreview" style="margin-top: 1rem; display: none;">
+                            <img id="googleIdPreviewImg" style="max-width: 300px; max-height: 200px; border-radius: 8px;">
+                            <div id="googleIdAnalysis" style="margin-top: 0.5rem; padding: 0.5rem; background: #f8f9fa; border-radius: 4px;"></div>
+                        </div>
+                    </div>
+                    
+                    <button type="submit" class="btn" style="width: 100%;">Complete Registration & Pay $25</button>
+                </form>
+                
+                <p style="text-align: center; margin-top: 1rem; color: #666;">
+                    <a href="#" onclick="cancelGoogleSellerRegistration()" style="color: #ffd700;">Cancel and go back</a>
+                </p>
+            </div>
+        </div>
+    `;
+    
+    // Insert the completion form
+    const sellerContent = document.querySelector('.seller-content');
+    sellerContent.appendChild(completionDiv);
+    
+    // Set up date dropdowns for Google form
+    setupGoogleDateDropdowns();
+    
+    // Store Google user data
+    window.pendingGoogleSeller = googleUser;
+}
+
+function setupGoogleDateDropdowns() {
+    // Populate year dropdown
+    const yearSelect = document.getElementById('googleBirthYear');
+    const currentYear = new Date().getFullYear();
+    const minYear = currentYear - 100;
+    const maxYear = currentYear - 14;
+    
+    for (let year = maxYear; year >= minYear; year--) {
+        const option = document.createElement('option');
+        option.value = year;
+        option.textContent = year;
+        yearSelect.appendChild(option);
+    }
+    
+    // Add event listeners
+    document.getElementById('googleBirthMonth').addEventListener('change', updateGoogleDayDropdown);
+    document.getElementById('googleBirthYear').addEventListener('change', updateGoogleDayDropdown);
+    
+    // Add ID upload handler
+    document.getElementById('googlePhotoID').addEventListener('change', function(e) {
+        handleIdUpload(e.target.files[0], 'googleIdPreview', 'googleIdPreviewImg', 'googleIdAnalysis');
+    });
+}
+
+function updateGoogleDayDropdown() {
+    const monthSelect = document.getElementById('googleBirthMonth');
+    const yearSelect = document.getElementById('googleBirthYear');
+    const daySelect = document.getElementById('googleBirthDay');
+    
+    const month = parseInt(monthSelect.value);
+    const year = parseInt(yearSelect.value);
+    
+    daySelect.innerHTML = '<option value="">Day</option>';
+    
+    if (month && year) {
+        const daysInMonth = new Date(year, month, 0).getDate();
+        
+        for (let day = 1; day <= daysInMonth; day++) {
+            const option = document.createElement('option');
+            option.value = day.toString().padStart(2, '0');
+            option.textContent = day;
+            daySelect.appendChild(option);
+        }
+    }
+}
+
+function completeGoogleSellerRegistration(event) {
     event.preventDefault();
     
-    // Check if ID was uploaded
+    if (!window.pendingGoogleSeller) {
+        alert('Session expired. Please try again.');
+        return;
+    }
+    
     if (!uploadedIdData) {
         alert('Please upload a photo of your ID');
         return;
     }
     
-    // Check if verification was completed
-    if (!window.idVerificationResult) {
-        alert('Please wait for ID verification to complete before submitting');
+    // Get formatted birth date
+    const month = document.getElementById('googleBirthMonth').value;
+    const day = document.getElementById('googleBirthDay').value;
+    const year = document.getElementById('googleBirthYear').value;
+    const birthDate = `${year}-${month}-${day}`;
+    
+    // Age verification
+    const dob = new Date(birthDate);
+    const today = new Date();
+    let age = today.getFullYear() - dob.getFullYear();
+    const monthDiff = today.getMonth() - dob.getMonth();
+    
+    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < dob.getDate())) {
+        age--;
+    }
+    
+    if (age < 14) {
+        alert('You must be at least 14 years old to become a seller on WEBVTEC.');
         return;
     }
     
-    // Check if verification passed
-    if (!window.idVerificationResult.overallVerified) {
-        const proceed = confirm(
-            'ID verification was not successful. This may be due to image quality or OCR limitations. ' +
-            'Do you want to proceed anyway? (Manual review may be required)'
-        );
-        if (!proceed) return;
+    const sellerData = {
+        firstName: document.getElementById('googleSellerFirstName').value,
+        lastName: document.getElementById('googleSellerLastName').value,
+        dateOfBirth: birthDate,
+        businessName: document.getElementById('googleBusinessName').value,
+        email: window.pendingGoogleSeller.email,
+        phone: document.getElementById('googleSellerPhone').value,
+        photoIdData: uploadedIdData,
+        idVerificationResult: window.idVerificationResult || { overallVerified: false },
+        subscriptionStatus: 'active',
+        joinDate: new Date().toISOString(),
+        products: [],
+        googleUser: true,
+        googleId: window.pendingGoogleSeller.uid,
+        photoURL: window.pendingGoogleSeller.photoURL
+    };
+    
+    db.collection('sellers').add(sellerData)
+        .then((docRef) => {
+            currentSeller = { id: docRef.id, ...sellerData };
+            
+            // Clean up
+            document.getElementById('googleSellerCompletion').remove();
+            window.pendingGoogleSeller = null;
+            
+            alert('Registration successful! Welcome to WEBVTEC Sellers!');
+            showSellerDash();
+        })
+        .catch((error) => {
+            console.error('Error completing Google seller registration:', error);
+            alert('Registration failed. Please try again.');
+        });
+}
+
+function cancelGoogleSellerRegistration() {
+    // Clean up
+    const completionDiv = document.getElementById('googleSellerCompletion');
+    if (completionDiv) {
+        completionDiv.remove();
+    }
+    window.pendingGoogleSeller = null;
+    
+    // Show auth section
+    document.getElementById('sellerAuth').style.display = 'block';
+}
+
+// Update the existing registerSeller function to use formatted date
+function registerSeller(event) {
+    event.preventDefault();
+    
+    if (!uploadedIdData) {
+        alert('Please upload a photo of your ID');
+        return;
+    }
+    
+    // Get formatted birth date
+    const birthDate = getFormattedBirthDate();
+    if (!birthDate) {
+        alert('Please select your complete date of birth');
+        return;
     }
     
     // Age verification
-    const dob = new Date(document.getElementById('sellerDOB').value);
+    const dob = new Date(birthDate);
     const today = new Date();
     let age = today.getFullYear() - dob.getFullYear();
     const monthDiff = today.getMonth() - dob.getMonth();
@@ -2657,13 +3039,13 @@ function registerSeller(event) {
     const sellerData = {
         firstName: document.getElementById('sellerFirstName').value,
         lastName: document.getElementById('sellerLastName').value,
-        dateOfBirth: document.getElementById('sellerDOB').value,
+        dateOfBirth: birthDate,
         businessName: document.getElementById('businessName').value,
         email: document.getElementById('sellerEmail').value,
         password: document.getElementById('sellerPassword').value,
         phone: document.getElementById('sellerPhone').value,
         photoIdData: uploadedIdData,
-        idVerificationResult: window.idVerificationResult,
+        idVerificationResult: window.idVerificationResult || { overallVerified: false },
         subscriptionStatus: 'active',
         joinDate: new Date().toISOString(),
         products: []
@@ -2682,10 +3064,7 @@ function registerSeller(event) {
             db.collection('sellers').add(sellerData)
                 .then((docRef) => {
                     currentSeller = { id: docRef.id, ...sellerData };
-                    const verificationStatus = window.idVerificationResult.overallVerified ? 
-                        'Your ID has been successfully verified!' : 
-                        'Your registration is complete, but ID verification needs manual review.';
-                    alert(`Registration successful! ${verificationStatus} Welcome to WEBVTEC Sellers!`);
+                    alert('Registration successful! Welcome to WEBVTEC Sellers!');
                     showSellerDash();
                 })
                 .catch((error) => {
@@ -2695,70 +3074,6 @@ function registerSeller(event) {
         });
 }
 
-// Update the registerSeller function to include image data
-function registerSeller(event) {
-    event.preventDefault();
-    
-    // Check if ID was uploaded
-    if (!uploadedIdData) {
-        alert('Please upload a photo of your ID');
-        return;
-    }
-    
-    // Age verification
-    const dob = new Date(document.getElementById('sellerDOB').value);
-    const today = new Date();
-    let age = today.getFullYear() - dob.getFullYear();
-    const monthDiff = today.getMonth() - dob.getMonth();
-    
-    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < dob.getDate())) {
-        age--;
-    }
-    
-    if (age < 14) {
-        alert('You must be at least 14 years old to become a seller on WEBVTEC.');
-        return;
-    }
-    
-    const sellerData = {
-        firstName: document.getElementById('sellerFirstName').value,
-        lastName: document.getElementById('sellerLastName').value,
-        dateOfBirth: document.getElementById('sellerDOB').value,
-        businessName: document.getElementById('businessName').value,
-        email: document.getElementById('sellerEmail').value,
-        password: document.getElementById('sellerPassword').value,
-        phone: document.getElementById('sellerPhone').value,
-        photoIdData: uploadedIdData, // Store the base64 image data
-        idVerified: true, // In real implementation, this would be set after OCR verification
-        subscriptionStatus: 'active',
-        joinDate: new Date().toISOString(),
-        products: []
-    };
-    
-    // Check if email already exists
-    db.collection('sellers')
-        .where('email', '==', sellerData.email)
-        .get()
-        .then((querySnapshot) => {
-            if (!querySnapshot.empty) {
-                alert('Email already registered. Please use a different email or sign in.');
-                return;
-            }
-            
-            // In a real implementation, you would verify the ID here before saving
-            // For now, we'll proceed with registration
-            db.collection('sellers').add(sellerData)
-                .then((docRef) => {
-                    currentSeller = { id: docRef.id, ...sellerData };
-                    alert('Registration successful! Your ID has been verified. Welcome to WEBVTEC Sellers!');
-                    showSellerDash();
-                })
-                .catch((error) => {
-                    console.error('Error registering seller:', error);
-                    alert('Registration failed. Please try again.');
-                });
-        });
-}
 
 </script>
 </body>
