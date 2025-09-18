@@ -768,6 +768,59 @@
     cursor: pointer;
 }
 
+
+
+
+
+
+
+
+/* Add this to your existing CSS */
+.categories-section {
+    padding: 1rem 0;
+    background: rgba(255, 255, 255, 0.05);
+    border-bottom: 1px solid rgba(255, 215, 0, 0.2);
+}
+
+.categories-container {
+    max-width: 800px;
+    margin: 0 auto;
+    overflow-x: auto;
+    padding: 0 1rem;
+}
+
+.categories-scroll {
+    display: flex;
+    gap: 1rem;
+    padding: 0.5rem 0;
+    min-width: max-content;
+}
+
+.category-btn {
+    padding: 0.5rem 1rem;
+    border: none;
+    border-radius: 25px;
+    background: linear-gradient(45deg, #ffd700, #ffed4a);
+    color: #333;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-decoration: none;
+    display: inline-block;
+    white-space: nowrap;
+    min-width: fit-content;
+}
+
+.category-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(255, 215, 0, 0.3);
+}
+
+.category-btn.active {
+    background: linear-gradient(45deg, #333, #555);
+    color: #ffd700;
+}
+
     </style>
 </head>
 <body>
@@ -778,22 +831,42 @@
 </header>
 
 
-    <!-- Header -->
-    <header class="header">
-    <div style="display: flex; justify-content: space-around; align-items: center; margin-bottom: 10px;">
-        <button class="btn" onclick="showLogin()">👤 Sign In</button>
-        <button class="btn">Request Product</button>
-        <button class="btn" onclick="showCart()" style="position: relative;">
-            🛒 Cart <span class="cart-count" id="cartCount">0</span>
-        </button>
-    </div>
+    
+<!-- Header -->
+<header class="header">
+<div style="display: flex; justify-content: space-around; align-items: center; margin-bottom: 10px;">
+    <button class="btn" onclick="showLogin()">👤 Sign In</button>
+    <button class="btn" onclick="showSellerDashboard()">Sell on WEBVTEC</button>
+    <button class="btn" onclick="showCart()" style="position: relative;">
+        🛒 Cart <span class="cart-count" id="cartCount">0</span>
+    </button>
+</div>
 
-        
 <div class="search-container">
     <input type="text" class="search-bar" placeholder="Search for products..." onkeyup="searchProducts()">
     <button class="search-btn" onclick="searchProducts()">🔍</button>
 </div>
-    </header>
+
+<!-- Categories Section -->
+<div class="categories-section">
+    <div class="categories-container">
+        <div class="categories-scroll" id="categoriesScroll">
+            <button class="category-btn active" onclick="filterByCategory('all')">All</button>
+            <button class="category-btn" onclick="filterByCategory('electronics')">Electronics</button>
+            <button class="category-btn" onclick="filterByCategory('clothing')">Clothing</button>
+            <button class="category-btn" onclick="filterByCategory('home')">Home & Garden</button>
+            <button class="category-btn" onclick="filterByCategory('books')">Books</button>
+            <button class="category-btn" onclick="filterByCategory('sports')">Sports</button>
+            <button class="category-btn" onclick="filterByCategory('beauty')">Beauty</button>
+            <button class="category-btn" onclick="filterByCategory('automotive')">Automotive</button>
+            <button class="category-btn" onclick="filterByCategory('toys')">Toys & Games</button>
+            <button class="category-btn" onclick="filterByCategory('jewelry')">Jewelry</button>
+            <button class="category-btn" onclick="filterByCategory('health')">Health</button>
+        </div>
+    </div>
+</div>
+</header>
+    
 
         <div class="products-grid" id="productsGrid">
             <!-- Products will be loaded here -->
@@ -849,6 +922,149 @@
     </div>
 </div>
 
+
+<!-- Seller Dashboard Modal -->
+<div id="sellerModal" class="modal">
+    <div class="modal-content" style="max-width: 900px; width: 95%;">
+        <span class="close" onclick="closeSellerModal()">&times;</span>
+        
+        <!-- Seller Registration/Login -->
+        <div id="sellerAuth" style="display: block;">
+            <h2 style="color: #ffd700; margin-bottom: 1rem;">Become a Seller</h2>
+            <div style="background: rgba(0,0,0,0.1); padding: 1rem; border-radius: 8px; margin-bottom: 1rem;">
+                <h3 style="color: #ffd700;">Seller Subscription: $25/month</h3>
+                <p>Join thousands of sellers on WEBVTEC and start selling today!</p>
+                <ul style="margin: 1rem 0; padding-left: 2rem;">
+                    <li>Unlimited product listings</li>
+                    <li>Built-in payment processing</li>
+                    <li>Customer review system</li>
+                    <li>Seller analytics dashboard</li>
+                </ul>
+            </div>
+            <button class="btn" onclick="showSellerRegistration()" style="width: 100%; margin-bottom: 1rem;">Start Selling - $25/month</button>
+            <p style="text-align: center;">Already a seller? <a href="#" onclick="showSellerLogin()" style="color: #ffd700;">Sign In</a></p>
+        </div>
+
+        <!-- Seller Registration Form -->
+        <div id="sellerRegistration" style="display: none;">
+            <h2 style="color: #ffd700; margin-bottom: 1rem;">Seller Registration</h2>
+            <form id="sellerRegForm" onsubmit="registerSeller(event)">
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                    <div class="form-group">
+                        <label>First Name:</label>
+                        <input type="text" id="sellerFirstName" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Last Name:</label>
+                        <input type="text" id="sellerLastName" required>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Business Name:</label>
+                    <input type="text" id="businessName" required>
+                </div>
+                <div class="form-group">
+                    <label>Email:</label>
+                    <input type="email" id="sellerEmail" required>
+                </div>
+                <div class="form-group">
+                    <label>Password:</label>
+                    <input type="password" id="sellerPassword" required minlength="6">
+                </div>
+                <div class="form-group">
+                    <label>Phone Number:</label>
+                    <input type="tel" id="sellerPhone" required>
+                </div>
+                <div class="form-group">
+                    <label>Business Address:</label>
+                    <textarea id="businessAddress" rows="3" required></textarea>
+                </div>
+                <button type="submit" class="btn" style="width: 100%;">Register & Pay $25</button>
+            </form>
+        </div>
+
+        <!-- Seller Dashboard -->
+        <div id="sellerDashboard" style="display: none;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+                <h2 style="color: #ffd700; margin: 0;">Seller Dashboard</h2>
+                <button class="btn" onclick="signOutSeller()">Sign Out</button>
+            </div>
+            
+            <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem; margin-bottom: 2rem;">
+                <div style="background: rgba(0,0,0,0.1); padding: 1rem; border-radius: 8px; text-align: center;">
+                    <h3>Total Products</h3>
+                    <p style="font-size: 2rem; color: #ffd700;" id="sellerProductCount">0</p>
+                </div>
+                <div style="background: rgba(0,0,0,0.1); padding: 1rem; border-radius: 8px; text-align: center;">
+                    <h3>Total Sales</h3>
+                    <p style="font-size: 2rem; color: #ffd700;">$0.00</p>
+                </div>
+                <div style="background: rgba(0,0,0,0.1); padding: 1rem; border-radius: 8px; text-align: center;">
+                    <h3>Subscription</h3>
+                    <p style="color: #4CAF50;">Active</p>
+                </div>
+            </div>
+
+            <div style="display: flex; gap: 1rem; margin-bottom: 2rem;">
+                <button class="btn" onclick="showAddProduct()">Add New Product</button>
+                <button class="btn" onclick="showSellerProducts()">My Products</button>
+                <button class="btn" onclick="showSellerProfile()">Profile Settings</button>
+            </div>
+
+            <!-- Add Product Form -->
+            <div id="addProductSection" style="display: none; background: rgba(0,0,0,0.1); padding: 1rem; border-radius: 8px;">
+                <h3 style="color: #ffd700;">Add New Product</h3>
+                <form id="addProductForm" onsubmit="addSellerProduct(event)">
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                        <div class="form-group">
+                            <label>Product Name:</label>
+                            <input type="text" id="productName" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Price ($):</label>
+                            <input type="number" step="0.01" id="productPrice" required>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Category:</label>
+                        <select id="productCategory" required>
+                            <option value="">Select Category</option>
+                            <option value="electronics">Electronics</option>
+                            <option value="clothing">Clothing</option>
+                            <option value="home">Home & Garden</option>
+                            <option value="books">Books</option>
+                            <option value="sports">Sports</option>
+                            <option value="beauty">Beauty</option>
+                            <option value="automotive">Automotive</option>
+                            <option value="toys">Toys & Games</option>
+                            <option value="jewelry">Jewelry</option>
+                            <option value="health">Health</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Description:</label>
+                        <textarea id="productDescription" rows="3" required></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label>Image URL:</label>
+                        <input type="url" id="productImage" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Shipping Information:</label>
+                        <textarea id="shippingInfo" rows="2" placeholder="Shipping cost, delivery time, etc." required></textarea>
+                    </div>
+                    <button type="submit" class="btn">Add Product</button>
+                </form>
+            </div>
+
+            <!-- Seller Products List -->
+            <div id="sellerProductsList" style="display: none;">
+                <h3 style="color: #ffd700;">My Products</h3>
+                <div id="sellerProductsGrid"></div>
+            </div>
+        </div>
+    </div>
+</div>
     
 <script>
 // Firebase configuration - MOVE THIS TO THE TOP
@@ -1131,10 +1347,6 @@ function createProductCard(product) {
         ? reviews.reduce((sum, review) => sum + review.rating, 0) / reviews.length 
         : 0;
     
-    // Debug: Log the product data
-    console.log('Product:', product.name, 'Reviews:', reviews, 'Count:', reviewCount, 'Avg:', avgRating);
-    
-    // Generate filled stars for average rating, empty stars for remainder
     const starsHTML = Array.from({length: 5}, (_, i) => {
         if (i < Math.floor(avgRating)) {
             return `<span class="star">★</span>`;
@@ -1151,11 +1363,13 @@ function createProductCard(product) {
             <div class="product-header">
                 <h3 class="product-title">${product.name}</h3>
                 <p class="product-description">${product.description || 'DESCRIPTION'}</p>
+                <p style="color: #666; font-size: 0.9rem; margin: 0.5rem 0;">Sold by: ${product.sellerName || 'WEBVTEC'}</p>
             </div>
             <div class="rating-section">
                 <div class="stars">${starsHTML} <span class="review-count">(${reviewCount})</span></div>
             </div>
             <div class="product-price">$${product.price}</div>
+            <p style="color: #666; font-size: 0.8rem; margin: 0.5rem 0;">${product.shippingInfo || 'Shipping info available'}</p>
             <button class="add-to-cart" data-product-id="${product.id}">Add to cart</button>
         </div>
     `;
@@ -1539,6 +1753,202 @@ function updateDetailPageAuth() {
         }
     }
 }
+
+
+
+    // Add these variables to your existing variables section
+let currentSeller = null;
+let selectedCategory = 'all';
+
+// Category filtering function
+function filterByCategory(category) {
+    selectedCategory = category;
+    
+    // Update active button
+    document.querySelectorAll('.category-btn').forEach(btn => {
+        btn.classList.remove('active');
+    });
+    event.target.classList.add('active');
+    
+    // Filter products
+    if (category === 'all') {
+        displayProducts();
+    } else {
+        const filteredProducts = products.filter(product => 
+            product.category === category
+        );
+        displayFilteredProducts(filteredProducts);
+    }
+}
+
+function displayFilteredProducts(filteredProducts) {
+    const grid = document.getElementById('productsGrid');
+    grid.innerHTML = '';
+    
+    filteredProducts.forEach(product => {
+        const productCard = createProductCard(product);
+        grid.appendChild(productCard);
+    });
+}
+
+// Seller Functions
+function showSellerDashboard() {
+    document.getElementById('sellerModal').style.display = 'block';
+    if (currentSeller) {
+        showSellerDash();
+    } else {
+        document.getElementById('sellerAuth').style.display = 'block';
+    }
+}
+
+function closeSellerModal() {
+    document.getElementById('sellerModal').style.display = 'none';
+    // Reset all sections
+    document.getElementById('sellerAuth').style.display = 'block';
+    document.getElementById('sellerRegistration').style.display = 'none';
+    document.getElementById('sellerDashboard').style.display = 'none';
+    document.getElementById('addProductSection').style.display = 'none';
+    document.getElementById('sellerProductsList').style.display = 'none';
+}
+
+function showSellerRegistration() {
+    document.getElementById('sellerAuth').style.display = 'none';
+    document.getElementById('sellerRegistration').style.display = 'block';
+}
+
+function showSellerLogin() {
+    // Implement seller login logic
+    alert('Seller login functionality would be implemented here');
+}
+
+function registerSeller(event) {
+    event.preventDefault();
+    
+    const sellerData = {
+        firstName: document.getElementById('sellerFirstName').value,
+        lastName: document.getElementById('sellerLastName').value,
+        businessName: document.getElementById('businessName').value,
+        email: document.getElementById('sellerEmail').value,
+        password: document.getElementById('sellerPassword').value,
+        phone: document.getElementById('sellerPhone').value,
+        address: document.getElementById('businessAddress').value,
+        subscriptionStatus: 'active',
+        joinDate: new Date().toISOString(),
+        products: []
+    };
+    
+    // Save to Firebase
+    db.collection('sellers').add(sellerData)
+        .then((docRef) => {
+            currentSeller = { id: docRef.id, ...sellerData };
+            alert('Registration successful! Welcome to WEBVTEC Sellers!');
+            showSellerDash();
+        })
+        .catch((error) => {
+            console.error('Error registering seller:', error);
+            alert('Registration failed. Please try again.');
+        });
+}
+
+function showSellerDash() {
+    document.getElementById('sellerAuth').style.display = 'none';
+    document.getElementById('sellerRegistration').style.display = 'none';
+    document.getElementById('sellerDashboard').style.display = 'block';
+    updateSellerStats();
+}
+
+function updateSellerStats() {
+    if (currentSeller) {
+        // Count seller's products
+        const sellerProducts = products.filter(p => p.sellerId === currentSeller.id);
+        document.getElementById('sellerProductCount').textContent = sellerProducts.length;
+    }
+}
+
+function showAddProduct() {
+    document.getElementById('addProductSection').style.display = 'block';
+    document.getElementById('sellerProductsList').style.display = 'none';
+}
+
+function showSellerProducts() {
+    document.getElementById('addProductSection').style.display = 'none';
+    document.getElementById('sellerProductsList').style.display = 'block';
+    loadSellerProducts();
+}
+
+function showSellerProfile() {
+    alert('Seller profile settings would be implemented here');
+}
+
+function addSellerProduct(event) {
+    event.preventDefault();
+    
+    if (!currentSeller) {
+        alert('Please log in as a seller first');
+        return;
+    }
+    
+    const productData = {
+        name: document.getElementById('productName').value,
+        price: parseFloat(document.getElementById('productPrice').value),
+        category: document.getElementById('productCategory').value,
+        description: document.getElementById('productDescription').value,
+        image: document.getElementById('productImage').value,
+        shippingInfo: document.getElementById('shippingInfo').value,
+        sellerId: currentSeller.id,
+        sellerName: currentSeller.businessName,
+        dateAdded: new Date().toISOString(),
+        reviews: []
+    };
+    
+    db.collection('products').add(productData)
+        .then(() => {
+            alert('Product added successfully!');
+            document.getElementById('addProductForm').reset();
+            document.getElementById('addProductSection').style.display = 'none';
+            updateSellerStats();
+        })
+        .catch((error) => {
+            console.error('Error adding product:', error);
+            alert('Failed to add product. Please try again.');
+        });
+}
+
+function loadSellerProducts() {
+    if (!currentSeller) return;
+    
+    const sellerProducts = products.filter(p => p.sellerId === currentSeller.id);
+    const grid = document.getElementById('sellerProductsGrid');
+    grid.innerHTML = '';
+    
+    sellerProducts.forEach(product => {
+        const productDiv = document.createElement('div');
+        productDiv.style.cssText = 'background: rgba(255,255,255,0.1); padding: 1rem; border-radius: 8px; margin-bottom: 1rem;';
+        productDiv.innerHTML = `
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <div>
+                    <h4>${product.name}</h4>
+                    <p>$${product.price} - ${product.category}</p>
+                </div>
+                <button class="btn" onclick="editProduct('${product.id}')">Edit</button>
+            </div>
+        `;
+        grid.appendChild(productDiv);
+    });
+}
+
+function editProduct(productId) {
+    alert('Product editing functionality would be implemented here');
+}
+
+function signOutSeller() {
+    currentSeller = null;
+    closeSellerModal();
+    alert('Signed out successfully');
+}
+
+// Update your existing createProductCard function to include seller info
+// Replace the existing createProductCard function with this updated version:
 </script>
 </body>
 </html>
