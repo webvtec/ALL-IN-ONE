@@ -3562,6 +3562,68 @@ function levenshteinDistance(str1, str2) {
     return matrix[str2.length][str1.length];
 }
 
+
+
+    function verifyIdInfo(ocrText, expectedName, expectedDob) {
+  // Normalize OCR text
+  const cleanText = ocrText.toLowerCase().replace(/\s+/g, " ");
+
+  // Split expected name into parts
+  const [firstName, lastName] = expectedName.toLowerCase().split(" ");
+
+  // ✅ Name check
+  const nameMatch = cleanText.includes(firstName) && cleanText.includes(lastName);
+
+  // ✅ DOB check (try multiple formats)
+  const dobRegexes = [
+    /\b\d{2}[\/\-]\d{2}[\/\-]\d{4}\b/,   // 12/08/1990
+    /\b\d{4}[\/\-]\d{2}[\/\-]\d{2}\b/,   // 1990-08-12
+    /\b\d{1,2}\s(?:jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*\s\d{4}\b/i
+  ];
+
+  let dobFound = null;
+  for (let regex of dobRegexes) {
+    const match = cleanText.match(regex);
+    if (match) {
+      dobFound = match[0];
+      break;
+    }
+  }
+
+  // Compare extracted DOB to expected
+  const dobMatch = dobFound && normalizeDob(dobFound) === normalizeDob(expectedDob);
+
+  // Build result message
+  let result = `ID Verification Results ⚠️\n`;
+  result += `Name Verification:\n${nameMatch ? "✅ Verified" : "❌ No Match"}\n`;
+  result += `Form: ${expectedName}\n`;
+  result += `Found: ${nameMatch ? `"${firstName}" and "${lastName}" in text` : "Not detected"}\n\n`;
+
+  result += `Date of Birth:\n${dobMatch ? "✅ Verified" : "❌ No Match"}\n`;
+  result += `Form: ${expectedDob}\n`;
+  result += `Found: ${dobFound || "None detected"}\n`;
+
+  document.getElementById("idAnalysis").innerText = result;
+}
+
+function normalizeDob(dobString) {
+  // Convert to YYYYMMDD for easy comparison
+  return dobString
+    .replace(/[^0-9]/g, "") // remove separators
+    .padStart(8, "0");      // normalize length
+}
+
+
+    Tesseract.recognize(file, 'eng').then(({ data: { text } }) => {
+  const expectedName = document.getElementById("sellerFirstName").value + " " + 
+                       document.getElementById("sellerLastName").value;
+
+  const expectedDob = `${document.getElementById("birthYear").value}-${document.getElementById("birthMonth").value}-${document.getElementById("birthDay").value}`;
+
+  verifyIdInfo(text, expectedName, expectedDob);
+});
+
+
 </script>
 </body>
 </html>
