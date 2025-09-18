@@ -63,8 +63,8 @@
             text-align: center;
         }
 
-        .header-main {
-            padding: 16px 0;
+        ..header-main {
+    padding: 8px 0;
         }
 
         .header-container {
@@ -1155,13 +1155,14 @@
     </style>
 </head>
 <body>
+    
+    <header>
     <!-- Header -->
-    <header class="header">
-        <div class="header-top">
-            <div class="header-container">
-                Free shipping on orders over $75 • 30-day return policy • 24/7 customer support
-            </div>
-        </div>
+    <div class="header-top">
+    <div class="header-container">
+        WEB VTEC
+    </div>
+    </div>
         
         <div class="header-main">
             <div class="header-container">
@@ -1432,8 +1433,8 @@
                 <span id="cartSubtotal">$0.00</span>
             </div>
             <div class="cart-shipping">
-                <span>Shipping:</span>
-                <span>FREE</span>
+    <span>Shipping:</span>
+    <span>Handled by Sellers</span>
             </div>
             <div class="cart-total">
                 <span>Total:</span>
@@ -2208,7 +2209,7 @@
                     rating: 4.8,
                     reviews: 1247,
                     badge: 'BESTSELLER',
-                    shipping: 'FREE shipping by tomorrow',
+                    shipping: 'Seller handles shipping',
                     description: 'Industry-leading noise cancellation with premium audio quality.',
                     stock: 15,
                     isActive: true,
@@ -2223,7 +2224,7 @@
                     sellerName: 'EcoWear',
                     rating: 4.5,
                     reviews: 523,
-                    shipping: 'FREE shipping on orders over $35',
+                    shipping: 'Seller handles shipping',
                     description: '100% organic cotton, ethically sourced and sustainably made.',
                     stock: 50,
                     isActive: true,
@@ -2240,7 +2241,7 @@
                     rating: 4.7,
                     reviews: 892,
                     badge: 'SMART CHOICE',
-                    shipping: 'FREE 2-day shipping',
+                    shipping: 'Seller handles shipping',
                     description: '4K Ultra HD with night vision and mobile app control.',
                     stock: 25,
                     isActive: true,
@@ -2563,18 +2564,17 @@
         }
 
         function updateCartTotals() {
-            const subtotal = cart.reduce((total, item) => total + (parseFloat(item.price) * item.quantity), 0);
-            const shipping = subtotal >= 75 ? 0 : 9.99; // Free shipping over $75
-            const total = subtotal + shipping;
-            
-            elements.cartSubtotal.textContent = `${subtotal.toFixed(2)}`;
-            elements.cartTotal.textContent = `${total.toFixed(2)}`;
-            
-            // Update shipping text
-            const shippingElement = document.querySelector('.cart-shipping span:last-child');
-            if (shippingElement) {
-                shippingElement.textContent = shipping === 0 ? 'FREE' : `${shipping.toFixed(2)}`;
-            }
+    const subtotal = cart.reduce((total, item) => total + (parseFloat(item.price) * item.quantity), 0);
+    const total = subtotal; // Remove shipping logic since sellers handle it
+    
+    elements.cartSubtotal.textContent = `$${subtotal.toFixed(2)}`;
+    elements.cartTotal.textContent = `$${total.toFixed(2)}`;
+    
+    // Update shipping text
+    const shippingElement = document.querySelector('.cart-shipping span:last-child');
+    if (shippingElement) {
+        shippingElement.textContent = 'By Seller';
+    }
         }
 
         async function updateCartQuantity(itemId, change, newValue = null) {
@@ -3689,6 +3689,74 @@
         window.editProduct = editProduct;
         
         console.log('WEB VTEC initialized successfully!');
+
+
+        // Fix missing functions
+function showModal(modalId) {
+    const modal = document.getElementById(modalId);
+    if (modal) {
+        modal.classList.add('active');
+        document.body.style.overflow = 'hidden';
+    }
+}
+
+function hideModal(modalId) {
+    const modal = document.getElementById(modalId);
+    if (modal) {
+        modal.classList.remove('active');
+        document.body.style.overflow = '';
+    }
+}
+
+// Fix category card clicks
+document.addEventListener('click', function(e) {
+    if (e.target.closest('.category-card')) {
+        e.preventDefault();
+        const categoryCard = e.target.closest('.category-card');
+        const categoryId = categoryCard.dataset.category;
+        if (categoryId) {
+            filterByCategory(categoryId);
+        }
+    }
+});
+
+// Fix become seller button
+function handleBecomeSellerClick() {
+    if (!currentUser) {
+        showModal('authModal');
+        return;
+    }
+    
+    if (userProfile?.isSeller && sellerSubscription?.status === 'active') {
+        toggleSellerDashboard();
+    } else {
+        showModal('subscriptionModal');
+    }
+}
+
+// Fix missing modal close handlers
+document.addEventListener('DOMContentLoaded', function() {
+    // Close modals when clicking close buttons
+    document.addEventListener('click', function(e) {
+        if (e.target.classList.contains('modal-close') || e.target.closest('.modal-close')) {
+            const modal = e.target.closest('.modal');
+            if (modal) {
+                modal.classList.remove('active');
+                document.body.style.overflow = '';
+            }
+        }
+        
+        // Close cart when clicking close button
+        if (e.target.id === 'cartCloseBtn' || e.target.closest('#cartCloseBtn')) {
+            toggleCart();
+        }
+        
+        // Close subscription modal
+        if (e.target.id === 'subscriptionClose' || e.target.closest('#subscriptionClose')) {
+            hideModal('subscriptionModal');
+        }
+    });
+});
     </script>
 </body>
 </html>
