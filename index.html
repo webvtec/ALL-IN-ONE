@@ -821,6 +821,110 @@
     color: #ffd700;
 }
 
+
+
+
+
+
+
+    /* Add this CSS for seller page */
+.seller-page {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100vh;
+    background: #FFFFFF;
+    z-index: 1003;
+    overflow-y: auto;
+    padding: 0;
+}
+
+.seller-page.active {
+    display: block;
+}
+
+.seller-content {
+    padding: 20px;
+    margin-top: 140px; /* Account for both headers */
+    max-width: 1200px;
+    margin-left: auto;
+    margin-right: auto;
+    color: #333;
+}
+
+.dashboard-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.dashboard-card {
+    background: #f8f9fa;
+    border: 1px solid #e0e0e0;
+    border-radius: 12px;
+    padding: 1.5rem;
+    text-align: center;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.dashboard-card h3 {
+    color: #333;
+    margin-bottom: 1rem;
+    font-size: 1.1rem;
+}
+
+.dashboard-card .stat-number {
+    font-size: 2.5rem;
+    font-weight: bold;
+    color: #ffd700;
+    margin-bottom: 0.5rem;
+}
+
+.seller-nav {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 2rem;
+    flex-wrap: wrap;
+}
+
+.seller-nav .btn {
+    background: #fff;
+    color: #333;
+    border: 2px solid #ffd700;
+}
+
+.seller-nav .btn.active {
+    background: #ffd700;
+    color: #333;
+}
+
+.seller-section {
+    background: #fff;
+    border-radius: 12px;
+    padding: 2rem;
+    border: 1px solid #e0e0e0;
+    margin-bottom: 2rem;
+}
+
+.form-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+}
+
+@media (max-width: 768px) {
+    .form-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .seller-nav {
+        flex-direction: column;
+    }
+}
+
     </style>
 </head>
 <body>
@@ -923,111 +1027,190 @@
 </div>
 
 
-<!-- Seller Dashboard Modal -->
-<div id="sellerModal" class="modal">
-    <div class="modal-content" style="max-width: 900px; width: 95%;">
-        <span class="close" onclick="closeSellerModal()">&times;</span>
-        
+
+<!-- Seller Page -->
+<div id="sellerPage" class="seller-page">
+    <!-- Top header that stays at top -->
+    <header class="top-header">
+        <div class="logo">WEBVTEC</div>
+    </header>
+    
+    <!-- Second header -->
+    <header class="header" style="position: fixed; width: 100%; z-index: 999; margin: 0; top: 70px;">
+        <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
+            <button class="btn" onclick="closeSellerPage()">← Back to Store</button>
+            <button class="btn" onclick="showLogin()" id="sellerPageSignInBtn">👤 Sign In</button>
+            <button class="btn" onclick="signOutSeller()">Sign Out</button>
+        </div>
+    </header>
+
+    <div class="seller-content">
         <!-- Seller Registration/Login -->
         <div id="sellerAuth" style="display: block;">
-            <h2 style="color: #ffd700; margin-bottom: 1rem;">Become a Seller</h2>
-            <div style="background: rgba(0,0,0,0.1); padding: 1rem; border-radius: 8px; margin-bottom: 1rem;">
-                <h3 style="color: #ffd700;">Seller Subscription: $25/month</h3>
-                <p>Join thousands of sellers on WEBVTEC and start selling today!</p>
-                <ul style="margin: 1rem 0; padding-left: 2rem;">
-                    <li>Unlimited product listings</li>
-                    <li>Built-in payment processing</li>
-                    <li>Customer review system</li>
-                    <li>Seller analytics dashboard</li>
-                </ul>
+            <div style="max-width: 600px; margin: 0 auto; text-align: center;">
+                <h1 style="color: #333; margin-bottom: 2rem;">Become a WEBVTEC Seller</h1>
+                
+                <div class="seller-section">
+                    <h2 style="color: #ffd700;">Seller Subscription: $25/month</h2>
+                    <p style="color: #666; margin: 1rem 0;">Join thousands of sellers on WEBVTEC and start selling today!</p>
+                    <ul style="margin: 1rem 0; padding-left: 2rem; text-align: left; color: #666;">
+                        <li>Unlimited product listings</li>
+                        <li>Built-in payment processing</li>
+                        <li>Customer review system</li>
+                        <li>Seller analytics dashboard</li>
+                        <li>You handle your own shipping</li>
+                    </ul>
+                    
+                    <div style="display: flex; gap: 1rem; justify-content: center; margin-top: 2rem;">
+                        <button class="btn" onclick="showSellerRegistration()">Start Selling - $25/month</button>
+                        <button class="btn" onclick="showSellerLogin()" style="background: #fff; color: #333; border: 2px solid #ffd700;">Seller Sign In</button>
+                    </div>
+                </div>
             </div>
-            <button class="btn" onclick="showSellerRegistration()" style="width: 100%; margin-bottom: 1rem;">Start Selling - $25/month</button>
-            <p style="text-align: center;">Already a seller? <a href="#" onclick="showSellerLogin()" style="color: #ffd700;">Sign In</a></p>
+        </div>
+
+        <!-- Seller Login Form -->
+        <div id="sellerLogin" style="display: none;">
+            <div style="max-width: 500px; margin: 0 auto;">
+                <h2 style="color: #333; text-align: center; margin-bottom: 2rem;">Seller Sign In</h2>
+                
+                <div class="seller-section">
+                    <form id="sellerLoginForm" onsubmit="loginSeller(event)">
+                        <div class="form-group">
+                            <label style="color: #333;">Email:</label>
+                            <input type="email" id="sellerLoginEmail" required style="width: 100%; padding: 0.7rem; border: 1px solid #ddd; border-radius: 8px;">
+                        </div>
+                        <div class="form-group">
+                            <label style="color: #333;">Password:</label>
+                            <input type="password" id="sellerLoginPassword" required minlength="6" style="width: 100%; padding: 0.7rem; border: 1px solid #ddd; border-radius: 8px;">
+                        </div>
+                        <button type="submit" class="btn" style="width: 100%;">Sign In</button>
+                    </form>
+                    <p style="text-align: center; margin-top: 1rem; color: #666;">
+                        New seller? <a href="#" onclick="showSellerRegistration()" style="color: #ffd700;">Register here</a>
+                    </p>
+                </div>
+            </div>
         </div>
 
         <!-- Seller Registration Form -->
         <div id="sellerRegistration" style="display: none;">
-            <h2 style="color: #ffd700; margin-bottom: 1rem;">Seller Registration</h2>
-            <form id="sellerRegForm" onsubmit="registerSeller(event)">
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
-                    <div class="form-group">
-                        <label>First Name:</label>
-                        <input type="text" id="sellerFirstName" required>
-                    </div>
-                    <div class="form-group">
-                        <label>Last Name:</label>
-                        <input type="text" id="sellerLastName" required>
-                    </div>
+            <div style="max-width: 700px; margin: 0 auto;">
+                <h2 style="color: #333; text-align: center; margin-bottom: 2rem;">Seller Registration</h2>
+                
+                <div class="seller-section">
+                    <form id="sellerRegForm" onsubmit="registerSeller(event)">
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label style="color: #333;">First Name:</label>
+                                <input type="text" id="sellerFirstName" required style="width: 100%; padding: 0.7rem; border: 1px solid #ddd; border-radius: 8px;">
+                            </div>
+                            <div class="form-group">
+                                <label style="color: #333;">Last Name:</label>
+                                <input type="text" id="sellerLastName" required style="width: 100%; padding: 0.7rem; border: 1px solid #ddd; border-radius: 8px;">
+                            </div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label style="color: #333;">Date of Birth:</label>
+                            <input type="date" id="sellerDOB" required style="width: 100%; padding: 0.7rem; border: 1px solid #ddd; border-radius: 8px;">
+                            <small style="color: #666;">You must be at least 14 years old to sell on WEBVTEC</small>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label style="color: #333;">Business Name:</label>
+                            <input type="text" id="businessName" required style="width: 100%; padding: 0.7rem; border: 1px solid #ddd; border-radius: 8px;">
+                        </div>
+                        
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label style="color: #333;">Email:</label>
+                                <input type="email" id="sellerEmail" required style="width: 100%; padding: 0.7rem; border: 1px solid #ddd; border-radius: 8px;">
+                            </div>
+                            <div class="form-group">
+                                <label style="color: #333;">Phone Number:</label>
+                                <input type="tel" id="sellerPhone" required style="width: 100%; padding: 0.7rem; border: 1px solid #ddd; border-radius: 8px;">
+                            </div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label style="color: #333;">Password:</label>
+                            <input type="password" id="sellerPassword" required minlength="6" style="width: 100%; padding: 0.7rem; border: 1px solid #ddd; border-radius: 8px;">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label style="color: #333;">Photo ID URL (Driver's License, Passport, etc.):</label>
+                            <input type="url" id="photoID" required style="width: 100%; padding: 0.7rem; border: 1px solid #ddd; border-radius: 8px;" placeholder="https://example.com/your-id-photo.jpg">
+                            <small style="color: #666;">Upload your ID to a service like Imgur or Google Drive and paste the link here</small>
+                        </div>
+                        
+                        <button type="submit" class="btn" style="width: 100%;">Register & Pay $25</button>
+                    </form>
+                    <p style="text-align: center; margin-top: 1rem; color: #666;">
+                        Already a seller? <a href="#" onclick="showSellerLogin()" style="color: #ffd700;">Sign in here</a>
+                    </p>
                 </div>
-                <div class="form-group">
-                    <label>Business Name:</label>
-                    <input type="text" id="businessName" required>
-                </div>
-                <div class="form-group">
-                    <label>Email:</label>
-                    <input type="email" id="sellerEmail" required>
-                </div>
-                <div class="form-group">
-                    <label>Password:</label>
-                    <input type="password" id="sellerPassword" required minlength="6">
-                </div>
-                <div class="form-group">
-                    <label>Phone Number:</label>
-                    <input type="tel" id="sellerPhone" required>
-                </div>
-                <div class="form-group">
-                    <label>Business Address:</label>
-                    <textarea id="businessAddress" rows="3" required></textarea>
-                </div>
-                <button type="submit" class="btn" style="width: 100%;">Register & Pay $25</button>
-            </form>
+            </div>
         </div>
 
         <!-- Seller Dashboard -->
         <div id="sellerDashboard" style="display: none;">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
-                <h2 style="color: #ffd700; margin: 0;">Seller Dashboard</h2>
-                <button class="btn" onclick="signOutSeller()">Sign Out</button>
+                <h1 style="color: #333; margin: 0;">Seller Dashboard</h1>
+                <div style="color: #666;" id="sellerWelcome"></div>
             </div>
             
-            <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem; margin-bottom: 2rem;">
-                <div style="background: rgba(0,0,0,0.1); padding: 1rem; border-radius: 8px; text-align: center;">
+            <div class="dashboard-grid">
+                <div class="dashboard-card">
                     <h3>Total Products</h3>
-                    <p style="font-size: 2rem; color: #ffd700;" id="sellerProductCount">0</p>
+                    <div class="stat-number" id="sellerProductCount">0</div>
                 </div>
-                <div style="background: rgba(0,0,0,0.1); padding: 1rem; border-radius: 8px; text-align: center;">
+                <div class="dashboard-card">
                     <h3>Total Sales</h3>
-                    <p style="font-size: 2rem; color: #ffd700;">$0.00</p>
+                    <div class="stat-number">$0.00</div>
                 </div>
-                <div style="background: rgba(0,0,0,0.1); padding: 1rem; border-radius: 8px; text-align: center;">
+                <div class="dashboard-card">
                     <h3>Subscription</h3>
-                    <p style="color: #4CAF50;">Active</p>
+                    <div style="color: #4CAF50; font-size: 1.2rem; font-weight: bold;">Active</div>
+                    <div style="color: #666; font-size: 0.9rem;">$25/month</div>
+                </div>
+                <div class="dashboard-card">
+                    <h3>Account Status</h3>
+                    <div style="color: #4CAF50; font-size: 1.2rem; font-weight: bold;">Verified</div>
                 </div>
             </div>
 
-            <div style="display: flex; gap: 1rem; margin-bottom: 2rem;">
-                <button class="btn" onclick="showAddProduct()">Add New Product</button>
-                <button class="btn" onclick="showSellerProducts()">My Products</button>
-                <button class="btn" onclick="showSellerProfile()">Profile Settings</button>
+            <div class="seller-nav">
+                <button class="btn active" onclick="showDashboardSection('overview')">Overview</button>
+                <button class="btn" onclick="showDashboardSection('add-product')">Add Product</button>
+                <button class="btn" onclick="showDashboardSection('my-products')">My Products</button>
+                <button class="btn" onclick="showDashboardSection('profile')">Profile Settings</button>
             </div>
 
-            <!-- Add Product Form -->
-            <div id="addProductSection" style="display: none; background: rgba(0,0,0,0.1); padding: 1rem; border-radius: 8px;">
-                <h3 style="color: #ffd700;">Add New Product</h3>
+            <!-- Overview Section -->
+            <div id="overview-section" class="seller-section">
+                <h2 style="color: #333;">Welcome to your seller dashboard!</h2>
+                <p style="color: #666;">Here you can manage your products, view sales, and update your profile.</p>
+            </div>
+
+            <!-- Add Product Section -->
+            <div id="add-product-section" class="seller-section" style="display: none;">
+                <h2 style="color: #333;">Add New Product</h2>
                 <form id="addProductForm" onsubmit="addSellerProduct(event)">
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                    <div class="form-grid">
                         <div class="form-group">
-                            <label>Product Name:</label>
-                            <input type="text" id="productName" required>
+                            <label style="color: #333;">Product Name:</label>
+                            <input type="text" id="productName" required style="width: 100%; padding: 0.7rem; border: 1px solid #ddd; border-radius: 8px;">
                         </div>
                         <div class="form-group">
-                            <label>Price ($):</label>
-                            <input type="number" step="0.01" id="productPrice" required>
+                            <label style="color: #333;">Price ($):</label>
+                            <input type="number" step="0.01" id="productPrice" required style="width: 100%; padding: 0.7rem; border: 1px solid #ddd; border-radius: 8px;">
                         </div>
                     </div>
+                    
                     <div class="form-group">
-                        <label>Category:</label>
-                        <select id="productCategory" required>
+                        <label style="color: #333;">Category:</label>
+                        <select id="productCategory" required style="width: 100%; padding: 0.7rem; border: 1px solid #ddd; border-radius: 8px;">
                             <option value="">Select Category</option>
                             <option value="electronics">Electronics</option>
                             <option value="clothing">Clothing</option>
@@ -1041,26 +1224,70 @@
                             <option value="health">Health</option>
                         </select>
                     </div>
+                    
                     <div class="form-group">
-                        <label>Description:</label>
-                        <textarea id="productDescription" rows="3" required></textarea>
+                        <label style="color: #333;">Description:</label>
+                        <textarea id="productDescription" rows="3" required style="width: 100%; padding: 0.7rem; border: 1px solid #ddd; border-radius: 8px;"></textarea>
                     </div>
+                    
                     <div class="form-group">
-                        <label>Image URL:</label>
-                        <input type="url" id="productImage" required>
+                        <label style="color: #333;">Image URL:</label>
+                        <input type="url" id="productImage" required style="width: 100%; padding: 0.7rem; border: 1px solid #ddd; border-radius: 8px;">
                     </div>
+                    
                     <div class="form-group">
-                        <label>Shipping Information:</label>
-                        <textarea id="shippingInfo" rows="2" placeholder="Shipping cost, delivery time, etc." required></textarea>
+                        <label style="color: #333;">Shipping Information:</label>
+                        <textarea id="shippingInfo" rows="2" placeholder="Shipping cost, delivery time, etc." required style="width: 100%; padding: 0.7rem; border: 1px solid #ddd; border-radius: 8px;"></textarea>
                     </div>
+                    
                     <button type="submit" class="btn">Add Product</button>
                 </form>
             </div>
 
-            <!-- Seller Products List -->
-            <div id="sellerProductsList" style="display: none;">
-                <h3 style="color: #ffd700;">My Products</h3>
+            <!-- My Products Section -->
+            <div id="my-products-section" class="seller-section" style="display: none;">
+                <h2 style="color: #333;">My Products</h2>
                 <div id="sellerProductsGrid"></div>
+            </div>
+
+            <!-- Profile Settings Section -->
+            <div id="profile-section" class="seller-section" style="display: none;">
+                <h2 style="color: #333;">Profile Settings</h2>
+                <form id="sellerProfileForm" onsubmit="updateSellerProfile(event)">
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label style="color: #333;">First Name:</label>
+                            <input type="text" id="profileFirstName" style="width: 100%; padding: 0.7rem; border: 1px solid #ddd; border-radius: 8px;">
+                        </div>
+                        <div class="form-group">
+                            <label style="color: #333;">Last Name:</label>
+                            <input type="text" id="profileLastName" style="width: 100%; padding: 0.7rem; border: 1px solid #ddd; border-radius: 8px;">
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label style="color: #333;">Business Name:</label>
+                        <input type="text" id="profileBusinessName" style="width: 100%; padding: 0.7rem; border: 1px solid #ddd; border-radius: 8px;">
+                    </div>
+                    
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label style="color: #333;">Email:</label>
+                            <input type="email" id="profileEmail" style="width: 100%; padding: 0.7rem; border: 1px solid #ddd; border-radius: 8px;">
+                        </div>
+                        <div class="form-group">
+                            <label style="color: #333;">Phone:</label>
+                            <input type="tel" id="profilePhone" style="width: 100%; padding: 0.7rem; border: 1px solid #ddd; border-radius: 8px;">
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label style="color: #333;">Photo ID URL:</label>
+                        <input type="url" id="profilePhotoID" style="width: 100%; padding: 0.7rem; border: 1px solid #ddd; border-radius: 8px;">
+                    </div>
+                    
+                    <button type="submit" class="btn">Update Profile</button>
+                </form>
             </div>
         </div>
     </div>
@@ -1791,129 +2018,216 @@ function displayFilteredProducts(filteredProducts) {
     });
 }
 
-// Seller Functions
+
+// Updated seller functions
 function showSellerDashboard() {
-    document.getElementById('sellerModal').style.display = 'block';
+    document.getElementById('sellerPage').classList.add('active');
     if (currentSeller) {
         showSellerDash();
     } else {
         document.getElementById('sellerAuth').style.display = 'block';
+        document.getElementById('sellerLogin').style.display = 'none';
+        document.getElementById('sellerRegistration').style.display = 'none';
+        document.getElementById('sellerDashboard').style.display = 'none';
     }
+    // Hide main content
+    document.querySelector('.main-content').style.display = 'none';
 }
 
-function closeSellerModal() {
-    document.getElementById('sellerModal').style.display = 'none';
-    // Reset all sections
-    document.getElementById('sellerAuth').style.display = 'block';
-    document.getElementById('sellerRegistration').style.display = 'none';
-    document.getElementById('sellerDashboard').style.display = 'none';
-    document.getElementById('addProductSection').style.display = 'none';
-    document.getElementById('sellerProductsList').style.display = 'none';
+function closeSellerPage() {
+    document.getElementById('sellerPage').classList.remove('active');
+    // Show main content
+    document.querySelector('.main-content').style.display = 'block';
 }
 
 function showSellerRegistration() {
     document.getElementById('sellerAuth').style.display = 'none';
+    document.getElementById('sellerLogin').style.display = 'none';
     document.getElementById('sellerRegistration').style.display = 'block';
+    document.getElementById('sellerDashboard').style.display = 'none';
 }
 
 function showSellerLogin() {
-    // Implement seller login logic
-    alert('Seller login functionality would be implemented here');
+    document.getElementById('sellerAuth').style.display = 'none';
+    document.getElementById('sellerLogin').style.display = 'block';
+    document.getElementById('sellerRegistration').style.display = 'none';
+    document.getElementById('sellerDashboard').style.display = 'none';
+}
+
+function loginSeller(event) {
+    event.preventDefault();
+    
+    const email = document.getElementById('sellerLoginEmail').value;
+    const password = document.getElementById('sellerLoginPassword').value;
+    
+    // Query sellers collection for matching email and password
+    db.collection('sellers')
+        .where('email', '==', email)
+        .where('password', '==', password)
+        .get()
+        .then((querySnapshot) => {
+            if (querySnapshot.empty) {
+                alert('Invalid email or password');
+                return;
+            }
+            
+            querySnapshot.forEach((doc) => {
+                currentSeller = { id: doc.id, ...doc.data() };
+                console.log('Seller login successful:', currentSeller);
+                showSellerDash();
+                alert(`Welcome back, ${currentSeller.firstName}!`);
+            });
+        })
+        .catch((error) => {
+            console.error('Error logging in seller:', error);
+            alert('Login failed. Please try again.');
+        });
 }
 
 function registerSeller(event) {
     event.preventDefault();
     
+    // Age verification
+    const dob = new Date(document.getElementById('sellerDOB').value);
+    const today = new Date();
+    const age = today.getFullYear() - dob.getFullYear();
+    const monthDiff = today.getMonth() - dob.getMonth();
+    
+    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < dob.getDate())) {
+        age--;
+    }
+    
+    if (age < 14) {
+        alert('You must be at least 14 years old to become a seller on WEBVTEC.');
+        return;
+    }
+    
     const sellerData = {
         firstName: document.getElementById('sellerFirstName').value,
         lastName: document.getElementById('sellerLastName').value,
+        dateOfBirth: document.getElementById('sellerDOB').value,
         businessName: document.getElementById('businessName').value,
         email: document.getElementById('sellerEmail').value,
         password: document.getElementById('sellerPassword').value,
         phone: document.getElementById('sellerPhone').value,
-        address: document.getElementById('businessAddress').value,
+        photoID: document.getElementById('photoID').value,
         subscriptionStatus: 'active',
         joinDate: new Date().toISOString(),
         products: []
     };
     
-    // Save to Firebase
-    db.collection('sellers').add(sellerData)
-        .then((docRef) => {
-            currentSeller = { id: docRef.id, ...sellerData };
-            alert('Registration successful! Welcome to WEBVTEC Sellers!');
-            showSellerDash();
-        })
-        .catch((error) => {
-            console.error('Error registering seller:', error);
-            alert('Registration failed. Please try again.');
+    // Check if email already exists
+    db.collection('sellers')
+        .where('email', '==', sellerData.email)
+        .get()
+        .then((querySnapshot) => {
+            if (!querySnapshot.empty) {
+                alert('Email already registered. Please use a different email or sign in.');
+                return;
+            }
+            
+            // Save to Firebase
+            db.collection('sellers').add(sellerData)
+                .then((docRef) => {
+                    currentSeller = { id: docRef.id, ...sellerData };
+                    alert('Registration successful! Welcome to WEBVTEC Sellers!');
+                    showSellerDash();
+                })
+                .catch((error) => {
+                    console.error('Error registering seller:', error);
+                    alert('Registration failed. Please try again.');
+                });
         });
 }
 
 function showSellerDash() {
     document.getElementById('sellerAuth').style.display = 'none';
+    document.getElementById('sellerLogin').style.display = 'none';
     document.getElementById('sellerRegistration').style.display = 'none';
     document.getElementById('sellerDashboard').style.display = 'block';
+    
+    // Update welcome message
+    document.getElementById('sellerWelcome').textContent = 
+        `Welcome, ${currentSeller.firstName} ${currentSeller.lastName}`;
+    
+    // Load profile data
+    loadSellerProfileData();
     updateSellerStats();
+    showDashboardSection('overview');
 }
 
-function updateSellerStats() {
-    if (currentSeller) {
-        // Count seller's products
-        const sellerProducts = products.filter(p => p.sellerId === currentSeller.id);
-        document.getElementById('sellerProductCount').textContent = sellerProducts.length;
+function showDashboardSection(section) {
+    // Hide all sections
+    document.querySelectorAll('[id$="-section"]').forEach(sec => {
+        sec.style.display = 'none';
+    });
+    
+    // Update nav buttons
+    document.querySelectorAll('.seller-nav .btn').forEach(btn => {
+        btn.classList.remove('active');
+    });
+    
+    // Show selected section
+    document.getElementById(`${section}-section`).style.display = 'block';
+    event.target.classList.add('active');
+    
+    // Load data for specific sections
+    if (section === 'my-products') {
+        loadSellerProducts();
     }
 }
 
-function showAddProduct() {
-    document.getElementById('addProductSection').style.display = 'block';
-    document.getElementById('sellerProductsList').style.display = 'none';
+function loadSellerProfileData() {
+    if (!currentSeller) return;
+    
+    document.getElementById('profileFirstName').value = currentSeller.firstName || '';
+    document.getElementById('profileLastName').value = currentSeller.lastName || '';
+    document.getElementById('profileBusinessName').value = currentSeller.businessName || '';
+    document.getElementById('profileEmail').value = currentSeller.email || '';
+    document.getElementById('profilePhone').value = currentSeller.phone || '';
+    document.getElementById('profilePhotoID').value = currentSeller.photoID || '';
 }
 
-function showSellerProducts() {
-    document.getElementById('addProductSection').style.display = 'none';
-    document.getElementById('sellerProductsList').style.display = 'block';
-    loadSellerProducts();
-}
-
-function showSellerProfile() {
-    alert('Seller profile settings would be implemented here');
-}
-
-function addSellerProduct(event) {
+function updateSellerProfile(event) {
     event.preventDefault();
     
     if (!currentSeller) {
-        alert('Please log in as a seller first');
+        alert('Please log in first');
         return;
     }
     
-    const productData = {
-        name: document.getElementById('productName').value,
-        price: parseFloat(document.getElementById('productPrice').value),
-        category: document.getElementById('productCategory').value,
-        description: document.getElementById('productDescription').value,
-        image: document.getElementById('productImage').value,
-        shippingInfo: document.getElementById('shippingInfo').value,
-        sellerId: currentSeller.id,
-        sellerName: currentSeller.businessName,
-        dateAdded: new Date().toISOString(),
-        reviews: []
+    const updatedData = {
+        firstName: document.getElementById('profileFirstName').value,
+        lastName: document.getElementById('profileLastName').value,
+        businessName: document.getElementById('profileBusinessName').value,
+        email: document.getElementById('profileEmail').value,
+        phone: document.getElementById('profilePhone').value,
+        photoID: document.getElementById('profilePhotoID').value
     };
     
-    db.collection('products').add(productData)
+    db.collection('sellers').doc(currentSeller.id)
+        .update(updatedData)
         .then(() => {
-            alert('Product added successfully!');
-            document.getElementById('addProductForm').reset();
-            document.getElementById('addProductSection').style.display = 'none';
-            updateSellerStats();
+            // Update current seller object
+            Object.assign(currentSeller, updatedData);
+            alert('Profile updated successfully!');
+            // Update welcome message
+            document.getElementById('sellerWelcome').textContent = 
+                `Welcome, ${currentSeller.firstName} ${currentSeller.lastName}`;
         })
         .catch((error) => {
-            console.error('Error adding product:', error);
-            alert('Failed to add product. Please try again.');
+            console.error('Error updating profile:', error);
+            alert('Failed to update profile. Please try again.');
         });
 }
 
+function signOutSeller() {
+    currentSeller = null;
+    closeSellerPage();
+    alert('Signed out successfully');
+}
+
+// Updated loadSellerProducts function for the new layout
 function loadSellerProducts() {
     if (!currentSeller) return;
     
@@ -1921,16 +2235,32 @@ function loadSellerProducts() {
     const grid = document.getElementById('sellerProductsGrid');
     grid.innerHTML = '';
     
+    if (sellerProducts.length === 0) {
+        grid.innerHTML = '<p style="color: #666; text-align: center;">No products yet. Add your first product!</p>';
+        return;
+    }
+    
     sellerProducts.forEach(product => {
         const productDiv = document.createElement('div');
-        productDiv.style.cssText = 'background: rgba(255,255,255,0.1); padding: 1rem; border-radius: 8px; margin-bottom: 1rem;';
+        productDiv.style.cssText = `
+            background: #f8f9fa;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        `;
         productDiv.innerHTML = `
-            <div style="display: flex; justify-content: space-between; align-items: center;">
-                <div>
-                    <h4>${product.name}</h4>
-                    <p>$${product.price} - ${product.category}</p>
-                </div>
-                <button class="btn" onclick="editProduct('${product.id}')">Edit</button>
+            <div>
+                <h4 style="color: #333; margin: 0 0 0.5rem 0;">${product.name}</h4>
+                <p style="color: #666; margin: 0;">$${product.price} - ${product.category}</p>
+                <p style="color: #666; margin: 0; font-size: 0.9rem;">${product.description}</p>
+            </div>
+            <div style="display: flex; gap: 0.5rem;">
+                <button class="btn" onclick="editProduct('${product.id}')" style="padding: 0.5rem 1rem;">Edit</button>
+                <button class="btn" onclick="deleteProduct('${product.id}')" style="background: #dc3545; padding: 0.5rem 1rem;">Delete</button>
             </div>
         `;
         grid.appendChild(productDiv);
@@ -1938,17 +2268,25 @@ function loadSellerProducts() {
 }
 
 function editProduct(productId) {
-    alert('Product editing functionality would be implemented here');
+    // Implementation for editing products
+    alert('Product editing functionality - would open edit form for product: ' + productId);
 }
 
-function signOutSeller() {
-    currentSeller = null;
-    closeSellerModal();
-    alert('Signed out successfully');
+function deleteProduct(productId) {
+    if (!confirm('Are you sure you want to delete this product?')) return;
+    
+    db.collection('products').doc(productId)
+        .delete()
+        .then(() => {
+            alert('Product deleted successfully!');
+            loadSellerProducts(); // Refresh the list
+            updateSellerStats(); // Update stats
+        })
+        .catch((error) => {
+            console.error('Error deleting product:', error);
+            alert('Failed to delete product. Please try again.');
+        });
 }
-
-// Update your existing createProductCard function to include seller info
-// Replace the existing createProductCard function with this updated version:
 </script>
 </body>
 </html>
