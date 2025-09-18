@@ -1660,11 +1660,27 @@
         // GLOBAL VARIABLES
         // ======================
         let currentUser = null;
+        let userProfile = null;
         let cart = [];
         let products = [];
         let categories = [];
         let isSellerMode = false;
         let sellerSubscription = null;
+        let currentAuthMode = 'signin'; // signin or signup
+
+        // ======================
+        // SAMPLE DATA STRUCTURE
+        // ======================
+        const sampleCategories = [
+            { id: 'electronics', name: 'Electronics', icon: 'fas fa-laptop', count: 1250 },
+            { id: 'fashion', name: 'Fashion', icon: 'fas fa-tshirt', count: 890 },
+            { id: 'home', name: 'Home & Garden', icon: 'fas fa-home', count: 654 },
+            { id: 'sports', name: 'Sports & Fitness', icon: 'fas fa-dumbbell', count: 432 },
+            { id: 'books', name: 'Books & Media', icon: 'fas fa-book', count: 789 },
+            { id: 'toys', name: 'Toys & Games', icon: 'fas fa-gamepad', count: 345 },
+            { id: 'health', name: 'Health & Beauty', icon: 'fas fa-heart', count: 567 },
+            { id: 'automotive', name: 'Automotive', icon: 'fas fa-car', count: 234 }
+        ];
 
         // ======================
         // DOM ELEMENTS
@@ -1678,6 +1694,8 @@
             authSubmitBtn: document.getElementById('authSubmitBtn'),
             authSwitchBtn: document.getElementById('authSwitchBtn'),
             authSwitchText: document.getElementById('authSwitchText'),
+            confirmPasswordGroup: document.getElementById('confirmPasswordGroup'),
+            profileFieldsGroup: document.getElementById('profileFieldsGroup'),
             
             // Navigation
             accountBtn: document.getElementById('accountBtn'),
@@ -1696,6 +1714,7 @@
             categoryFilter: document.getElementById('categoryFilter'),
             sortFilter: document.getElementById('sortFilter'),
             priceFilter: document.getElementById('priceFilter'),
+            loadingProducts: document.getElementById('loadingProducts'),
             
             // Cart
             cartSidebar: document.getElementById('cartSidebar'),
@@ -1742,12 +1761,9 @@
                 }
             });
 
-            // Load cart from localStorage
-            const savedCart = localStorage.getItem('webvtec-cart');
-            if (savedCart) {
-                cart = JSON.parse(savedCart);
-                updateCartUI();
-            }
+            // Load cart from memory (no localStorage in artifacts)
+            cart = [];
+            updateCartUI();
         }
 
         function setupEventListeners() {
@@ -1813,11 +1829,10 @@
         }
 
         // ======================
-        // AUTHENTICATION
+        // AUTHENTICATION FUNCTIONS
         // ======================
         function showAuthModal() {
             if (currentUser) {
-                // Show user menu or profile
                 showUserMenu();
             } else {
                 showModal('authModal');
@@ -1825,10 +1840,1855 @@
         }
 
         function switchAuthMode() {
-            const isSignIn = elements.authTitle.textContent.includes('Welcome');
+            currentAuthMode = currentAuthMode === 'signin' ? 'signup' : 'signin';
             
-            if (isSignIn) {
-                // Switch to sign up
+            if (currentAuthMode === 'signup') {
                 elements.authTitle.textContent = 'Create Account';
                 elements.authSubtitle.textContent = 'Join thousands of sellers and buyers';
-                elements.authSubmitBtn.textContent = 'Create
+                elements.authSubmitBtn.textContent = 'Create Account';
+                elements.authSwitchText.textContent = 'Already have an account?';
+                elements.authSwitchBtn.textContent = 'Sign in';
+                elements.confirmPasswordGroup.style.display = 'block';
+                elements.profileFieldsGroup.style.display = 'block';
+                elements.authForm.confirmPassword.required = true;
+                elements.authForm.firstName.required = true;
+                elements.authForm.lastName.required = true;
+            } else {
+                elements.authTitle.textContent = 'Welcome Back';
+                elements.authSubtitle.textContent = 'Sign in to your account';
+                elements.authSubmitBtn.textContent = 'Sign In';
+                elements.authSwitchText.textContent = "Don't have an account?";
+                elements.authSwitchBtn.textContent = 'Sign up';
+                elements.confirmPasswordGroup.style.display = 'none';
+                elements.profileFieldsGroup.style.display = 'none';
+                elements.authForm.confirmPassword.required = false;
+                elements.authForm.firstName.required = false;
+                elements.authForm.lastName.required = false;
+            }
+        }
+
+        async function handleAuthSubmit(e) {
+            e.preventDefault();
+            const formData = new FormData(e.target);
+            const email = formData.get('email');
+            const password = formData.get('password');
+            
+            try {
+                showLoading(true, elements.authSubmitBtn);
+                
+                if (currentAuthMode === 'signup') {
+                    const confirmPassword = formData.get('confirmPassword');
+                    const firstName = formData.get('firstName');
+                    const lastName = formData.get('lastName');
+                    
+                    if (password !== confirmPassword) {
+                        throw new Error('Passwords do not match');
+                    }
+                    
+                    // Create user account
+                    const userCredential = await auth.createUserWithEmailAndPassword(email, password);
+                    const user = userCredential.user;
+                    
+                    // Create user profile
+                    await db.collection('users').doc(user.uid).set({
+                        email: email,
+                        firstName: firstName,
+                        lastName: lastName,
+                        displayName: `${firstName} ${lastName}`,
+                        isSeller: false,
+                        sellerSubscription: null,
+                        createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                        address: {
+                            street: '',
+                            city: '',
+                            state: '',
+                            zipCode: '',
+                            country: ''
+                        },
+                        paymentMethods: []
+                    });
+                    
+                    await sendWelcomeEmail(user, firstName);
+                    showAlert('Account created successfully! Welcome to WEB VTEC!', 'success');
+                    
+                } else {
+                    // Sign in
+                    await auth.signInWithEmailAndPassword(email, password);
+                    showAlert('Welcome back!', 'success');
+                }
+                
+                hideModal('authModal');
+                elements.authForm.reset();
+                
+            } catch (error) {
+                console.error('Authentication error:', error);
+                showAlert(getFirebaseErrorMessage(error), 'error');
+            } finally {
+                showLoading(false, elements.authSubmitBtn);
+            }
+        }
+
+        async function signOut() {
+            try {
+                await auth.signOut();
+                cart = [];
+                userProfile = null;
+                sellerSubscription = null;
+                isSellerMode = false;
+                updateCartUI();
+                hideSellerDashboard();
+                showAlert('Signed out successfully', 'success');
+            } catch (error) {
+                console.error('Sign out error:', error);
+                showAlert('Error signing out', 'error');
+            }
+        }
+
+        function updateAuthUI() {
+            if (currentUser) {
+                elements.accountText.textContent = 'Account';
+                elements.accountBtn.innerHTML = `
+                    <i class="fas fa-user-circle"></i>
+                    <span>Hi, ${userProfile?.firstName || 'User'}</span>
+                `;
+            } else {
+                elements.accountText.textContent = 'Sign In';
+                elements.accountBtn.innerHTML = `
+                    <i class="fas fa-user"></i>
+                    <span>Account</span>
+                `;
+            }
+        }
+
+        async function loadUserData() {
+            if (!currentUser) return;
+            
+            try {
+                // Load user profile
+                const userDoc = await db.collection('users').doc(currentUser.uid).get();
+                if (userDoc.exists) {
+                    userProfile = userDoc.data();
+                    updateAuthUI();
+                }
+                
+                // Load seller subscription if user is a seller
+                if (userProfile?.isSeller) {
+                    const subscriptionDoc = await db.collection('subscriptions')
+                        .where('userId', '==', currentUser.uid)
+                        .where('status', '==', 'active')
+                        .limit(1)
+                        .get();
+                    
+                    if (!subscriptionDoc.empty) {
+                        sellerSubscription = subscriptionDoc.docs[0].data();
+                    }
+                }
+                
+                // Load user's cart from Firestore
+                const cartDoc = await db.collection('carts').doc(currentUser.uid).get();
+                if (cartDoc.exists) {
+                    cart = cartDoc.data().items || [];
+                    updateCartUI();
+                }
+                
+            } catch (error) {
+                console.error('Error loading user data:', error);
+            }
+        }
+
+        function showUserMenu() {
+            const menu = document.createElement('div');
+            menu.className = 'user-menu';
+            menu.style.cssText = `
+                position: absolute;
+                top: 100%;
+                right: 0;
+                background: white;
+                border: 1px solid var(--border);
+                border-radius: 8px;
+                box-shadow: var(--shadow-lg);
+                min-width: 200px;
+                z-index: 1000;
+                margin-top: 8px;
+            `;
+            
+            menu.innerHTML = `
+                <div style="padding: 16px; border-bottom: 1px solid var(--border);">
+                    <div style="font-weight: 600;">${userProfile?.displayName || 'User'}</div>
+                    <div style="font-size: 0.9rem; color: var(--text-secondary);">${currentUser?.email}</div>
+                </div>
+                <div style="padding: 8px 0;">
+                    <a href="#" id="viewProfile" style="display: block; padding: 12px 16px; text-decoration: none; color: var(--text-primary);">
+                        <i class="fas fa-user" style="margin-right: 8px;"></i> View Profile
+                    </a>
+                    <a href="#" id="orderHistory" style="display: block; padding: 12px 16px; text-decoration: none; color: var(--text-primary);">
+                        <i class="fas fa-box" style="margin-right: 8px;"></i> Order History
+                    </a>
+                    <a href="#" id="signOutBtn" style="display: block; padding: 12px 16px; text-decoration: none; color: var(--error);">
+                        <i class="fas fa-sign-out-alt" style="margin-right: 8px;"></i> Sign Out
+                    </a>
+                </div>
+            `;
+            
+            // Position relative to account button
+            elements.accountBtn.style.position = 'relative';
+            elements.accountBtn.appendChild(menu);
+            
+            // Add event listeners
+            menu.querySelector('#viewProfile').addEventListener('click', (e) => {
+                e.preventDefault();
+                showProfileModal();
+                menu.remove();
+            });
+            
+            menu.querySelector('#orderHistory').addEventListener('click', (e) => {
+                e.preventDefault();
+                showOrderHistory();
+                menu.remove();
+            });
+            
+            menu.querySelector('#signOutBtn').addEventListener('click', (e) => {
+                e.preventDefault();
+                signOut();
+                menu.remove();
+            });
+            
+            // Close menu when clicking outside
+            setTimeout(() => {
+                document.addEventListener('click', function closeMenu(e) {
+                    if (!menu.contains(e.target) && !elements.accountBtn.contains(e.target)) {
+                        menu.remove();
+                        document.removeEventListener('click', closeMenu);
+                    }
+                });
+            }, 0);
+        }
+
+        // ======================
+        // PRODUCT FUNCTIONS
+        // ======================
+        async function loadCategories() {
+            try {
+                // In a real implementation, load from Firestore
+                // const categoriesSnapshot = await db.collection('categories').get();
+                // categories = categoriesSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                
+                // For demo, use sample data
+                categories = sampleCategories;
+                renderCategories();
+                populateCategoryFilter();
+                
+            } catch (error) {
+                console.error('Error loading categories:', error);
+                categories = sampleCategories; // Fallback to sample data
+                renderCategories();
+                populateCategoryFilter();
+            }
+        }
+
+        async function loadProducts() {
+            try {
+                // In a real implementation:
+                const productsSnapshot = await db.collection('products')
+                    .where('isActive', '==', true)
+                    .orderBy('createdAt', 'desc')
+                    .limit(50)
+                    .get();
+                
+                products = productsSnapshot.docs.map(doc => ({
+                    id: doc.id,
+                    ...doc.data()
+                }));
+                
+                renderProducts(products);
+                
+            } catch (error) {
+                console.error('Error loading products:', error);
+                // Load sample products for demo
+                products = await generateSampleProducts();
+                renderProducts(products);
+            }
+        }
+
+        function renderCategories() {
+            elements.categoriesGrid.innerHTML = categories.map(category => `
+                <a href="#" class="category-card" data-category="${category.id}">
+                    <div class="category-icon">
+                        <i class="${category.icon}"></i>
+                    </div>
+                    <div class="category-name">${category.name}</div>
+                    <div class="category-count">${category.count} products</div>
+                </a>
+            `).join('');
+        }
+
+        function renderProducts(productsToRender) {
+            if (productsToRender.length === 0) {
+                elements.productsGrid.innerHTML = `
+                    <div style="grid-column: 1 / -1; text-align: center; padding: 60px 20px;">
+                        <i class="fas fa-search" style="font-size: 3rem; color: var(--text-muted); margin-bottom: 16px;"></i>
+                        <h3 style="margin-bottom: 8px;">No products found</h3>
+                        <p style="color: var(--text-secondary);">Try adjusting your filters or search terms</p>
+                    </div>
+                `;
+                return;
+            }
+
+            elements.productsGrid.innerHTML = productsToRender.map(product => `
+                <div class="product-card" data-product-id="${product.id}">
+                    <div class="product-image">
+                        ${product.badge ? `<div class="product-badge">${product.badge}</div>` : ''}
+                        <img src="${product.image}" alt="${product.title}" loading="lazy">
+                    </div>
+                    <div class="product-info">
+                        <h3 class="product-title">${product.title}</h3>
+                        <div class="product-seller">by ${product.sellerName}</div>
+                        <div class="product-rating">
+                            <div class="stars">
+                                ${generateStars(product.rating)}
+                            </div>
+                            <span class="rating-text">(${product.reviews})</span>
+                        </div>
+                        <div class="product-price">
+                            $${product.price}
+                            ${product.originalPrice ? `<span class="product-original-price">$${product.originalPrice}</span>` : ''}
+                        </div>
+                        <div class="product-shipping">${product.shipping}</div>
+                        <div class="product-actions">
+                            <button class="btn btn-primary add-to-cart" data-product-id="${product.id}">
+                                <i class="fas fa-cart-plus"></i>
+                                Add to Cart
+                            </button>
+                            <button class="btn btn-secondary view-product" data-product-id="${product.id}">
+                                <i class="fas fa-eye"></i>
+                                View
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function generateStars(rating) {
+            const fullStars = Math.floor(rating);
+            const hasHalfStar = rating % 1 !== 0;
+            const emptyStars = 5 - Math.ceil(rating);
+            
+            let stars = '';
+            for (let i = 0; i < fullStars; i++) {
+                stars += '<i class="fas fa-star star"></i>';
+            }
+            if (hasHalfStar) {
+                stars += '<i class="fas fa-star-half-alt star"></i>';
+            }
+            for (let i = 0; i < emptyStars; i++) {
+                stars += '<i class="far fa-star star empty"></i>';
+            }
+            return stars;
+        }
+
+        function populateCategoryFilter() {
+            elements.categoryFilter.innerHTML = `
+                <option value="">All Categories</option>
+                ${categories.map(cat => `<option value="${cat.id}">${cat.name}</option>`).join('')}
+            `;
+        }
+
+        async function generateSampleProducts() {
+            // This is sample data - in production, products come from Firestore
+            return [
+                {
+                    id: '1',
+                    title: 'Premium Wireless Noise-Canceling Headphones',
+                    price: '299.99',
+                    originalPrice: '399.99',
+                    image: 'https://via.placeholder.com/300x240/1a73e8/ffffff?text=Headphones',
+                    category: 'electronics',
+                    sellerName: 'TechGear Pro',
+                    rating: 4.8,
+                    reviews: 1247,
+                    badge: 'BESTSELLER',
+                    shipping: 'FREE shipping by tomorrow',
+                    description: 'Industry-leading noise cancellation with premium audio quality.',
+                    stock: 15,
+                    isActive: true,
+                    createdAt: new Date()
+                },
+                {
+                    id: '2',
+                    title: 'Organic Cotton T-Shirt - Premium Quality',
+                    price: '29.99',
+                    image: 'https://via.placeholder.com/300x240/f59e0b/ffffff?text=T-Shirt',
+                    category: 'fashion',
+                    sellerName: 'EcoWear',
+                    rating: 4.5,
+                    reviews: 523,
+                    shipping: 'FREE shipping on orders over $35',
+                    description: '100% organic cotton, ethically sourced and sustainably made.',
+                    stock: 50,
+                    isActive: true,
+                    createdAt: new Date()
+                },
+                {
+                    id: '3',
+                    title: 'Smart Home Security Camera System',
+                    price: '199.99',
+                    originalPrice: '249.99',
+                    image: 'https://via.placeholder.com/300x240/10b981/ffffff?text=Security+Camera',
+                    category: 'electronics',
+                    sellerName: 'SecureHome Solutions',
+                    rating: 4.7,
+                    reviews: 892,
+                    badge: 'SMART CHOICE',
+                    shipping: 'FREE 2-day shipping',
+                    description: '4K Ultra HD with night vision and mobile app control.',
+                    stock: 25,
+                    isActive: true,
+                    createdAt: new Date()
+                }
+            ];
+        }
+
+        function handleProductClick(e) {
+            const target = e.target;
+            const productCard = target.closest('.product-card');
+            if (!productCard) return;
+            
+            const productId = productCard.dataset.productId;
+            
+            if (target.classList.contains('add-to-cart')) {
+                e.preventDefault();
+                addToCart(productId);
+            } else if (target.classList.contains('view-product')) {
+                e.preventDefault();
+                showProductModal(productId);
+            }
+        }
+
+        async function addToCart(productId) {
+            try {
+                const product = products.find(p => p.id === productId);
+                if (!product) {
+                    throw new Error('Product not found');
+                }
+                
+                // Check if product already in cart
+                const existingItem = cart.find(item => item.id === productId);
+                
+                if (existingItem) {
+                    existingItem.quantity += 1;
+                } else {
+                    cart.push({
+                        id: productId,
+                        title: product.title,
+                        price: product.price,
+                        image: product.image,
+                        sellerName: product.sellerName,
+                        quantity: 1
+                    });
+                }
+                
+                updateCartUI();
+                
+                // Save cart to Firestore if user is logged in
+                if (currentUser) {
+                    await db.collection('carts').doc(currentUser.uid).set({
+                        items: cart,
+                        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                    });
+                }
+                
+                showAlert('Product added to cart!', 'success');
+                
+            } catch (error) {
+                console.error('Error adding to cart:', error);
+                showAlert('Failed to add product to cart', 'error');
+            }
+        }
+
+        async function showProductModal(productId) {
+            try {
+                const product = products.find(p => p.id === productId);
+                if (!product) return;
+                
+                // Load product reviews
+                const reviewsSnapshot = await db.collection('reviews')
+                    .where('productId', '==', productId)
+                    .orderBy('createdAt', 'desc')
+                    .limit(10)
+                    .get();
+                
+                const reviews = reviewsSnapshot.docs.map(doc => ({
+                    id: doc.id,
+                    ...doc.data()
+                }));
+                
+                const modal = document.createElement('div');
+                modal.className = 'modal active';
+                modal.id = 'productModal';
+                
+                modal.innerHTML = `
+                    <div class="modal-content" style="max-width: 900px;">
+                        <button class="modal-close" onclick="this.closest('.modal').remove()">
+                            <i class="fas fa-times"></i>
+                        </button>
+                        
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 32px; margin-bottom: 32px;">
+                            <div>
+                                <img src="${product.image}" alt="${product.title}" 
+                                     style="width: 100%; border-radius: 12px;">
+                            </div>
+                            <div>
+                                <h2 style="font-size: 1.75rem; margin-bottom: 16px;">${product.title}</h2>
+                                <div style="margin-bottom: 16px;">
+                                    <div class="product-rating">
+                                        <div class="stars">${generateStars(product.rating)}</div>
+                                        <span class="rating-text">(${product.reviews} reviews)</span>
+                                    </div>
+                                </div>
+                                <div style="font-size: 2rem; font-weight: 700; color: var(--primary); margin-bottom: 16px;">
+                                    $${product.price}
+                                    ${product.originalPrice ? `<span style="font-size: 1.2rem; text-decoration: line-through; color: var(--text-secondary); margin-left: 8px;">$${product.originalPrice}</span>` : ''}
+                                </div>
+                                <div style="color: var(--success); margin-bottom: 24px; font-weight: 500;">
+                                    ${product.shipping}
+                                </div>
+                                <div style="margin-bottom: 24px;">
+                                    <h4 style="margin-bottom: 8px;">Description</h4>
+                                    <p style="color: var(--text-secondary);">${product.description}</p>
+                                </div>
+                                <div style="margin-bottom: 24px;">
+                                    <strong>Seller:</strong> ${product.sellerName}<br>
+                                    <strong>Stock:</strong> ${product.stock} available
+                                </div>
+                                <button class="btn btn-primary btn-lg" onclick="addToCart('${product.id}'); this.closest('.modal').remove();">
+                                    <i class="fas fa-cart-plus"></i>
+                                    Add to Cart - $${product.price}
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div style="border-top: 1px solid var(--border); padding-top: 32px;">
+                            <h3 style="margin-bottom: 24px;">Customer Reviews</h3>
+                            <div id="reviewsList">
+                                ${reviews.length === 0 ? 
+                                    '<p style="color: var(--text-secondary); text-align: center; padding: 40px;">No reviews yet. Be the first to review this product!</p>' :
+                                    reviews.map(review => `
+                                        <div style="border-bottom: 1px solid var(--border-light); padding-bottom: 16px; margin-bottom: 16px;">
+                                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                                                <div>
+                                                    <strong>${review.userName}</strong>
+                                                    <div class="stars" style="margin-left: 8px; display: inline-block;">
+                                                        ${generateStars(review.rating)}
+                                                    </div>
+                                                </div>
+                                                <div style="color: var(--text-secondary); font-size: 0.9rem;">
+                                                    ${new Date(review.createdAt?.toDate()).toLocaleDateString()}
+                                                </div>
+                                            </div>
+                                            <p style="color: var(--text-secondary);">${review.comment}</p>
+                                        </div>
+                                    `).join('')
+                                }
+                            </div>
+                            ${currentUser ? `
+                                <div style="margin-top: 24px; padding: 24px; background: var(--background-light); border-radius: 12px;">
+                                    <h4 style="margin-bottom: 16px;">Write a Review</h4>
+                                    <form id="reviewForm" data-product-id="${product.id}">
+                                        <div style="margin-bottom: 16px;">
+                                            <label style="display: block; margin-bottom: 8px; font-weight: 600;">Rating</label>
+                                            <div class="rating-input" style="display: flex; gap: 4px;">
+                                                ${[1,2,3,4,5].map(star => `
+                                                    <i class="fas fa-star rating-star" data-rating="${star}" 
+                                                       style="font-size: 1.5rem; color: var(--border); cursor: pointer; transition: color 0.2s;"></i>
+                                                `).join('')}
+                                            </div>
+                                        </div>
+                                        <div style="margin-bottom: 16px;">
+                                            <label style="display: block; margin-bottom: 8px; font-weight: 600;">Your Review</label>
+                                            <textarea name="comment" rows="4" style="width: 100%; padding: 12px; border: 1px solid var(--border); border-radius: 8px;" placeholder="Share your experience with this product..."></textarea>
+                                        </div>
+                                        <button type="submit" class="btn btn-primary">Submit Review</button>
+                                    </form>
+                                </div>
+                            ` : ''}
+                        </div>
+                    </div>
+                `;
+                
+                document.body.appendChild(modal);
+                
+                // Setup review form if user is logged in
+                if (currentUser) {
+                    setupReviewForm(modal, product.id);
+                }
+                
+            } catch (error) {
+                console.error('Error showing product modal:', error);
+                showAlert('Error loading product details', 'error');
+            }
+        }
+
+        function setupReviewForm(modal, productId) {
+            const reviewForm = modal.querySelector('#reviewForm');
+            const ratingStars = modal.querySelectorAll('.rating-star');
+            let selectedRating = 0;
+            
+            // Rating star interactions
+            ratingStars.forEach(star => {
+                star.addEventListener('mouseover', () => {
+                    const rating = parseInt(star.dataset.rating);
+                    ratingStars.forEach((s, index) => {
+                        s.style.color = index < rating ? 'var(--accent)' : 'var(--border)';
+                    });
+                });
+                
+                star.addEventListener('mouseout', () => {
+                    ratingStars.forEach((s, index) => {
+                        s.style.color = index < selectedRating ? 'var(--accent)' : 'var(--border)';
+                    });
+                });
+                
+                star.addEventListener('click', () => {
+                    selectedRating = parseInt(star.dataset.rating);
+                    ratingStars.forEach((s, index) => {
+                        s.style.color = index < selectedRating ? 'var(--accent)' : 'var(--border)';
+                    });
+                });
+            });
+            
+            // Review form submission
+            reviewForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                
+                if (selectedRating === 0) {
+                    showAlert('Please select a rating', 'error');
+                    return;
+                }
+                
+                const formData = new FormData(e.target);
+                const comment = formData.get('comment').trim();
+                
+                if (!comment) {
+                    showAlert('Please write a review', 'error');
+                    return;
+                }
+                
+                try {
+                    await submitReview(productId, selectedRating, comment);
+                    showAlert('Review submitted successfully!', 'success');
+                    modal.remove();
+                } catch (error) {
+                    console.error('Error submitting review:', error);
+                    showAlert('Failed to submit review', 'error');
+                }
+            });
+        }
+
+        async function submitReview(productId, rating, comment) {
+            if (!currentUser) throw new Error('User not authenticated');
+            
+            const review = {
+                productId: productId,
+                userId: currentUser.uid,
+                userName: userProfile?.displayName || 'Anonymous User',
+                rating: rating,
+                comment: comment,
+                createdAt: firebase.firestore.FieldValue.serverTimestamp()
+            };
+            
+            // Add review to Firestore
+            await db.collection('reviews').add(review);
+            
+            // Update product rating (you'd typically do this with Cloud Functions)
+            // This is a simplified version
+            const reviewsSnapshot = await db.collection('reviews')
+                .where('productId', '==', productId)
+                .get();
+            
+            const reviews = reviewsSnapshot.docs.map(doc => doc.data());
+            const avgRating = reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length;
+            
+            await db.collection('products').doc(productId).update({
+                rating: Math.round(avgRating * 10) / 10,
+                reviews: reviews.length
+            });
+        }
+
+        // ======================
+        // CART FUNCTIONS
+        // ======================
+        function updateCartUI() {
+            const itemCount = cart.reduce((total, item) => total + item.quantity, 0);
+            elements.cartCount.textContent = itemCount;
+            elements.cartCount.style.display = itemCount > 0 ? 'flex' : 'none';
+            
+            if (cart.length === 0) {
+                elements.cartItems.innerHTML = `
+                    <div style="text-align: center; padding: 60px 20px; color: var(--text-secondary);">
+                        <i class="fas fa-shopping-cart" style="font-size: 3rem; margin-bottom: 16px; opacity: 0.3;"></i>
+                        <p style="font-size: 1.1rem; margin-bottom: 8px;">Your cart is empty</p>
+                        <p style="font-size: 0.9rem;">Add some amazing products!</p>
+                    </div>
+                `;
+                elements.cartFooter.style.display = 'none';
+            } else {
+                renderCartItems();
+                updateCartTotals();
+                elements.cartFooter.style.display = 'block';
+            }
+        }
+
+        function renderCartItems() {
+            elements.cartItems.innerHTML = cart.map(item => `
+                <div class="cart-item" data-item-id="${item.id}">
+                    <div class="cart-item-image">
+                        <img src="${item.image}" alt="${item.title}">
+                    </div>
+                    <div class="cart-item-info">
+                        <div class="cart-item-title">${item.title}</div>
+                        <div class="cart-item-price">${item.price}</div>
+                        <div class="cart-item-controls">
+                            <button class="qty-btn" onclick="updateCartQuantity('${item.id}', -1)">-</button>
+                            <input type="number" class="qty-input" value="${item.quantity}" min="1" 
+                                   onchange="updateCartQuantity('${item.id}', 0, this.value)">
+                            <button class="qty-btn" onclick="updateCartQuantity('${item.id}', 1)">+</button>
+                            <button class="remove-btn" onclick="removeFromCart('${item.id}')">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function updateCartTotals() {
+            const subtotal = cart.reduce((total, item) => total + (parseFloat(item.price) * item.quantity), 0);
+            const shipping = subtotal >= 75 ? 0 : 9.99; // Free shipping over $75
+            const total = subtotal + shipping;
+            
+            elements.cartSubtotal.textContent = `${subtotal.toFixed(2)}`;
+            elements.cartTotal.textContent = `${total.toFixed(2)}`;
+            
+            // Update shipping text
+            const shippingElement = document.querySelector('.cart-shipping span:last-child');
+            if (shippingElement) {
+                shippingElement.textContent = shipping === 0 ? 'FREE' : `${shipping.toFixed(2)}`;
+            }
+        }
+
+        async function updateCartQuantity(itemId, change, newValue = null) {
+            const item = cart.find(i => i.id === itemId);
+            if (!item) return;
+            
+            if (newValue !== null) {
+                item.quantity = Math.max(1, parseInt(newValue));
+            } else {
+                item.quantity = Math.max(1, item.quantity + change);
+            }
+            
+            updateCartUI();
+            
+            // Save to Firestore if user is logged in
+            if (currentUser) {
+                await db.collection('carts').doc(currentUser.uid).set({
+                    items: cart,
+                    updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                });
+            }
+        }
+
+        async function removeFromCart(itemId) {
+            cart = cart.filter(item => item.id !== itemId);
+            updateCartUI();
+            
+            // Save to Firestore if user is logged in
+            if (currentUser) {
+                await db.collection('carts').doc(currentUser.uid).set({
+                    items: cart,
+                    updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                });
+            }
+            
+            showAlert('Item removed from cart', 'info');
+        }
+
+        function toggleCart() {
+            elements.cartSidebar.classList.toggle('active');
+        }
+
+        // ======================
+        // SELLER FUNCTIONS
+        // ======================
+        function handleBecomeSellerClick() {
+            if (!currentUser) {
+                showAuthModal();
+                return;
+            }
+            
+            if (userProfile?.isSeller && sellerSubscription?.status === 'active') {
+                toggleSellerDashboard();
+            } else {
+                showSubscriptionModal();
+            }
+        }
+
+        function toggleSellerDashboard() {
+            isSellerMode = !isSellerMode;
+            
+            if (isSellerMode) {
+                elements.sellerDashboard.classList.add('active');
+                loadSellerDashboard();
+            } else {
+                hideSellerDashboard();
+            }
+        }
+
+        function hideSellerDashboard() {
+            elements.sellerDashboard.classList.remove('active');
+            hideProductForm();
+            isSellerMode = false;
+        }
+
+        async function loadSellerDashboard() {
+            if (!currentUser || !userProfile?.isSeller) return;
+            
+            try {
+                // Load seller stats
+                const [ordersSnapshot, productsSnapshot, revenueSnapshot] = await Promise.all([
+                    db.collection('orders').where('sellerId', '==', currentUser.uid).get(),
+                    db.collection('products').where('sellerId', '==', currentUser.uid).get(),
+                    db.collection('orders')
+                        .where('sellerId', '==', currentUser.uid)
+                        .where('status', '==', 'completed')
+                        .get()
+                ]);
+                
+                const totalOrders = ordersSnapshot.size;
+                const totalProducts = productsSnapshot.size;
+                const totalRevenue = revenueSnapshot.docs.reduce((sum, doc) => {
+                    return sum + (doc.data().total || 0);
+                }, 0);
+                
+                renderSellerStats({
+                    totalProducts,
+                    totalOrders,
+                    totalRevenue: totalRevenue.toFixed(2),
+                    subscriptionStatus: sellerSubscription?.status || 'inactive'
+                });
+                
+                // Load seller products
+                const sellerProducts = productsSnapshot.docs.map(doc => ({
+                    id: doc.id,
+                    ...doc.data()
+                }));
+                
+                renderSellerProducts(sellerProducts);
+                
+            } catch (error) {
+                console.error('Error loading seller dashboard:', error);
+                showAlert('Error loading dashboard data', 'error');
+            }
+        }
+
+        function renderSellerStats(stats) {
+            elements.dashboardStats.innerHTML = `
+                <div class="stat-card">
+                    <div class="stat-value">${stats.totalProducts}</div>
+                    <div class="stat-label">Products Listed</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value">${stats.totalOrders}</div>
+                    <div class="stat-label">Total Orders</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value">${stats.totalRevenue}</div>
+                    <div class="stat-label">Total Revenue</div>
+                </div>
+                <div class="stat-card" style="background: ${stats.subscriptionStatus === 'active' ? 'var(--success)' : 'var(--error)'};">
+                    <div class="stat-value">${stats.subscriptionStatus === 'active' ? 'ACTIVE' : 'INACTIVE'}</div>
+                    <div class="stat-label">Subscription</div>
+                </div>
+            `;
+        }
+
+        function renderSellerProducts(sellerProducts) {
+            if (sellerProducts.length === 0) {
+                elements.sellerProductsList.innerHTML = `
+                    <div style="text-align: center; padding: 60px 20px; color: var(--text-secondary);">
+                        <i class="fas fa-box-open" style="font-size: 3rem; margin-bottom: 16px; opacity: 0.3;"></i>
+                        <h3 style="margin-bottom: 8px;">No products yet</h3>
+                        <p style="margin-bottom: 16px;">Start selling by adding your first product</p>
+                        <button class="btn btn-primary" onclick="showProductForm()">
+                            <i class="fas fa-plus"></i> Add Product
+                        </button>
+                    </div>
+                `;
+                return;
+            }
+            
+            elements.sellerProductsList.innerHTML = `
+                <div style="display: grid; gap: 16px;">
+                    ${sellerProducts.map(product => `
+                        <div class="seller-product-item" style="display: flex; gap: 16px; padding: 16px; border: 1px solid var(--border); border-radius: 12px;">
+                            <img src="${product.image}" alt="${product.title}" style="width: 80px; height: 80px; object-fit: cover; border-radius: 8px;">
+                            <div style="flex: 1;">
+                                <h4 style="margin-bottom: 8px;">${product.title}</h4>
+                                <div style="color: var(--text-secondary); margin-bottom: 8px;">
+                                    Price: ${product.price} • Stock: ${product.stock} • 
+                                    Status: <span style="color: ${product.isActive ? 'var(--success)' : 'var(--error)'}">
+                                        ${product.isActive ? 'Active' : 'Inactive'}
+                                    </span>
+                                </div>
+                                <div style="display: flex; gap: 8px;">
+                                    <button class="btn btn-sm btn-secondary" onclick="editProduct('${product.id}')">
+                                        <i class="fas fa-edit"></i> Edit
+                                    </button>
+                                    <button class="btn btn-sm ${product.isActive ? 'btn-danger' : 'btn-success'}" 
+                                            onclick="toggleProductStatus('${product.id}', ${!product.isActive})">
+                                        <i class="fas fa-${product.isActive ? 'pause' : 'play'}"></i> 
+                                        ${product.isActive ? 'Deactivate' : 'Activate'}
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+        }
+
+        function showProductForm() {
+            elements.productFormContainer.classList.add('active');
+            elements.productFormContainer.scrollIntoView({ behavior: 'smooth' });
+        }
+
+        function hideProductForm() {
+            elements.productFormContainer.classList.remove('active');
+            elements.productForm.reset();
+        }
+
+        async function handleAddProduct(e) {
+            e.preventDefault();
+            
+            if (!currentUser || !userProfile?.isSeller) {
+                showAlert('You must be a subscribed seller to add products', 'error');
+                return;
+            }
+            
+            try {
+                showLoading(true, e.target.querySelector('button[type="submit"]'));
+                
+                const formData = new FormData(e.target);
+                const images = formData.getAll('images');
+                
+                if (images.length === 0 || !images[0].name) {
+                    throw new Error('Please select at least one product image');
+                }
+                
+                // Upload images to Firebase Storage
+                const imageUrls = [];
+                for (let i = 0; i < Math.min(images.length, 5); i++) {
+                    const image = images[i];
+                    const imageRef = storage.ref(`products/${currentUser.uid}/${Date.now()}_${i}`);
+                    const snapshot = await imageRef.put(image);
+                    const url = await snapshot.ref.getDownloadURL();
+                    imageUrls.push(url);
+                }
+                
+                // Create product document
+                const productData = {
+                    title: formData.get('title'),
+                    description: formData.get('description'),
+                    price: parseFloat(formData.get('price')).toFixed(2),
+                    category: formData.get('category'),
+                    condition: formData.get('condition'),
+                    stock: parseInt(formData.get('stock')),
+                    weight: parseFloat(formData.get('weight')) || 0,
+                    shippingTime: formData.get('shippingTime'),
+                    brand: formData.get('brand') || '',
+                    images: imageUrls,
+                    image: imageUrls[0], // Main image
+                    sellerId: currentUser.uid,
+                    sellerName: userProfile.displayName,
+                    isActive: true,
+                    rating: 0,
+                    reviews: 0,
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                    updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                };
+                
+                // Add shipping info based on time
+                const shippingMap = {
+                    '1-2': 'FREE overnight shipping',
+                    '3-5': 'FREE shipping in 3-5 days',
+                    '5-7': 'FREE shipping in 5-7 days',
+                    '7-14': 'FREE shipping in 1-2 weeks',
+                    '14+': 'Standard shipping (2+ weeks)'
+                };
+                productData.shipping = shippingMap[productData.shippingTime];
+                
+                // Save to Firestore
+                await db.collection('products').add(productData);
+                
+                showAlert('Product added successfully!', 'success');
+                hideProductForm();
+                loadSellerDashboard(); // Refresh dashboard
+                loadProducts(); // Refresh main product list
+                
+            } catch (error) {
+                console.error('Error adding product:', error);
+                showAlert(error.message || 'Failed to add product', 'error');
+            } finally {
+                showLoading(false, e.target.querySelector('button[type="submit"]'));
+            }
+        }
+
+        async function toggleProductStatus(productId, isActive) {
+            try {
+                await db.collection('products').doc(productId).update({
+                    isActive: isActive,
+                    updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                });
+                
+                showAlert(`Product ${isActive ? 'activated' : 'deactivated'} successfully`, 'success');
+                loadSellerDashboard();
+                
+            } catch (error) {
+                console.error('Error updating product status:', error);
+                showAlert('Failed to update product status', 'error');
+            }
+        }
+
+        // ======================
+        // SUBSCRIPTION FUNCTIONS
+        // ======================
+        function showSubscriptionModal() {
+            showModal('subscriptionModal');
+        }
+
+        async function handleSubscription() {
+            if (!currentUser) {
+                showAlert('Please sign in to subscribe', 'error');
+                return;
+            }
+            
+            try {
+                showLoading(true, elements.subscribeBtn);
+                
+                // Create Stripe checkout session
+                const createCheckoutSession = functions.httpsCallable('createCheckoutSession');
+                const result = await createCheckoutSession({
+                    priceId: 'price_seller_subscription_monthly', // Replace with your Stripe price ID
+                    successUrl: window.location.origin + '?subscription=success',
+                    cancelUrl: window.location.origin + '?subscription=cancelled'
+                });
+                
+                // Redirect to Stripe Checkout
+                const { error } = await stripe.redirectToCheckout({
+                    sessionId: result.data.sessionId
+                });
+                
+                if (error) {
+                    throw error;
+                }
+                
+            } catch (error) {
+                console.error('Subscription error:', error);
+                showAlert('Failed to start subscription process', 'error');
+            } finally {
+                showLoading(false, elements.subscribeBtn);
+            }
+        }
+
+        // Handle subscription success/failure from URL params
+        function handleSubscriptionResult() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const subscriptionResult = urlParams.get('subscription');
+            
+            if (subscriptionResult === 'success') {
+                showAlert('Subscription activated! Welcome to WEB VTEC sellers!', 'success');
+                // Refresh user data to get updated subscription status
+                loadUserData();
+                // Clean URL
+                window.history.replaceState({}, document.title, window.location.pathname);
+            } else if (subscriptionResult === 'cancelled') {
+                showAlert('Subscription cancelled', 'info');
+                window.history.replaceState({}, document.title, window.location.pathname);
+            }
+        }
+
+        // ======================
+        // CHECKOUT FUNCTIONS
+        // ======================
+        async function proceedToCheckout() {
+            if (!currentUser) {
+                showAlert('Please sign in to checkout', 'error');
+                showAuthModal();
+                return;
+            }
+            
+            if (cart.length === 0) {
+                showAlert('Your cart is empty', 'error');
+                return;
+            }
+            
+            showCheckoutModal();
+        }
+
+        function showCheckoutModal() {
+            const subtotal = cart.reduce((total, item) => total + (parseFloat(item.price) * item.quantity), 0);
+            const shipping = subtotal >= 75 ? 0 : 9.99;
+            const total = subtotal + shipping;
+            
+            elements.checkoutContent.innerHTML = `
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 32px;">
+                    <div>
+                        <h3 style="margin-bottom: 24px;">Shipping Information</h3>
+                        <form id="checkoutForm">
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label class="form-label">First Name *</label>
+                                    <input type="text" class="form-input" name="firstName" required 
+                                           value="${userProfile?.firstName || ''}">
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Last Name *</label>
+                                    <input type="text" class="form-input" name="lastName" required
+                                           value="${userProfile?.lastName || ''}">
+                                </div>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label class="form-label">Email Address *</label>
+                                <input type="email" class="form-input" name="email" required
+                                       value="${currentUser?.email || ''}">
+                            </div>
+                            
+                            <div class="form-group">
+                                <label class="form-label">Street Address *</label>
+                                <input type="text" class="form-input" name="street" required
+                                       value="${userProfile?.address?.street || ''}" placeholder="123 Main Street">
+                            </div>
+                            
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label class="form-label">City *</label>
+                                    <input type="text" class="form-input" name="city" required
+                                           value="${userProfile?.address?.city || ''}">
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">State *</label>
+                                    <input type="text" class="form-input" name="state" required
+                                           value="${userProfile?.address?.state || ''}">
+                                </div>
+                            </div>
+                            
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label class="form-label">ZIP Code *</label>
+                                    <input type="text" class="form-input" name="zipCode" required
+                                           value="${userProfile?.address?.zipCode || ''}">
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Country *</label>
+                                    <select class="form-select" name="country" required>
+                                        <option value="US" ${userProfile?.address?.country === 'US' ? 'selected' : ''}>United States</option>
+                                        <option value="CA" ${userProfile?.address?.country === 'CA' ? 'selected' : ''}>Canada</option>
+                                        <option value="GB" ${userProfile?.address?.country === 'GB' ? 'selected' : ''}>United Kingdom</option>
+                                    </select>
+                                </div>
+                            </div>
+                            
+                            <div style="margin: 32px 0;">
+                                <h4 style="margin-bottom: 16px;">Payment Method</h4>
+                                <div id="card-element" style="padding: 16px; border: 1px solid var(--border); border-radius: 8px; background: white;">
+                                    <!-- Stripe Elements will create form elements here -->
+                                </div>
+                                <div id="card-errors" role="alert" style="color: var(--error); margin-top: 8px;"></div>
+                            </div>
+                        </form>
+                    </div>
+                    
+                    <div>
+                        <h3 style="margin-bottom: 24px;">Order Summary</h3>
+                        <div style="border: 1px solid var(--border); border-radius: 12px; padding: 24px;">
+                            ${cart.map(item => `
+                                <div style="display: flex; justify-content: space-between; margin-bottom: 16px; padding-bottom: 16px; border-bottom: 1px solid var(--border-light);">
+                                    <div>
+                                        <div style="font-weight: 600;">${item.title}</div>
+                                        <div style="color: var(--text-secondary); font-size: 0.9rem;">Qty: ${item.quantity}</div>
+                                    </div>
+                                    <div style="font-weight: 600;">${(parseFloat(item.price) * item.quantity).toFixed(2)}</div>
+                                </div>
+                            `).join('')}
+                            
+                            <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                                <span>Subtotal:</span>
+                                <span>${subtotal.toFixed(2)}</span>
+                            </div>
+                            <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                                <span>Shipping:</span>
+                                <span>${shipping === 0 ? 'FREE' : ' + shipping.toFixed(2)}</span>
+                            </div>
+                            <div style="display: flex; justify-content: space-between; font-size: 1.25rem; font-weight: 700; padding-top: 16px; border-top: 1px solid var(--border);">
+                                <span>Total:</span>
+                                <span>${total.toFixed(2)}</span>
+                            </div>
+                            
+                            <button type="button" class="btn btn-primary btn-lg" id="payNowBtn" style="width: 100%; margin-top: 24px;">
+                                <i class="fas fa-lock"></i>
+                                Complete Order - ${total.toFixed(2)}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            showModal('checkoutModal');
+            setupStripeElements();
+        }
+
+        function setupStripeElements() {
+            const elements = stripe.elements();
+            const card = elements.create('card', {
+                style: {
+                    base: {
+                        fontSize: '16px',
+                        color: '#424770',
+                        '::placeholder': {
+                            color: '#aab7c4',
+                        },
+                    },
+                    invalid: {
+                        color: '#9e2146',
+                    },
+                },
+            });
+            
+            card.mount('#card-element');
+            
+            card.on('change', ({error}) => {
+                const displayError = document.getElementById('card-errors');
+                if (error) {
+                    displayError.textContent = error.message;
+                } else {
+                    displayError.textContent = '';
+                }
+            });
+            
+            document.getElementById('payNowBtn').addEventListener('click', () => handlePayment(card));
+        }
+
+        async function handlePayment(card) {
+            const checkoutForm = document.getElementById('checkoutForm');
+            const payNowBtn = document.getElementById('payNowBtn');
+            
+            try {
+                showLoading(true, payNowBtn);
+                
+                const formData = new FormData(checkoutForm);
+                const shippingAddress = {
+                    name: `${formData.get('firstName')} ${formData.get('lastName')}`,
+                    email: formData.get('email'),
+                    street: formData.get('street'),
+                    city: formData.get('city'),
+                    state: formData.get('state'),
+                    zipCode: formData.get('zipCode'),
+                    country: formData.get('country')
+                };
+                
+                // Create payment intent
+                const createPaymentIntent = functions.httpsCallable('createPaymentIntent');
+                const paymentIntentResult = await createPaymentIntent({
+                    amount: cart.reduce((total, item) => total + (parseFloat(item.price) * item.quantity), 0) * 100, // Convert to cents
+                    currency: 'usd',
+                    shipping: shippingAddress,
+                    items: cart
+                });
+                
+                const {error, paymentIntent} = await stripe.confirmCardPayment(
+                    paymentIntentResult.data.clientSecret,
+                    {
+                        payment_method: {
+                            card: card,
+                            billing_details: {
+                                name: shippingAddress.name,
+                                email: shippingAddress.email,
+                                address: {
+                                    line1: shippingAddress.street,
+                                    city: shippingAddress.city,
+                                    state: shippingAddress.state,
+                                    postal_code: shippingAddress.zipCode,
+                                    country: shippingAddress.country
+                                }
+                            }
+                        }
+                    }
+                );
+                
+                if (error) {
+                    throw error;
+                }
+                
+                if (paymentIntent.status === 'succeeded') {
+                    await processOrder(paymentIntent, shippingAddress);
+                    showAlert('Order placed successfully! Check your email for confirmation.', 'success');
+                    hideModal('checkoutModal');
+                    cart = [];
+                    updateCartUI();
+                    toggleCart();
+                }
+                
+            } catch (error) {
+                console.error('Payment error:', error);
+                showAlert(error.message || 'Payment failed. Please try again.', 'error');
+            } finally {
+                showLoading(false, payNowBtn);
+            }
+        }
+
+        async function processOrder(paymentIntent, shippingAddress) {
+            try {
+                // Group items by seller
+                const ordersBySeller = {};
+                cart.forEach(item => {
+                    const sellerId = item.sellerId || 'platform';
+                    if (!ordersBySeller[sellerId]) {
+                        ordersBySeller[sellerId] = [];
+                    }
+                    ordersBySeller[sellerId].push(item);
+                });
+                
+                // Create separate orders for each seller
+                const orderPromises = Object.keys(ordersBySeller).map(async (sellerId) => {
+                    const items = ordersBySeller[sellerId];
+                    const subtotal = items.reduce((sum, item) => sum + (parseFloat(item.price) * item.quantity), 0);
+                    
+                    const orderData = {
+                        orderId: generateOrderId(),
+                        customerId: currentUser.uid,
+                        customerName: userProfile.displayName,
+                        customerEmail: currentUser.email,
+                        sellerId: sellerId,
+                        items: items,
+                        subtotal: subtotal,
+                        shipping: subtotal >= 75 ? 0 : 9.99,
+                        total: subtotal + (subtotal >= 75 ? 0 : 9.99),
+                        shippingAddress: shippingAddress,
+                        paymentIntentId: paymentIntent.id,
+                        status: 'confirmed',
+                        trackingNumber: null,
+                        estimatedDelivery: calculateEstimatedDelivery(items),
+                        createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                    };
+                    
+                    // Save order to Firestore
+                    const orderRef = await db.collection('orders').add(orderData);
+                    
+                    // Update product stock
+                    const stockUpdates = items.map(item => {
+                        return db.collection('products').doc(item.id).update({
+                            stock: firebase.firestore.FieldValue.increment(-item.quantity)
+                        });
+                    });
+                    
+                    await Promise.all(stockUpdates);
+                    
+                    // Send email notifications
+                    await sendOrderNotifications(orderRef.id, orderData);
+                    
+                    return orderRef.id;
+                });
+                
+                await Promise.all(orderPromises);
+                
+                // Clear user's cart
+                if (currentUser) {
+                    await db.collection('carts').doc(currentUser.uid).delete();
+                }
+                
+            } catch (error) {
+                console.error('Error processing order:', error);
+                throw new Error('Order processing failed');
+            }
+        }
+
+        function generateOrderId() {
+            return 'WV-' + Date.now() + '-' + Math.random().toString(36).substr(2, 5).toUpperCase();
+        }
+
+        function calculateEstimatedDelivery(items) {
+            // Find the longest shipping time among items
+            const shippingTimes = items.map(item => item.shippingTime || '3-5');
+            const maxTime = shippingTimes.reduce((max, time) => {
+                const days = parseInt(time.split('-')[1] || time.split('-')[0]);
+                const maxDays = parseInt(max.split('-')[1] || max.split('-')[0]);
+                return days > maxDays ? time : max;
+            });
+            
+            const today = new Date();
+            const deliveryDate = new Date(today);
+            deliveryDate.setDate(today.getDate() + parseInt(maxTime.split('-')[1] || maxTime.split('-')[0]));
+            
+            return deliveryDate.toLocaleDateString();
+        }
+
+        async function sendOrderNotifications(orderId, orderData) {
+            try {
+                // Send email to customer
+                const sendOrderEmail = functions.httpsCallable('sendOrderEmail');
+                await sendOrderEmail({
+                    to: orderData.customerEmail,
+                    type: 'customer_confirmation',
+                    orderData: orderData
+                });
+                
+                // Send email to seller (if not platform)
+                if (orderData.sellerId !== 'platform') {
+                    const sellerDoc = await db.collection('users').doc(orderData.sellerId).get();
+                    if (sellerDoc.exists) {
+                        await sendOrderEmail({
+                            to: sellerDoc.data().email,
+                            type: 'seller_notification',
+                            orderData: orderData
+                        });
+                    }
+                }
+                
+            } catch (error) {
+                console.error('Error sending notifications:', error);
+                // Don't throw error - order was successful even if emails failed
+            }
+        }
+
+        // ======================
+        // SEARCH & FILTER FUNCTIONS
+        // ======================
+        function handleSearch(e) {
+            e.preventDefault();
+            const query = elements.searchInput.value.trim().toLowerCase();
+            
+            if (!query) {
+                renderProducts(products);
+                return;
+            }
+            
+            const filteredProducts = products.filter(product => 
+                product.title.toLowerCase().includes(query) ||
+                product.description.toLowerCase().includes(query) ||
+                product.category.toLowerCase().includes(query) ||
+                product.sellerName.toLowerCase().includes(query)
+            );
+            
+            renderProducts(filteredProducts);
+            showAlert(`Found ${filteredProducts.length} products for "${query}"`, 'info');
+        }
+
+        function filterByCategory(categoryId) {
+            elements.categoryFilter.value = categoryId;
+            applyFilters();
+        }
+
+        function applyFilters() {
+            let filteredProducts = [...products];
+            
+            // Category filter
+            const categoryFilter = elements.categoryFilter.value;
+            if (categoryFilter) {
+                filteredProducts = filteredProducts.filter(product => 
+                    product.category === categoryFilter
+                );
+            }
+            
+            // Price filter
+            const priceFilter = elements.priceFilter.value;
+            if (priceFilter) {
+                const [min, max] = priceFilter.split('-');
+                filteredProducts = filteredProducts.filter(product => {
+                    const price = parseFloat(product.price);
+                    if (max) {
+                        return price >= parseFloat(min) && price <= parseFloat(max);
+                    } else {
+                        return price >= parseFloat(min);
+                    }
+                });
+            }
+            
+            // Sort filter
+            const sortFilter = elements.sortFilter.value;
+            switch (sortFilter) {
+                case 'price-low':
+                    filteredProducts.sort((a, b) => parseFloat(a.price) - parseFloat(b.price));
+                    break;
+                case 'price-high':
+                    filteredProducts.sort((a, b) => parseFloat(b.price) - parseFloat(a.price));
+                    break;
+                case 'rating':
+                    filteredProducts.sort((a, b) => (b.rating || 0) - (a.rating || 0));
+                    break;
+                case 'newest':
+                    filteredProducts.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+                    break;
+                default: // featured
+                    // Keep original order or sort by some featured algorithm
+                    break;
+            }
+            
+            renderProducts(filteredProducts);
+        }
+
+        // ======================
+        // PROFILE & ORDER FUNCTIONS
+        // ======================
+        function showProfileModal() {
+            const modal = document.createElement('div');
+            modal.className = 'modal active';
+            modal.id = 'profileModal';
+            
+            modal.innerHTML = `
+                <div class="modal-content" style="max-width: 600px;">
+                    <button class="modal-close" onclick="this.closest('.modal').remove()">
+                        <i class="fas fa-times"></i>
+                    </button>
+                    
+                    <h2 class="modal-title">My Profile</h2>
+                    
+                    <form id="profileForm">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label class="form-label">First Name</label>
+                                <input type="text" class="form-input" name="firstName" 
+                                       value="${userProfile?.firstName || ''}" required>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Last Name</label>
+                                <input type="text" class="form-input" name="lastName" 
+                                       value="${userProfile?.lastName || ''}" required>
+                            </div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label class="form-label">Email</label>
+                            <input type="email" class="form-input" value="${currentUser?.email || ''}" disabled>
+                        </div>
+                        
+                        <h4 style="margin: 24px 0 16px 0;">Shipping Address</h4>
+                        
+                        <div class="form-group">
+                            <label class="form-label">Street Address</label>
+                            <input type="text" class="form-input" name="street" 
+                                   value="${userProfile?.address?.street || ''}">
+                        </div>
+                        
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label class="form-label">City</label>
+                                <input type="text" class="form-input" name="city" 
+                                       value="${userProfile?.address?.city || ''}">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">State</label>
+                                <input type="text" class="form-input" name="state" 
+                                       value="${userProfile?.address?.state || ''}">
+                            </div>
+                        </div>
+                        
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label class="form-label">ZIP Code</label>
+                                <input type="text" class="form-input" name="zipCode" 
+                                       value="${userProfile?.address?.zipCode || ''}">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Country</label>
+                                <select class="form-select" name="country">
+                                    <option value="US" ${userProfile?.address?.country === 'US' ? 'selected' : ''}>United States</option>
+                                    <option value="CA" ${userProfile?.address?.country === 'CA' ? 'selected' : ''}>Canada</option>
+                                    <option value="GB" ${userProfile?.address?.country === 'GB' ? 'selected' : ''}>United Kingdom</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div style="display: flex; gap: 16px; margin-top: 32px;">
+                            <button type="button" class="btn btn-secondary" onclick="this.closest('.modal').remove()">
+                                Cancel
+                            </button>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save"></i>
+                                Save Changes
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            `;
+            
+            document.body.appendChild(modal);
+            
+            // Setup form handler
+            modal.querySelector('#profileForm').addEventListener('submit', async (e) => {
+                e.preventDefault();
+                await updateProfile(e.target, modal);
+            });
+        }
+
+        async function updateProfile(form, modal) {
+            try {
+                showLoading(true, form.querySelector('button[type="submit"]'));
+                
+                const formData = new FormData(form);
+                const updatedProfile = {
+                    firstName: formData.get('firstName'),
+                    lastName: formData.get('lastName'),
+                    displayName: `${formData.get('firstName')} ${formData.get('lastName')}`,
+                    address: {
+                        street: formData.get('street'),
+                        city: formData.get('city'),
+                        state: formData.get('state'),
+                        zipCode: formData.get('zipCode'),
+                        country: formData.get('country')
+                    },
+                    updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                };
+                
+                await db.collection('users').doc(currentUser.uid).update(updatedProfile);
+                
+                // Update local profile
+                userProfile = { ...userProfile, ...updatedProfile };
+                updateAuthUI();
+                
+                showAlert('Profile updated successfully!', 'success');
+                modal.remove();
+                
+            } catch (error) {
+                console.error('Error updating profile:', error);
+                showAlert('Failed to update profile', 'error');
+            } finally {
+                showLoading(false, form.querySelector('button[type="submit"]'));
+            }
+        }
+
+        async function showOrderHistory() {
+            try {
+                const ordersSnapshot = await db.collection('orders')
+                    .where('customerId', '==', currentUser.uid)
+                    .orderBy('createdAt', 'desc')
+                    .get();
+                
+                const orders = ordersSnapshot.docs.map(doc => ({
+                    id: doc.id,
+                    ...doc.data()
+                }));
+                
+                const modal = document.createElement('div');
+                modal.className = 'modal active';
+                modal.id = 'orderHistoryModal';
+                
+                modal.innerHTML = `
+                    <div class="modal-content" style="max-width: 900px;">
+                        <button class="modal-close" onclick="this.closest('.modal').remove()">
+                            <i class="fas fa-times"></i>
+                        </button>
+                        
+                        <h2 class="modal-title">Order History</h2>
+                        
+                        <div style="max-height: 600px; overflow-y: auto;">
+                            ${orders.length === 0 ? 
+                                '<p style="text-align: center; color: var(--text-secondary); padding: 60px;">No orders found</p>' :
+                                orders.map(order => `
+                                    <div style="border: 1px solid var(--border); border-radius: 12px; padding: 24px; margin-bottom: 16px;">
+                                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+                                            <div>
+                                                <h4 style="margin-bottom: 4px;">Order ${order.orderId}</h4>
+                                                <div style="color: var(--text-secondary); font-size: 0.9rem;">
+                                                    ${new Date(order.createdAt?.toDate()).toLocaleDateString()}
+                                                </div>
+                                            </div>
+                                            <div style="text-align: right;">
+                                                <div style="font-size: 1.25rem; font-weight: 700;">${order.total?.toFixed(2)}</div>
+                                                <div style="color: var(--${getStatusColor(order.status)}); font-weight: 500; text-transform: capitalize;">
+                                                    ${order.status}
+                                                </div>
+                                            </div>
+                                        </div>
+                                        
+                                        <div style="border-top: 1px solid var(--border-light); padding-top: 16px;">
+                                            ${order.items?.map(item => `
+                                                <div style="display: flex; gap: 12px; margin-bottom: 12px;">
+                                                    <img src="${item.image}" alt="${item.title}" style="width: 60px; height: 60px; object-fit: cover; border-radius: 8px;">
+                                                    <div>
+                                                        <div style="font-weight: 600; margin-bottom: 4px;">${item.title}</div>
+                                                        <div style="color: var(--text-secondary); font-size: 0.9rem;">
+                                                            Qty: ${item.quantity} • ${item.price} each
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            `).join('')}
+                                        </div>
+                                        
+                                        ${order.trackingNumber ? `
+                                            <div style="margin-top: 16px; padding: 12px; background: var(--background-light); border-radius: 8px;">
+                                                <strong>Tracking Number:</strong> ${order.trackingNumber}<br>
+                                                <strong>Estimated Delivery:</strong> ${order.estimatedDelivery}
+                                            </div>
+                                        ` : ''}
+                                    </div>
+                                `).join('')
+                            }
+                        </div>
+                    </div>
+                `;
+                
+                document.body.appendChild(modal);
+                
+            } catch (error) {
+                console.error('Error loading order history:', error);
+                showAlert('Failed to load order history', 'error');
+            }
+        }
+
+        function getStatusColor(status) {
+            switch (status?.toLowerCase()) {
+                case 'confirmed': return 'primary';
+                case 'processing': return 'accent';
+                case 'shipped': return 'success';
+                case 'delivered': return 'success';
+                case 'cancelled': return 'error';
+                default: return 'text-secondary';
+            }
+        }
+
+        // ======================
+        // EMAIL FUNCTIONS
+        // ======================
+        async function sendWelcomeEmail(user, firstName) {
+            try {
+                const sendEmail = functions.httpsCallable('sendEmail');
+                await sendEmail({
+                    to: user.email,
+                    subject: 'Welcome to WEB VTEC!',
+                    template: 'welcome',
+                    data: {
+                        firstName: firstName,
+                        loginUrl: window.location.origin
+                    }
+                });
+            } catch (error) {
+                console.error('Error sending welcome email:', error);
+                // Don't throw error - account creation was successful
+            }
+        }
+
+        // ======================
+        // UTILITY FUNCTIONS
+        // ======================
+        function showModal(modalId) {
+            const modal = document.getElementById(modalId);
+            if (modal) {
+                modal.classList.add('active');
+                document.body.style.overflow = 'hidden';
+            }
+        }
+
+        function hideModal(modalId) {
+            const modal = document.getElementById(modalId);
+            if (modal) {
+                modal.classList.remove('active');
+                document.body.style.overflow = '';
+            }
+        }
+
+        function handleModalOutsideClick(e) {
+            if (e.target.classList.contains('modal') && e.target.classList.contains('active')) {
+                e.target.classList.remove('active');
+                document.body.style.overflow = '';
+            }
+        }
+
+        function showAlert(message, type = 'info') {
+            const alert = document.createElement('div');
+            alert.className = `alert alert-${type} show`;
+            
+            const icon = type === 'success' ? 'check-circle' : 
+                        type === 'error' ? 'exclamation-triangle' : 
+                        type === 'info' ? 'info-circle' : 'bell';
+            
+            alert.innerHTML = `
+                <i class="fas fa-${icon}"></i>
+                <span>${message}</span>
+            `;
+            
+            document.body.appendChild(alert);
+            
+            setTimeout(() => {
+                alert.classList.remove('show');
+                setTimeout(() => {
+                    if (alert.parentNode) {
+                        alert.parentNode.removeChild(alert);
+                    }
+                }, 300);
+            }, 4000);
+        }
+
+        function showLoading(show, button = null) {
+            if (button) {
+                if (show) {
+                    button.disabled = true;
+                    button.innerHTML = button.innerHTML.replace(/<i[^>]*><\/i>/, '<div class="loading"></div>');
+                } else {
+                    button.disabled = false;
+                    // Restore original button content would need to be stored
+                }
+            }
+            
+            if (elements.loadingProducts) {
+                elements.loadingProducts.style.display = show ? 'block' : 'none';
+            }
+        }
+
+        function getFirebaseErrorMessage(error) {
+            switch (error.code) {
+                case 'auth/email-already-in-use':
+                    return 'An account with this email already exists.';
+                case 'auth/weak-password':
+                    return 'Password should be at least 6 characters.';
+                case 'auth/invalid-email':
+                    return 'Please enter a valid email address.';
+                case 'auth/user-not-found':
+                    return 'No account found with this email.';
+                case 'auth/wrong-password':
+                    return 'Incorrect password.';
+                case 'auth/too-many-requests':
+                    return 'Too many failed attempts. Please try again later.';
+                default:
+                    return error.message || 'An error occurred. Please try again.';
+            }
+        }
+
+        // ======================
+        // INITIALIZATION COMPLETION
+        // ======================
+        
+        // Check for subscription result on page load
+        window.addEventListener('load', handleSubscriptionResult);
+        
+        // Global functions that need to be accessible from HTML
+        window.addToCart = addToCart;
+        window.updateCartQuantity = updateCartQuantity;
+        window.removeFromCart = removeFromCart;
+        window.showProductForm = showProductForm;
+        window.editProduct = editProduct;
+        window.toggleProductStatus = toggleProductStatus;
+        
+        // Additional seller functions
+        async function editProduct(productId) {
+            // Implementation for editing existing products
+            showAlert('Edit product feature coming soon!', 'info');
+        }
+        
+        window.editProduct = editProduct;
+        
+        console.log('WEB VTEC initialized successfully!');
+    </script>
+</body>
+</html>
