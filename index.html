@@ -1362,10 +1362,9 @@
             </div>
         </div>
     </div>
-</div>
-    
+    </div>
 
-<script>
+    <script>
 // Firebase configuration
 const firebaseConfig = {
     apiKey: "AIzaSyD01uGyvyD9vyXa6SFAqxqEdEFuedc-b5M",
@@ -1375,6 +1374,9 @@ const firebaseConfig = {
     messagingSenderId: "363586978941",
     appId: "1:363586978941:web:35b3b34237bca75b405d14"
 };
+
+// Google Vision API Configuration
+const GOOGLE_VISION_API_KEY = "YOUR_GOOGLE_VISION_API_KEY"; // Replace with your actual API key
 
 // Initialize Firebase
 firebase.initializeApp(firebaseConfig);
@@ -1393,37 +1395,88 @@ let currentUser = null;
 let isSignUpMode = false;
 let currentSeller = null;
 let selectedCategory = 'all';
-let googleSellerProvider = null;
 let uploadedIdData = null;
+let idVerificationResult = null;
+
+// Utility Functions
+function showNotification(message, type = 'success') {
+    const notification = document.createElement('div');
+    const bgColor = type === 'success' ? '#d4edda' : type === 'error' ? '#f8d7da' : '#fff3cd';
+    const textColor = type === 'success' ? '#155724' : type === 'error' ? '#721c24' : '#856404';
+    
+    notification.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        background: ${bgColor};
+        color: ${textColor};
+        padding: 1rem 1.5rem;
+        border-radius: 8px;
+        z-index: 3000;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        border: 1px solid ${type === 'success' ? '#c3e6cb' : type === 'error' ? '#f5c6cb' : '#ffeaa7'};
+        max-width: 300px;
+        word-wrap: break-word;
+    `;
+    notification.textContent = message;
+    document.body.appendChild(notification);
+    
+    setTimeout(() => {
+        notification.style.opacity = '0';
+        notification.style.transform = 'translateX(100%)';
+        notification.style.transition = 'all 0.3s ease';
+        setTimeout(() => notification.remove(), 300);
+    }, 3000);
+}
+
+function closeModal(modalId) {
+    const modal = document.getElementById(modalId);
+    if (modal) {
+        modal.style.display = 'none';
+    }
+}
+
+function closeAllModals() {
+    const modals = document.querySelectorAll('.modal');
+    modals.forEach(modal => modal.style.display = 'none');
+}
 
 // Initialize on page load
 document.addEventListener('DOMContentLoaded', function() {
-    console.log('DOM loaded');
     loadProductsFromFirebase();
     updateCartCount();
-    
-    // Initialize Google provider for sellers
-    if (typeof firebase !== 'undefined' && firebase.auth) {
-        googleSellerProvider = new firebase.auth.GoogleAuthProvider();
-        googleSellerProvider.addScope('email');
-        googleSellerProvider.addScope('profile');
-    }
-    
-    // Set up date dropdowns and file handlers
-    setTimeout(() => {
-        populateYearDropdown();
-        setupEventListeners();
-    }, 1000);
+    setupEventListeners();
+    populateYearDropdowns();
 });
 
 function setupEventListeners() {
+    // Close modals when clicking outside
+    window.onclick = function(event) {
+        const modals = document.querySelectorAll('.modal');
+        modals.forEach(modal => {
+            if (event.target === modal) {
+                modal.style.display = 'none';
+            }
+        });
+    };
+
     // Date dropdown handlers
     const birthMonth = document.getElementById('birthMonth');
     const birthYear = document.getElementById('birthYear');
     if (birthMonth) birthMonth.addEventListener('change', populateDayDropdown);
     if (birthYear) birthYear.addEventListener('change', populateDayDropdown);
     
+    // Google date dropdowns
+    const googleBirthMonth = document.getElementById('googleBirthMonth');
+    const googleBirthYear = document.getElementById('googleBirthYear');
+    if (googleBirthMonth) googleBirthMonth.addEventListener('change', populateGoogleDayDropdown);
+    if (googleBirthYear) googleBirthYear.addEventListener('change', populateGoogleDayDropdown);
+    
     // File upload handlers
+    setupFileHandlers();
+}
+
+function setupFileHandlers() {
     const photoIdInput = document.getElementById('photoID');
     if (photoIdInput) {
         photoIdInput.addEventListener('change', function(e) {
@@ -1441,34 +1494,21 @@ function setupEventListeners() {
             }
         });
     }
-    
-    const googlePhotoIdInput = document.getElementById('googlePhotoID');
-    if (googlePhotoIdInput) {
-        googlePhotoIdInput.addEventListener('change', function(e) {
-            if (e.target.files[0]) {
-                handleIdUpload(e.target.files[0], 'googleIdPreview', 'googleIdPreviewImg', 'googleIdAnalysis');
-            }
-        });
-    }
 }
 
 // Authentication Functions
 function signInWithGoogle() {
-    console.log('Google sign-in button clicked');
-    
     if (typeof firebase === 'undefined' || !firebase.auth) {
-        console.error('Firebase Auth not loaded');
-        alert('Authentication system not ready. Please refresh the page.');
+        showNotification('Authentication system not ready. Please refresh the page.', 'error');
         return;
     }
     
     auth.signInWithPopup(googleProvider)
         .then((result) => {
             currentUser = result.user;
-            console.log('Google sign-in successful:', currentUser);
             updateAuthUI();
-            closeLogin();
-            alert(`Welcome ${currentUser.displayName || currentUser.email}!`);
+            closeModal('loginModal');
+            showNotification(`Welcome ${currentUser.displayName || currentUser.email}!`);
         })
         .catch((error) => {
             console.error('Google sign-in error:', error);
@@ -1486,7 +1526,7 @@ function signInWithGoogle() {
                 default:
                     errorMessage += error.message;
             }
-            alert(errorMessage);
+            showNotification(errorMessage, 'error');
         });
 }
 
@@ -1500,23 +1540,24 @@ function handleEmailAuth(event) {
             .then((result) => {
                 currentUser = result.user;
                 updateAuthUI();
-                closeLogin();
-                alert('Account created successfully!');
+                closeModal('loginModal');
+                showNotification('Account created successfully!');
             })
             .catch((error) => {
                 console.error('Sign up error:', error);
-                alert('Error creating account: ' + error.message);
+                showNotification('Error creating account: ' + error.message, 'error');
             });
     } else {
         auth.signInWithEmailAndPassword(email, password)
             .then((result) => {
                 currentUser = result.user;
                 updateAuthUI();
-                closeLogin();
+                closeModal('loginModal');
+                showNotification('Signed in successfully!');
             })
             .catch((error) => {
                 console.error('Sign in error:', error);
-                alert('Error signing in: ' + error.message);
+                showNotification('Error signing in: ' + error.message, 'error');
             });
     }
 }
@@ -1525,11 +1566,11 @@ function signOut() {
     auth.signOut().then(() => {
         currentUser = null;
         updateAuthUI();
-        closeLogin();
-        alert('You have been signed out successfully.');
+        closeModal('loginModal');
+        showNotification('You have been signed out successfully.');
     }).catch((error) => {
         console.error('Sign out error:', error);
-        alert('Error signing out. Please try again.');
+        showNotification('Error signing out. Please try again.', 'error');
     });
 }
 
@@ -1559,18 +1600,31 @@ function updateAuthModalUI() {
 
 function updateAuthUI() {
     const signInBtn = document.querySelector('.btn[onclick="showLogin()"]');
+    const detailSignInBtn = document.getElementById('detailSignInBtn');
     
     if (currentUser) {
         const displayName = currentUser.displayName || 'User';
         const firstName = displayName.split(' ')[0];
-        signInBtn.innerHTML = `👤 ${firstName}`;
-        signInBtn.onclick = showUserProfile;
+        const buttonText = `👤 ${firstName}`;
+        
+        if (signInBtn) {
+            signInBtn.innerHTML = buttonText;
+            signInBtn.onclick = showUserProfile;
+        }
+        if (detailSignInBtn) {
+            detailSignInBtn.innerHTML = buttonText;
+            detailSignInBtn.onclick = showUserProfile;
+        }
     } else {
-        signInBtn.innerHTML = '👤 Sign In';
-        signInBtn.onclick = showLogin;
+        if (signInBtn) {
+            signInBtn.innerHTML = '👤 Sign In';
+            signInBtn.onclick = showLogin;
+        }
+        if (detailSignInBtn) {
+            detailSignInBtn.innerHTML = '👤 Sign In';
+            detailSignInBtn.onclick = showLogin;
+        }
     }
-    
-    updateDetailPageAuth();
 }
 
 function showLogin() {
@@ -1616,7 +1670,7 @@ function showUserProfile() {
 }
 
 function closeLogin() {
-    document.getElementById('loginModal').style.display = 'none';
+    closeModal('loginModal');
 }
 
 // Firebase Auth State Observer
@@ -1636,14 +1690,23 @@ function loadProductsFromFirebase() {
             });
         });
         displayProducts();
+    }, (error) => {
+        console.error('Error loading products:', error);
+        showNotification('Error loading products. Please refresh the page.', 'error');
     });
 }
 
 function displayProducts() {
     const grid = document.getElementById('productsGrid');
+    if (!grid) return;
+    
     grid.innerHTML = '';
 
-    products.forEach(product => {
+    const filteredProducts = selectedCategory === 'all' 
+        ? products 
+        : products.filter(product => product.category === selectedCategory);
+
+    filteredProducts.forEach(product => {
         const productCard = createProductCard(product);
         grid.appendChild(productCard);
     });
@@ -1669,30 +1732,22 @@ function createProductCard(product) {
     
     card.innerHTML = `
         <div class="product-image">
-            <img src="${product.image}" alt="${product.name}">
+            <img src="${product.image}" alt="${product.name}" onerror="this.src='data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZGRkIi8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtc2l6ZT0iMTgiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGR5PSIuM2VtIj5ObyBJbWFnZTwvdGV4dD48L3N2Zz4='">
         </div>
         <div class="product-details">
             <div class="product-header">
                 <h3 class="product-title">${product.name}</h3>
-                <p class="product-description">${product.description || 'DESCRIPTION'}</p>
+                <p class="product-description">${product.description || 'Product Description'}</p>
                 <p style="color: #666; font-size: 0.9rem; margin: 0.5rem 0;">Sold by: ${product.sellerName || 'WEBVTEC'}</p>
             </div>
             <div class="rating-section">
                 <div class="stars">${starsHTML} <span class="review-count">(${reviewCount})</span></div>
             </div>
-            <div class="product-price">$${product.price}</div>
+            <div class="product-price">$${parseFloat(product.price || 0).toFixed(2)}</div>
             <p style="color: #666; font-size: 0.8rem; margin: 0.5rem 0;">${product.shippingInfo || 'Shipping info available'}</p>
-            <button class="add-to-cart" data-product-id="${product.id}">Add to cart</button>
+            <button class="add-to-cart" onclick="addToCart('${product.id}')">Add to cart</button>
         </div>
     `;
-    
-    const addToCartBtn = card.querySelector('.add-to-cart');
-    addToCartBtn.addEventListener('click', function(e) {
-        e.stopPropagation();
-        e.preventDefault();
-        addToCart(product.id);
-        return false;
-    });
     
     card.addEventListener('click', function(e) {
         if (!e.target.classList.contains('add-to-cart')) {
@@ -1705,6 +1760,11 @@ function createProductCard(product) {
 
 function addToCart(productId) {
     const product = products.find(p => p.id === productId);
+    if (!product) {
+        showNotification('Product not found', 'error');
+        return;
+    }
+    
     const existingItem = cart.find(item => item.id === productId);
     
     if (existingItem) {
@@ -1714,58 +1774,52 @@ function addToCart(productId) {
     }
     
     updateCartCount();
-    showCartNotification(product.name);
-    return false;
+    showNotification(`${product.name} added to cart!`);
 }
 
 function updateCartCount() {
     const count = cart.reduce((total, item) => total + item.quantity, 0);
-    document.getElementById('cartCount').textContent = count;
-}
-
-function showCartNotification(productName) {
-    const notification = document.createElement('div');
-    notification.style.cssText = `
-        position: fixed;
-        top: 20px;
-        right: 20px;
-        background: linear-gradient(45deg, #ffd700, #ffed4a);
-        color: #333;
-        padding: 1rem;
-        border-radius: 10px;
-        z-index: 3000;
-        box-shadow: 0 5px 15px rgba(0,0,0,0.3);
-    `;
-    notification.textContent = `${productName} added to cart!`;
-    document.body.appendChild(notification);
-    
-    setTimeout(() => {
-        notification.remove();
-    }, 3000);
+    const cartCountElements = document.querySelectorAll('.cart-count');
+    cartCountElements.forEach(element => {
+        element.textContent = count;
+    });
 }
 
 function showCart() {
     if (cart.length === 0) {
-        alert('Your cart is empty!');
+        showNotification('Your cart is empty!', 'warning');
         return;
     }
     
-    let cartHTML = '<h3>Your Cart:</h3>';
+    let cartHTML = '<h3 style="color: #ffd700; margin-bottom: 1rem;">Your Cart</h3>';
     let total = 0;
     
-    cart.forEach(item => {
-        const itemTotal = item.price * item.quantity;
+    cart.forEach((item, index) => {
+        const itemTotal = (item.price || 0) * item.quantity;
         total += itemTotal;
         cartHTML += `
-            <div style="display: flex; justify-content: space-between; padding: 0.5rem 0; border-bottom: 1px solid #ccc;">
-                <span>${item.name} x${item.quantity}</span>
-                <span>$${itemTotal.toFixed(2)}</span>
+            <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.5rem 0; border-bottom: 1px solid #ccc;">
+                <div>
+                    <span>${item.name}</span>
+                    <div style="font-size: 0.8rem; color: #666;">Qty: ${item.quantity}</div>
+                </div>
+                <div style="text-align: right;">
+                    <div>$${itemTotal.toFixed(2)}</div>
+                    <button onclick="removeFromCart(${index})" style="background: #dc3545; color: white; border: none; padding: 0.2rem 0.5rem; border-radius: 3px; font-size: 0.7rem; cursor: pointer; margin-top: 0.2rem;">Remove</button>
+                </div>
             </div>
         `;
     });
     
-    cartHTML += `<br><strong>Total: $${total.toFixed(2)}</strong>`;
-    cartHTML += `<br><br><button onclick="checkout()" class="btn">Checkout with PayPal</button>`;
+    cartHTML += `
+        <div style="margin-top: 1rem; text-align: right;">
+            <strong>Total: $${total.toFixed(2)}</strong>
+        </div>
+        <div style="margin-top: 1rem; display: flex; gap: 1rem;">
+            <button onclick="clearCart()" style="background: #6c757d; color: white; border: none; padding: 0.7rem 1rem; border-radius: 6px; cursor: pointer;">Clear Cart</button>
+            <button onclick="checkout()" class="btn" style="flex: 1;">Checkout with PayPal</button>
+        </div>
+    `;
     
     const modal = document.createElement('div');
     modal.className = 'modal';
@@ -1779,23 +1833,61 @@ function showCart() {
     document.body.appendChild(modal);
 }
 
-function checkout() {
-    const total = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-    alert(`Checkout total: $${total.toFixed(2)}\n\nPayPal integration would be implemented with your actual client ID.`);
+function removeFromCart(index) {
+    cart.splice(index, 1);
+    updateCartCount();
+    // Close current cart modal and reopen with updated content
+    document.querySelectorAll('.modal').forEach(modal => {
+        if (modal.innerHTML.includes('Your Cart')) {
+            modal.remove();
+        }
+    });
+    showCart();
+}
+
+function clearCart() {
     cart = [];
     updateCartCount();
+    closeAllModals();
+    showNotification('Cart cleared');
+}
+
+function checkout() {
+    const total = cart.reduce((sum, item) => sum + ((item.price || 0) * item.quantity), 0);
+    showNotification(`Checkout total: $${total.toFixed(2)} - PayPal integration would be implemented with your actual client ID.`, 'warning');
+    cart = [];
+    updateCartCount();
+    closeAllModals();
 }
 
 function searchProducts() {
     const searchInput = document.querySelector('.search-bar');
-    const searchTerm = searchInput.value.toLowerCase();
+    const searchTerm = searchInput.value.toLowerCase().trim();
+    
+    if (!searchTerm) {
+        displayProducts();
+        return;
+    }
+    
     const filteredProducts = products.filter(product => 
         product.name.toLowerCase().includes(searchTerm) || 
-        product.description.toLowerCase().includes(searchTerm)
+        (product.description && product.description.toLowerCase().includes(searchTerm)) ||
+        (product.category && product.category.toLowerCase().includes(searchTerm))
     );
     
+    displayFilteredProducts(filteredProducts);
+}
+
+function displayFilteredProducts(filteredProducts) {
     const grid = document.getElementById('productsGrid');
+    if (!grid) return;
+    
     grid.innerHTML = '';
+    
+    if (filteredProducts.length === 0) {
+        grid.innerHTML = '<p style="text-align: center; color: #666; margin: 2rem; font-size: 1.1rem;">No products found matching your search.</p>';
+        return;
+    }
     
     filteredProducts.forEach(product => {
         const productCard = createProductCard(product);
@@ -1810,29 +1902,19 @@ function filterByCategory(category) {
     document.querySelectorAll('.category-btn').forEach(btn => {
         btn.classList.remove('active');
     });
-    event.target.classList.add('active');
     
-    if (category === 'all') {
-        displayProducts();
-    } else {
-        const filteredProducts = products.filter(product => 
-            product.category === category
-        );
-        displayFilteredProducts(filteredProducts);
+    // Find the clicked button and add active class
+    const clickedButton = Array.from(document.querySelectorAll('.category-btn')).find(btn => 
+        btn.textContent.toLowerCase().includes(category === 'all' ? 'all' : category)
+    );
+    if (clickedButton) {
+        clickedButton.classList.add('active');
     }
-}
-
-function displayFilteredProducts(filteredProducts) {
-    const grid = document.getElementById('productsGrid');
-    grid.innerHTML = '';
     
-    filteredProducts.forEach(product => {
-        const productCard = createProductCard(product);
-        grid.appendChild(productCard);
-    });
+    displayProducts();
 }
 
-// Product Detail View
+// Product Detail Functions
 function showProductDetail(product) {
     let detailView = document.getElementById('productDetailView');
     if (!detailView) {
@@ -1852,6 +1934,8 @@ function showProductDetail(product) {
         return `<span class="${starClass}">★</span>`;
     }).join('');
     
+    const currentCartCount = cart.reduce((total, item) => total + item.quantity, 0);
+    
     detailView.innerHTML = `
         <header class="top-header">
             <div class="logo">WEBVTEC</div>
@@ -1861,7 +1945,7 @@ function showProductDetail(product) {
             <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
                 <button class="btn" onclick="showLogin()" id="detailSignInBtn">👤 Sign In</button>
                 <button class="btn" onclick="showCart()" style="position: relative;">
-                    🛒 Cart <span class="cart-count">${document.getElementById('cartCount').textContent}</span>
+                    🛒 Cart <span class="cart-count">${currentCartCount}</span>
                 </button>
             </div>
             <div class="search-container">
@@ -1871,21 +1955,23 @@ function showProductDetail(product) {
         </header>
 
         <div style="padding: 20px; margin-top: 50px;">
+            <button onclick="closeProductDetail()" style="background: #f0f0f0; border: none; padding: 0.5rem 1rem; border-radius: 5px; cursor: pointer; margin-bottom: 1rem;">← Back to Products</button>
+            
             <h2 style="text-align: left; color: #333; margin: 0.5rem 0; font-size: 1.5rem; font-weight: bold; text-transform: uppercase;">${product.name}</h2>
             
             <div class="stars" style="justify-content: flex-start; margin-bottom: 1rem;">
                 ${starsHTML} <span style="color: #666; margin-left: 10px;">(${reviews.length})</span>
             </div>
             
-            <h3 style="color: #333; font-size: 1.2rem; margin-bottom: 1rem; text-transform: uppercase; font-style: italic; font-weight: normal;">${product.description || 'PRODUCT DESCRIPTION'}</h3>
+            <h3 style="color: #333; font-size: 1.2rem; margin-bottom: 1rem; text-transform: uppercase; font-style: italic; font-weight: normal;">${product.description || 'Product Description'}</h3>
             
-            <div class="product-gallery">
-                <img src="${product.image}" alt="${product.name}">
+            <div class="product-gallery" style="text-align: center; margin-bottom: 2rem;">
+                <img src="${product.image}" alt="${product.name}" style="max-width: 400px; width: 100%; height: auto;" onerror="this.src='data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAwIiBoZWlnaHQ9IjQwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZGRkIi8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtc2l6ZT0iMjAiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGR5PSIuM2VtIj5ObyBJbWFnZTwvdGV4dD48L3N2Zz4='">
             </div>
             
             <div style="display: flex; justify-content: space-between; align-items: center; margin: 1rem 0;">
-                <div class="detail-price" style="margin: 0;">$${product.price}</div>
-                <button class="detail-share" onclick="shareProduct('${product.id}', '${product.name}')" style="background: transparent; border: none; cursor: pointer; color: #333; padding: 8px;">
+                <div style="font-size: 2rem; font-weight: bold; color: #333;">$${parseFloat(product.price || 0).toFixed(2)}</div>
+                <button onclick="shareProduct('${product.id}', '${product.name}')" style="background: transparent; border: none; cursor: pointer; color: #333; padding: 8px;">
                     <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <circle cx="18" cy="5" r="3"></circle>
                         <circle cx="6" cy="12" r="3"></circle>
@@ -1896,40 +1982,44 @@ function showProductDetail(product) {
                 </button>
             </div>
             
-            <div class="product-options">
-                <button class="option-button selected">Standard</button>
-                <button class="option-button">Premium</button>
-                <button class="option-button">Deluxe</button>
-            </div>
-            
-            <div class="detail-actions">
-                <button class="detail-add-to-cart" onclick="addToCart('${product.id}'); closeProductDetail();">Add to Cart</button>
+            <div style="margin: 2rem 0;">
+                <button onclick="addToCart('${product.id}'); updateDetailCartCount();" style="background: #ffd814; color: #333; border: none; padding: 12px 24px; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 16px; width: 100%;">Add to Cart</button>
             </div>
             
             <div style="margin-top: 2rem;">
                 <h3 style="color: #333;">Product Details</h3>
-                <p style="color: #666;">${product.description || 'Detailed product information goes here.'}</p>
+                <p style="color: #666;">${product.description || 'Detailed product information.'}</p>
+                <p style="color: #666; margin-top: 1rem;"><strong>Shipping:</strong> ${product.shippingInfo || 'Standard shipping available'}</p>
+                <p style="color: #666;"><strong>Sold by:</strong> ${product.sellerName || 'WEBVTEC'}</p>
             </div>
             
             <div style="margin-top: 2rem;">
                 <h3 style="color: #333;">Customer Reviews</h3>
                 <div class="reviews-list">
-                    ${reviews.map(review => `
-                        <div class="review-item" style="background: #f9f9f9; color: #333;">
-                            <div class="review-header">
-                                <span class="reviewer-name" style="color: #333;">${review.name}</span>
-                                <span class="review-stars" style="color: #ffa500;">${'★'.repeat(review.rating)}${'☆'.repeat(5-review.rating)}</span>
+                    ${reviews.length > 0 ? reviews.map(review => `
+                        <div style="background: #f9f9f9; color: #333; padding: 1rem; border-radius: 8px; margin-bottom: 1rem;">
+                            <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+                                <span style="font-weight: bold;">${review.name}</span>
+                                <span style="color: #ffa500;">${'★'.repeat(review.rating)}${'☆'.repeat(5-review.rating)}</span>
                             </div>
                             <p>${review.comment}</p>
                         </div>
-                    `).join('')}
+                    `).join('') : '<p style="color: #666;">No reviews yet. Be the first to review this product!</p>'}
                 </div>
             </div>
         </div>
     `;
     
     detailView.classList.add('active');
-    setTimeout(() => updateDetailPageAuth(), 100);
+    setTimeout(() => updateAuthUI(), 100);
+}
+
+function updateDetailCartCount() {
+    const cartCountElement = document.querySelector('#productDetailView .cart-count');
+    if (cartCountElement) {
+        const count = cart.reduce((total, item) => total + item.quantity, 0);
+        cartCountElement.textContent = count;
+    }
 }
 
 function closeProductDetail() {
@@ -1948,34 +2038,27 @@ function shareProduct(productId, productName) {
             title: productName,
             text: shareText,
             url: productUrl
-        });
+        }).catch(err => console.log('Error sharing:', err));
     } else {
         navigator.clipboard.writeText(productUrl).then(() => {
-            alert('Product link copied to clipboard!');
+            showNotification('Product link copied to clipboard!');
         }).catch(() => {
-            prompt('Copy this link to share:', productUrl);
+            const textArea = document.createElement('textarea');
+            textArea.value = productUrl;
+            document.body.appendChild(textArea);
+            textArea.select();
+            document.execCommand('copy');
+            document.body.removeChild(textArea);
+            showNotification('Product link copied to clipboard!');
         });
-    }
-}
-
-function updateDetailPageAuth() {
-    const detailSignInBtn = document.getElementById('detailSignInBtn');
-    if (detailSignInBtn) {
-        if (currentUser) {
-            const displayName = currentUser.displayName || 'User';
-            const firstName = displayName.split(' ')[0];
-            detailSignInBtn.innerHTML = `👤 ${firstName}`;
-            detailSignInBtn.onclick = showUserProfile;
-        } else {
-            detailSignInBtn.innerHTML = '👤 Sign In';
-            detailSignInBtn.onclick = showLogin;
-        }
     }
 }
 
 // Seller Functions
 function showSellerDashboard() {
     document.getElementById('sellerPage').classList.add('active');
+    document.querySelector('.main-content').style.display = 'none';
+    
     if (currentSeller) {
         showSellerDash();
     } else {
@@ -1984,7 +2067,6 @@ function showSellerDashboard() {
         document.getElementById('sellerRegistration').style.display = 'none';
         document.getElementById('sellerDashboard').style.display = 'none';
     }
-    document.querySelector('.main-content').style.display = 'none';
 }
 
 function closeSellerPage() {
@@ -2018,19 +2100,19 @@ function loginSeller(event) {
         .get()
         .then((querySnapshot) => {
             if (querySnapshot.empty) {
-                alert('Invalid email or password');
+                showNotification('Invalid email or password', 'error');
                 return;
             }
             
             querySnapshot.forEach((doc) => {
                 currentSeller = { id: doc.id, ...doc.data() };
                 showSellerDash();
-                alert(`Welcome back, ${currentSeller.firstName}!`);
+                showNotification(`Welcome back, ${currentSeller.firstName}!`);
             });
         })
         .catch((error) => {
             console.error('Error logging in seller:', error);
-            alert('Login failed. Please try again.');
+            showNotification('Login failed. Please try again.', 'error');
         });
 }
 
@@ -2058,7 +2140,18 @@ function showDashboardSection(section) {
     });
     
     document.getElementById(`${section}-section`).style.display = 'block';
-    event.target.classList.add('active');
+    
+    // Find and activate the correct button
+    const buttons = document.querySelectorAll('.seller-nav .btn');
+    buttons.forEach(btn => {
+        if (btn.textContent.toLowerCase().includes(section) || 
+            (section === 'add-product' && btn.textContent.includes('Add Product')) ||
+            (section === 'my-products' && btn.textContent.includes('My Products')) ||
+            (section === 'overview' && btn.textContent.includes('Overview')) ||
+            (section === 'profile' && btn.textContent.includes('Profile'))) {
+            btn.classList.add('active');
+        }
+    });
     
     if (section === 'my-products') {
         loadSellerProducts();
@@ -2068,18 +2161,25 @@ function showDashboardSection(section) {
 function loadSellerProfileData() {
     if (!currentSeller) return;
     
-    document.getElementById('profileFirstName').value = currentSeller.firstName || '';
-    document.getElementById('profileLastName').value = currentSeller.lastName || '';
-    document.getElementById('profileBusinessName').value = currentSeller.businessName || '';
-    document.getElementById('profileEmail').value = currentSeller.email || '';
-    document.getElementById('profilePhone').value = currentSeller.phone || '';
+    const fields = [
+        'profileFirstName', 'profileLastName', 'profileBusinessName', 
+        'profileEmail', 'profilePhone'
+    ];
+    
+    fields.forEach(fieldId => {
+        const element = document.getElementById(fieldId);
+        const key = fieldId.replace('profile', '').toLowerCase();
+        if (element && currentSeller[key]) {
+            element.value = currentSeller[key];
+        }
+    });
 }
 
 function updateSellerProfile(event) {
     event.preventDefault();
     
     if (!currentSeller) {
-        alert('Please log in first');
+        showNotification('Please log in first', 'error');
         return;
     }
     
@@ -2099,20 +2199,20 @@ function updateSellerProfile(event) {
         .update(updatedData)
         .then(() => {
             Object.assign(currentSeller, updatedData);
-            alert('Profile updated successfully!');
+            showNotification('Profile updated successfully!');
             document.getElementById('sellerWelcome').textContent = 
                 `Welcome, ${currentSeller.firstName} ${currentSeller.lastName}`;
         })
         .catch((error) => {
             console.error('Error updating profile:', error);
-            alert('Failed to update profile. Please try again.');
+            showNotification('Failed to update profile. Please try again.', 'error');
         });
 }
 
 function signOutSeller() {
     currentSeller = null;
     closeSellerPage();
-    alert('Signed out successfully');
+    showNotification('Signed out successfully');
 }
 
 function loadSellerProducts() {
@@ -2120,10 +2220,12 @@ function loadSellerProducts() {
     
     const sellerProducts = products.filter(p => p.sellerId === currentSeller.id);
     const grid = document.getElementById('sellerProductsGrid');
+    if (!grid) return;
+    
     grid.innerHTML = '';
     
     if (sellerProducts.length === 0) {
-        grid.innerHTML = '<p style="color: #666; text-align: center;">No products yet. Add your first product!</p>';
+        grid.innerHTML = '<p style="color: #666; text-align: center; padding: 2rem;">No products yet. Add your first product!</p>';
         return;
     }
     
@@ -2140,289 +2242,219 @@ function loadSellerProducts() {
             align-items: center;
         `;
         productDiv.innerHTML = `
-            <div>
-                <h4 style="color: #333; margin: 0 0 0.5rem 0;">${product.name}</h4>
-                <p style="color: #666; margin: 0;">$${product.price} - ${product.category}</p>
-                <p style="color: #666; margin: 0; font-size: 0.9rem;">${product.description}</p>
-            </div>
-            <div style="display: flex; gap: 0.5rem;">
-                <button class="btn" onclick="editProduct('${product.id}')" style="padding: 0.5rem 1rem;">Edit</button>
-                <button class="btn" onclick="deleteProduct('${product.id}')" style="background: #dc3545; padding: 0.5rem 1rem;">Delete</button>
-            </div>
-        `;
-        grid.appendChild(productDiv);
-    });
-}
-
-function editProduct(productId) {
-    alert('Product editing functionality - would open edit form for product: ' + productId);
-}
-
-function deleteProduct(productId) {
-    if (!confirm('Are you sure you want to delete this product?')) return;
-    
-    db.collection('products').doc(productId)
-        .delete()
-        .then(() => {
-            alert('Product deleted successfully!');
-            loadSellerProducts();
-            updateSellerStats();
-        })
-        .catch((error) => {
-            console.error('Error deleting product:', error);
-            alert('Failed to delete product. Please try again.');
-        });
-}
-
-function addSellerProduct(event) {
-    event.preventDefault();
-    
-    if (!currentSeller) {
-        alert('Please log in first');
-        return;
-    }
-    
-    const productData = {
-        name: document.getElementById('productName').value,
-        price: parseFloat(document.getElementById('productPrice').value),
-        category: document.getElementById('productCategory').value,
-        description: document.getElementById('productDescription').value,
-        image: document.getElementById('productImage').value,
-        shippingInfo: document.getElementById('shippingInfo').value,
-        sellerId: currentSeller.id,
-        sellerName: `${currentSeller.firstName} ${currentSeller.lastName}`,
-        businessName: currentSeller.businessName,
-        dateAdded: new Date().toISOString(),
-        reviews: []
-    };
-    
-    db.collection('products').add(productData)
-        .then((docRef) => {
-            alert('Product added successfully!');
-            document.getElementById('addProductForm').reset();
-            showDashboardSection('my-products');
-            updateSellerStats();
-        })
-        .catch((error) => {
-            console.error('Error adding product:', error);
-            alert('Failed to add product. Please try again.');
-        });
-}
-
-function updateSellerStats() {
-    if (!currentSeller) return;
-    
-    const sellerProducts = products.filter(p => p.sellerId === currentSeller.id);
-    document.getElementById('sellerProductCount').textContent = sellerProducts.length;
-}
-
-// Google Seller Sign-In
-function sellerGoogleSignIn() {
-    console.log('Seller Google sign-in clicked');
-    
-    if (!googleSellerProvider) {
-        console.error('Google provider not initialized');
-        alert('Google sign-in not available. Please try again.');
-        return;
-    }
-    
-    auth.signInWithPopup(googleSellerProvider)
-        .then((result) => {
-            const user = result.user;
-            console.log('Google sign-in successful:', user);
-            
-            db.collection('sellers')
-                .where('email', '==', user.email)
-                .get()
-                .then((querySnapshot) => {
-                    if (!querySnapshot.empty) {
-                        querySnapshot.forEach((doc) => {
-                            currentSeller = { id: doc.id, ...doc.data() };
-                            showSellerDash();
-                            alert(`Welcome back, ${currentSeller.firstName || user.displayName}!`);
-                        });
-                    } else {
-                        showGoogleSellerCompletion(user);
-                    }
-                })
-                .catch((error) => {
-                    console.error('Error checking seller status:', error);
-                    alert('Error accessing seller account. Please try again.');
-                });
-        })
-        .catch((error) => {
-            console.error('Google sign-in error:', error);
-            let errorMessage = 'Error signing in with Google: ';
-            switch(error.code) {
-                case 'auth/popup-closed-by-user':
-                    errorMessage += 'Sign-in cancelled.';
-                    break;
-                case 'auth/popup-blocked':
-                    errorMessage += 'Pop-up blocked. Please allow pop-ups.';
-                    break;
-                default:
-                    errorMessage += error.message;
-            }
-            alert(errorMessage);
-        });
-}
-
-function showGoogleSellerCompletion(googleUser) {
-    document.getElementById('sellerAuth').style.display = 'none';
-    document.getElementById('sellerLogin').style.display = 'none';
-    document.getElementById('sellerRegistration').style.display = 'none';
-    document.getElementById('sellerDashboard').style.display = 'none';
-    
-    const completionDiv = document.createElement('div');
-    completionDiv.id = 'googleSellerCompletion';
-    completionDiv.innerHTML = `
-        <div style="max-width: 700px; margin: 0 auto;">
-            <h2 style="color: #333; text-align: center; margin-bottom: 2rem;">Complete Your Seller Profile</h2>
-            
-            <div class="seller-section">
-                <div style="text-align: center; margin-bottom: 2rem;">
-                    <img src="${googleUser.photoURL || ''}" alt="Profile" style="width: 80px; height: 80px; border-radius: 50%; border: 3px solid #ffd700;">
-                    <h3 style="color: #333; margin: 0.5rem 0;">${googleUser.displayName}</h3>
-                    <p style="color: #666;">${googleUser.email}</p>
-                </div>
-                
-                <form id="googleSellerCompletionForm" onsubmit="completeGoogleSellerRegistration(event)">
-                    <div class="form-grid">
-                        <div class="form-group">
-                            <label style="color: #333;">First Name:</label>
-                            <input type="text" id="googleSellerFirstName" required style="width: 100%; padding: 0.7rem; border: 1px solid #ddd; border-radius: 8px;" value="${googleUser.displayName ? googleUser.displayName.split(' ')[0] : ''}">
-                        </div>
-                        <div class="form-group">
-                            <label style="color: #333;">Last Name:</label>
-                            <input type="text" id="googleSellerLastName" required style="width: 100%; padding: 0.7rem; border: 1px solid #ddd; border-radius: 8px;" value="${googleUser.displayName ? googleUser.displayName.split(' ').slice(1).join(' ') : ''}">
-                        </div>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label style="color: #333;">Date of Birth:</label>
-                        <div style="display: flex; gap: 0.5rem;">
-                            <select id="googleBirthMonth" required style="flex: 1; padding: 0.7rem; border: 1px solid #ddd; border-radius: 8px;">
-                                <option value="">Month</option>
-                                <option value="01">January</option>
-                                <option value="02">February</option>
-                                <option value="03">March</option>
-                                <option value="04">April</option>
-                                <option value="05">May</option>
-                                <option value="06">June</option>
-                                <option value="07">July</option>
-                                <option value="08">August</option>
-                                <option value="09">September</option>
-                                <option value="10">October</option>
-                                <option value="11">November</option>
-                                <option value="12">December</option>
-                            </select>
-                            <select id="googleBirthDay" required style="flex: 1; padding: 0.7rem; border: 1px solid #ddd; border-radius: 8px;">
-                                <option value="">Day</option>
-                            </select>
-                            <select id="googleBirthYear" required style="flex: 1; padding: 0.7rem; border: 1px solid #ddd; border-radius: 8px;">
-                                <option value="">Year</option>
-                            </select>
-                        </div>
-                        <small style="color: #666;">You must be at least 14 years old to sell on WEBVTEC</small>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label style="color: #333;">Business Name:</label>
-                        <input type="text" id="googleBusinessName" required style="width: 100%; padding: 0.7rem; border: 1px solid #ddd; border-radius: 8px;">
-                    </div>
-                    
-                    <div class="form-group">
-                        <label style="color: #333;">Phone Number:</label>
-                        <input type="tel" id="googleSellerPhone" required style="width: 100%; padding: 0.7rem; border: 1px solid #ddd; border-radius: 8px;">
-                    </div>
-                    
-                    <div class="form-group">
-                        <label style="color: #333;">Photo ID (Driver's License, Passport, etc.):</label>
-                        <input type="file" id="googlePhotoID" accept="image/*" required style="width: 100%; padding: 0.7rem; border: 1px solid #ddd; border-radius: 8px;">
-                        <small style="color: #666;">Upload a clear photo of your government-issued ID.</small>
-                        <div id="googleIdPreview" style="margin-top: 1rem; display: none;">
-                            <img id="googleIdPreviewImg" style="max-width: 300px; max-height: 200px; border-radius: 8px;">
-                            <div id="googleIdAnalysis" style="margin-top: 0.5rem; padding: 0.5rem; background: #f8f9fa; border-radius: 4px;"></div>
-                        </div>
-                    </div>
-                    
-                    <button type="submit" class="btn" style="width: 100%;">Complete Registration & Pay $25</button>
-                </form>
-                
-                <p style="text-align: center; margin-top: 1rem; color: #666;">
-                    <a href="#" onclick="cancelGoogleSellerRegistration()" style="color: #ffd700;">Cancel and go back</a>
-                </p>
-            </div>
-        </div>
+            <div style="flex: 1;">
+                <h4 style="color: #333; margin-bottom: 1rem;">Google Vision ID Analysis Results</h4>
     `;
     
-    const sellerContent = document.querySelector('.seller-content');
-    sellerContent.appendChild(completionDiv);
-    
-    setupGoogleDateDropdowns();
-    window.pendingGoogleSeller = googleUser;
-}
-
-function setupGoogleDateDropdowns() {
-    const yearSelect = document.getElementById('googleBirthYear');
-    if (!yearSelect) return;
-    
-    const currentYear = new Date().getFullYear();
-    const minYear = currentYear - 100;
-    const maxYear = currentYear - 14;
-    
-    for (let year = maxYear; year >= minYear; year--) {
-        const option = document.createElement('option');
-        option.value = year;
-        option.textContent = year;
-        yearSelect.appendChild(option);
+    if (data.name) {
+        html += `
+            <div style="margin-bottom: 1rem;">
+                <strong>Extracted Name:</strong> ${data.name} 
+                <span style="color: ${nameMatch ? '#28a745' : '#dc3545'}; font-weight: bold;">
+                    ${nameMatch ? '✓ Match' : '✗ No Match'}
+                </span>
+            </div>
+        `;
     }
     
-    document.getElementById('googleBirthMonth')?.addEventListener('change', updateGoogleDayDropdown);
-    document.getElementById('googleBirthYear')?.addEventListener('change', updateGoogleDayDropdown);
+    if (data.dob) {
+        html += `
+            <div style="margin-bottom: 1rem;">
+                <strong>Extracted Date of Birth:</strong> ${data.dob} 
+                <span style="color: #28a745; font-weight: bold;">✓ Valid</span>
+            </div>
+        `;
+    }
+    
+    if (!data.name || !data.dob) {
+        html += `
+            <div style="background: #fff3cd; color: #856404; padding: 1rem; border-radius: 6px; margin: 1rem 0;">
+                <strong>Partial extraction:</strong> Some information could not be automatically detected.
+                ${!data.name ? 'Name not found. ' : ''}
+                ${!data.dob ? 'Date of birth not found. ' : ''}
+            </div>
+        `;
+    }
+    
+    const overallVerified = nameMatch && dobMatch;
+    
+    html += `
+        <div style="margin: 1.5rem 0;">
+            <label style="display: flex; align-items: center; gap: 0.5rem;">
+                <input type="checkbox" id="googleVisionConfirm" ${overallVerified ? 'checked' : ''}>
+                <span>I confirm this extracted information matches my uploaded ID</span>
+            </label>
+        </div>
+        
+        <button onclick="completeGoogleVisionVerification(${overallVerified})" 
+                style="background: #28a745; color: white; border: none; padding: 0.8rem 2rem; border-radius: 6px; font-weight: bold; cursor: pointer; width: 100%;">
+            Complete Verification
+        </button>
+        
+        <details style="margin-top: 1rem;">
+            <summary style="cursor: pointer; color: #666;">View extracted text (for debugging)</summary>
+            <pre style="background: white; padding: 0.5rem; font-size: 0.8rem; max-height: 200px; overflow-y: auto; border: 1px solid #ddd; border-radius: 4px; margin-top: 0.5rem;">${data.rawText}</pre>
+        </details>
+    </div>
+    `;
+    
+    analysisDiv.innerHTML = html;
+    
+    if (overallVerified) {
+        idVerificationResult = {
+            nameVerified: nameMatch,
+            dobVerified: dobMatch,
+            overallVerified: true,
+            extractedName: data.name,
+            extractedDOB: data.dob,
+            method: 'google_vision_api',
+            timestamp: new Date().toISOString()
+        };
+    }
 }
 
-function updateGoogleDayDropdown() {
-    const monthSelect = document.getElementById('googleBirthMonth');
-    const yearSelect = document.getElementById('googleBirthYear');
-    const daySelect = document.getElementById('googleBirthDay');
+function completeGoogleVisionVerification(autoVerified) {
+    const confirmCheckbox = document.getElementById('googleVisionConfirm');
     
-    if (!monthSelect || !yearSelect || !daySelect) return;
+    if (!confirmCheckbox || !confirmCheckbox.checked) {
+        showNotification('Please confirm the extracted information matches your ID', 'error');
+        return;
+    }
     
-    const month = parseInt(monthSelect.value);
-    const year = parseInt(yearSelect.value);
+    idVerificationResult = {
+        nameVerified: true,
+        dobVerified: true,
+        overallVerified: true,
+        method: autoVerified ? 'google_vision_auto' : 'google_vision_manual_confirm',
+        timestamp: new Date().toISOString()
+    };
     
-    daySelect.innerHTML = '<option value="">Day</option>';
+    showNotification('ID verification completed successfully!');
     
-    if (month && year) {
-        const daysInMonth = new Date(year, month, 0).getDate();
-        
-        for (let day = 1; day <= daysInMonth; day++) {
-            const option = document.createElement('option');
-            option.value = day.toString().padStart(2, '0');
-            option.textContent = day;
-            daySelect.appendChild(option);
+    // Update the verification display
+    const analysisDiv = document.querySelector('#googleIdAnalysis, #idAnalysis');
+    if (analysisDiv) {
+        const successDiv = document.createElement('div');
+        successDiv.style.cssText = 'background: #d4edda; color: #155724; padding: 1rem; border-radius: 6px; margin-top: 1rem; text-align: center;';
+        successDiv.innerHTML = '<strong>✓ Verification Complete!</strong><br>You may now proceed with registration.';
+        analysisDiv.appendChild(successDiv);
+    }
+}
+
+function showManualVerification(analysisId) {
+    const analysisDiv = document.getElementById(analysisId);
+    if (!analysisDiv) return;
+    
+    analysisDiv.innerHTML = `
+        <div style="background: #f8f9fa; padding: 1.5rem; border-radius: 8px; color: #333;">
+            <h4 style="color: #333; margin-bottom: 1rem;">Manual ID Verification</h4>
+            <p style="margin-bottom: 1.5rem; color: #666;">Please confirm the information below matches what's shown on your uploaded ID:</p>
+            
+            <div style="margin-bottom: 1.5rem;">
+                <label style="font-weight: bold; color: #333;">
+                    <input type="checkbox" id="manualNameConfirm" style="margin-right: 0.5rem;">
+                    My name appears exactly as entered in the form on my uploaded ID
+                </label>
+            </div>
+            
+            <div style="margin-bottom: 1.5rem;">
+                <label style="font-weight: bold; color: #333;">
+                    <input type="checkbox" id="manualDobConfirm" style="margin-right: 0.5rem;">
+                    My date of birth matches what I entered in the form on my uploaded ID
+                </label>
+            </div>
+            
+            <div style="margin-bottom: 1.5rem;">
+                <label style="font-weight: bold; color: #333;">
+                    <input type="checkbox" id="manualLegalConfirm" style="margin-right: 0.5rem;">
+                    I certify this information is accurate and the ID is genuine
+                </label>
+            </div>
+            
+            <button onclick="completeManualVerification()" 
+                    style="background: #28a745; color: white; border: none; padding: 0.8rem 2rem; border-radius: 6px; font-weight: bold; cursor: pointer; width: 100%;">
+                Complete Manual Verification
+            </button>
+        </div>
+    `;
+}
+
+function completeManualVerification() {
+    const nameConfirm = document.getElementById('manualNameConfirm')?.checked;
+    const dobConfirm = document.getElementById('manualDobConfirm')?.checked;
+    const legalConfirm = document.getElementById('manualLegalConfirm')?.checked;
+    
+    if (!nameConfirm || !dobConfirm || !legalConfirm) {
+        showNotification('Please check all boxes to confirm your information is accurate', 'error');
+        return;
+    }
+    
+    idVerificationResult = {
+        nameVerified: true,
+        dobVerified: true,
+        overallVerified: true,
+        method: 'manual_verification',
+        timestamp: new Date().toISOString()
+    };
+    
+    showNotification('ID verification completed successfully!');
+}
+
+// String similarity function for name matching
+function similarity(s1, s2) {
+    const longer = s1.length > s2.length ? s1 : s2;
+    const shorter = s1.length > s2.length ? s2 : s1;
+    const editDistance = levenshteinDistance(longer, shorter);
+    return (longer.length - editDistance) / parseFloat(longer.length);
+}
+
+function levenshteinDistance(str1, str2) {
+    const matrix = [];
+    
+    for (let i = 0; i <= str2.length; i++) {
+        matrix[i] = [i];
+    }
+    
+    for (let j = 0; j <= str1.length; j++) {
+        matrix[0][j] = j;
+    }
+    
+    for (let i = 1; i <= str2.length; i++) {
+        for (let j = 1; j <= str1.length; j++) {
+            if (str2.charAt(i - 1) === str1.charAt(j - 1)) {
+                matrix[i][j] = matrix[i - 1][j - 1];
+            } else {
+                matrix[i][j] = Math.min(
+                    matrix[i - 1][j - 1] + 1,
+                    matrix[i][j - 1] + 1,
+                    matrix[i - 1][j] + 1
+                );
+            }
         }
     }
+    
+    return matrix[str2.length][str1.length];
 }
 
-function completeGoogleSellerRegistration(event) {
+// Regular Seller Registration
+function registerSeller(event) {
     event.preventDefault();
     
-    if (!window.pendingGoogleSeller) {
-        alert('Session expired. Please try again.');
-        return;
-    }
-    
     if (!uploadedIdData) {
-        alert('Please upload a photo of your ID');
+        showNotification('Please upload a photo of your ID', 'error');
         return;
     }
     
-    const month = document.getElementById('googleBirthMonth').value;
-    const day = document.getElementById('googleBirthDay').value;
-    const year = document.getElementById('googleBirthYear').value;
-    const birthDate = `${year}-${month}-${day}`;
+    if (!idVerificationResult || !idVerificationResult.overallVerified) {
+        showNotification('Please complete ID verification first', 'error');
+        return;
+    }
+    
+    const birthDate = getFormattedBirthDate();
+    if (!birthDate) {
+        showNotification('Please select your complete date of birth', 'error');
+        return;
+    }
     
     const dob = new Date(birthDate);
     const today = new Date();
@@ -2434,67 +2466,73 @@ function completeGoogleSellerRegistration(event) {
     }
     
     if (age < 14) {
-        alert('You must be at least 14 years old to become a seller on WEBVTEC.');
+        showNotification('You must be at least 14 years old to become a seller on WEBVTEC.', 'error');
         return;
     }
     
     const sellerData = {
-        firstName: document.getElementById('googleSellerFirstName').value,
-        lastName: document.getElementById('googleSellerLastName').value,
+        firstName: document.getElementById('sellerFirstName').value,
+        lastName: document.getElementById('sellerLastName').value,
         dateOfBirth: birthDate,
-        businessName: document.getElementById('googleBusinessName').value,
-        email: window.pendingGoogleSeller.email,
-        phone: document.getElementById('googleSellerPhone').value,
+        businessName: document.getElementById('businessName').value,
+        email: document.getElementById('sellerEmail').value,
+        password: document.getElementById('sellerPassword').value,
+        phone: document.getElementById('sellerPhone').value,
         photoIdData: uploadedIdData,
-        idVerificationResult: window.idVerificationResult || { overallVerified: true },
+        idVerificationResult: idVerificationResult,
         subscriptionStatus: 'active',
         joinDate: new Date().toISOString(),
-        products: [],
-        googleUser: true,
-        googleId: window.pendingGoogleSeller.uid,
-        photoURL: window.pendingGoogleSeller.photoURL
+        products: []
     };
     
-    db.collection('sellers').add(sellerData)
-        .then((docRef) => {
-            currentSeller = { id: docRef.id, ...sellerData };
+    // Check if email already exists
+    db.collection('sellers')
+        .where('email', '==', sellerData.email)
+        .get()
+        .then((querySnapshot) => {
+            if (!querySnapshot.empty) {
+                showNotification('Email already registered. Please use a different email or sign in.', 'error');
+                return;
+            }
             
-            document.getElementById('googleSellerCompletion')?.remove();
-            window.pendingGoogleSeller = null;
-            
-            alert('Registration successful! Welcome to WEBVTEC Sellers!');
-            showSellerDash();
+            db.collection('sellers').add(sellerData)
+                .then((docRef) => {
+                    currentSeller = { id: docRef.id, ...sellerData };
+                    showNotification('Registration successful! Welcome to WEBVTEC Sellers!');
+                    showSellerDash();
+                })
+                .catch((error) => {
+                    console.error('Error registering seller:', error);
+                    showNotification('Registration failed. Please try again.', 'error');
+                });
         })
         .catch((error) => {
-            console.error('Error completing Google seller registration:', error);
-            alert('Registration failed. Please try again.');
+            console.error('Error checking email:', error);
+            showNotification('Registration failed. Please try again.', 'error');
         });
 }
 
-function cancelGoogleSellerRegistration() {
-    const completionDiv = document.getElementById('googleSellerCompletion');
-    if (completionDiv) {
-        completionDiv.remove();
-    }
-    window.pendingGoogleSeller = null;
-    document.getElementById('sellerAuth').style.display = 'block';
-}
-
-// Date dropdown functions
-function populateYearDropdown() {
-    const yearSelect = document.getElementById('birthYear');
-    if (!yearSelect) return;
-    
+// Date dropdown utility functions
+function populateYearDropdowns() {
+    const yearSelects = ['birthYear', 'googleBirthYear'];
     const currentYear = new Date().getFullYear();
     const minYear = currentYear - 100;
     const maxYear = currentYear - 14;
     
-    for (let year = maxYear; year >= minYear; year--) {
-        const option = document.createElement('option');
-        option.value = year;
-        option.textContent = year;
-        yearSelect.appendChild(option);
-    }
+    yearSelects.forEach(selectId => {
+        const yearSelect = document.getElementById(selectId);
+        if (!yearSelect) return;
+        
+        // Clear existing options except the first one
+        yearSelect.innerHTML = '<option value="">Year</option>';
+        
+        for (let year = maxYear; year >= minYear; year--) {
+            const option = document.createElement('option');
+            option.value = year;
+            option.textContent = year;
+            yearSelect.appendChild(option);
+        }
+    });
 }
 
 function populateDayDropdown() {
@@ -2532,168 +2570,866 @@ function getFormattedBirthDate() {
     return null;
 }
 
-// NEW ID VERIFICATION SYSTEM (Replaces OCR)
-function handleIdUpload(file, previewId, imgId, analysisId) {
+// Event handlers for form submissions and key events
+document.addEventListener('keydown', function(event) {
+    if (event.key === 'Escape') {
+        closeAllModals();
+        closeProductDetail();
+    }
+});
+
+// Search on Enter key
+document.addEventListener('keydown', function(event) {
+    if (event.key === 'Enter' && event.target.classList.contains('search-bar')) {
+        searchProducts();
+    }
+});
+
+// Prevent form submission when pressing Enter in certain fields
+document.addEventListener('keydown', function(event) {
+    if (event.key === 'Enter' && (
+        event.target.type === 'email' || 
+        event.target.type === 'password' || 
+        event.target.type === 'text' ||
+        event.target.type === 'tel'
+    )) {
+        const form = event.target.closest('form');
+        if (form) {
+            event.preventDefault();
+            const submitButton = form.querySelector('button[type="submit"]');
+            if (submitButton) {
+                submitButton.click();
+            }
+        }
+    }
+});
+
+// Clean up functions
+function cleanup() {
+    // Remove any temporary elements
+    const tempElements = document.querySelectorAll('[id*="temp"], [class*="temp"]');
+    tempElements.forEach(el => el.remove());
+    
+    // Reset global variables that might cause issues
+    uploadedIdData = null;
+    idVerificationResult = null;
+}
+
+// Call cleanup on page unload
+window.addEventListener('beforeunload', cleanup);
+
+// Initialize everything when DOM is ready
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', function() {
+        console.log('E-commerce platform initialized');
+        
+        // Additional initialization if needed
+        updateCartCount();
+        
+        // Check for URL parameters (like product sharing)
+        const urlParams = new URLSearchParams(window.location.search);
+        const productId = urlParams.get('product');
+        if (productId) {
+            // Wait for products to load, then show the specific product
+            const checkProducts = setInterval(() => {
+                if (products.length > 0) {
+                    const product = products.find(p => p.id === productId);
+                    if (product) {
+                        showProductDetail(product);
+                    }
+                    clearInterval(checkProducts);
+                }
+            }, 500);
+        }
+    });
+} else {
+    console.log('E-commerce platform initialized (DOM already ready)');
+}
+
+// Export functions for debugging (only in development)
+if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+    window.ecommerceDebug = {
+        cart,
+        products,
+        currentUser,
+        currentSeller,
+        showNotification,
+        loadProductsFromFirebase,
+        clearCart,
+        cleanup
+    };
+}
+
+style="color: #333; margin: 0 0 0.5rem 0;">${product.name}</h4>
+                <p style="color: #666; margin: 0;">${parseFloat(product.price || 0).toFixed(2)} - ${product.category}</p>
+                <p style="color: #666; margin: 0; font-size: 0.9rem;">${product.description}</p>
+            </div>
+            <div style="display: flex; gap: 0.5rem;">
+                <button class="btn" onclick="editProduct('${product.id}')" style="padding: 0.5rem 1rem; font-size: 0.9rem;">Edit</button>
+                <button onclick="deleteProduct('${product.id}')" style="background: #dc3545; color: white; border: none; padding: 0.5rem 1rem; border-radius: 25px; cursor: pointer; font-size: 0.9rem;">Delete</button>
+            </div>
+        `;
+        grid.appendChild(productDiv);
+    });
+}
+
+function editProduct(productId) {
+    showNotification('Product editing functionality - would open edit form for product: ' + productId, 'warning');
+}
+
+function deleteProduct(productId) {
+    if (!confirm('Are you sure you want to delete this product?')) return;
+    
+    db.collection('products').doc(productId)
+        .delete()
+        .then(() => {
+            showNotification('Product deleted successfully!');
+            loadSellerProducts();
+            updateSellerStats();
+        })
+        .catch((error) => {
+            console.error('Error deleting product:', error);
+            showNotification('Failed to delete product. Please try again.', 'error');
+        });
+}
+
+function addSellerProduct(event) {
+    event.preventDefault();
+    
+    if (!currentSeller) {
+        showNotification('Please log in first', 'error');
+        return;
+    }
+    
+    const form = document.getElementById('addProductForm');
+    const formData = new FormData(form);
+    
+    const productData = {
+        name: document.getElementById('productName').value,
+        price: parseFloat(document.getElementById('productPrice').value),
+        category: document.getElementById('productCategory').value,
+        description: document.getElementById('productDescription').value,
+        image: document.getElementById('productImage').value,
+        shippingInfo: document.getElementById('shippingInfo').value,
+        sellerId: currentSeller.id,
+        sellerName: `${currentSeller.firstName} ${currentSeller.lastName}`,
+        businessName: currentSeller.businessName,
+        dateAdded: new Date().toISOString(),
+        reviews: []
+    };
+    
+    // Validate required fields
+    if (!productData.name || !productData.price || !productData.category || 
+        !productData.description || !productData.image || !productData.shippingInfo) {
+        showNotification('Please fill in all required fields', 'error');
+        return;
+    }
+    
+    db.collection('products').add(productData)
+        .then((docRef) => {
+            showNotification('Product added successfully!');
+            form.reset();
+            showDashboardSection('my-products');
+            updateSellerStats();
+        })
+        .catch((error) => {
+            console.error('Error adding product:', error);
+            showNotification('Failed to add product. Please try again.', 'error');
+        });
+}
+
+function updateSellerStats() {
+    if (!currentSeller) return;
+    
+    const sellerProducts = products.filter(p => p.sellerId === currentSeller.id);
+    const productCountElement = document.getElementById('sellerProductCount');
+    if (productCountElement) {
+        productCountElement.textContent = sellerProducts.length;
+    }
+}
+
+// Google Seller Sign-In Functions
+function sellerGoogleSignIn() {
+    if (!googleProvider) {
+        showNotification('Google sign-in not available. Please try again.', 'error');
+        return;
+    }
+    
+    auth.signInWithPopup(googleProvider)
+        .then((result) => {
+            const user = result.user;
+            
+            db.collection('sellers')
+                .where('email', '==', user.email)
+                .get()
+                .then((querySnapshot) => {
+                    if (!querySnapshot.empty) {
+                        querySnapshot.forEach((doc) => {
+                            currentSeller = { id: doc.id, ...doc.data() };
+                            showSellerDash();
+                            showNotification(`Welcome back, ${currentSeller.firstName || user.displayName}!`);
+                        });
+                    } else {
+                        showGoogleSellerCompletion(user);
+                    }
+                })
+                .catch((error) => {
+                    console.error('Error checking seller status:', error);
+                    showNotification('Error accessing seller account. Please try again.', 'error');
+                });
+        })
+        .catch((error) => {
+            console.error('Google sign-in error:', error);
+            let errorMessage = 'Error signing in with Google: ';
+            switch(error.code) {
+                case 'auth/popup-closed-by-user':
+                    errorMessage += 'Sign-in cancelled.';
+                    break;
+                case 'auth/popup-blocked':
+                    errorMessage += 'Pop-up blocked. Please allow pop-ups.';
+                    break;
+                default:
+                    errorMessage += error.message;
+            }
+            showNotification(errorMessage, 'error');
+        });
+}
+
+function showGoogleSellerCompletion(googleUser) {
+    document.getElementById('sellerAuth').style.display = 'none';
+    document.getElementById('sellerLogin').style.display = 'none';
+    document.getElementById('sellerRegistration').style.display = 'none';
+    document.getElementById('sellerDashboard').style.display = 'none';
+    
+    let completionDiv = document.getElementById('googleSellerCompletion');
+    if (completionDiv) {
+        completionDiv.remove();
+    }
+    
+    completionDiv = document.createElement('div');
+    completionDiv.id = 'googleSellerCompletion';
+    completionDiv.innerHTML = `
+        <div style="max-width: 700px; margin: 0 auto;">
+            <h2 style="color: #333; text-align: center; margin-bottom: 2rem;">Complete Your Seller Profile</h2>
+            
+            <div class="seller-section">
+                <div style="text-align: center; margin-bottom: 2rem;">
+                    <img src="${googleUser.photoURL || ''}" alt="Profile" style="width: 80px; height: 80px; border-radius: 50%; border: 3px solid #ffd700;" onerror="this.style.display='none'">
+                    <h3 style="color: #333; margin: 0.5rem 0;">${googleUser.displayName}</h3>
+                    <p style="color: #666;">${googleUser.email}</p>
+                </div>
+                
+                <form id="googleSellerCompletionForm" onsubmit="completeGoogleSellerRegistration(event)">
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label style="color: #333;">First Name:</label>
+                            <input type="text" id="googleSellerFirstName" required style="width: 100%; padding: 0.7rem; border: 1px solid #ddd; border-radius: 8px; color: #333;" value="${googleUser.displayName ? googleUser.displayName.split(' ')[0] : ''}">
+                        </div>
+                        <div class="form-group">
+                            <label style="color: #333;">Last Name:</label>
+                            <input type="text" id="googleSellerLastName" required style="width: 100%; padding: 0.7rem; border: 1px solid #ddd; border-radius: 8px; color: #333;" value="${googleUser.displayName ? googleUser.displayName.split(' ').slice(1).join(' ') : ''}">
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label style="color: #333;">Date of Birth:</label>
+                        <div style="display: flex; gap: 0.5rem;">
+                            <select id="googleBirthMonth" required style="flex: 1; padding: 0.7rem; border: 1px solid #ddd; border-radius: 8px; color: #333;">
+                                <option value="">Month</option>
+                                <option value="01">January</option>
+                                <option value="02">February</option>
+                                <option value="03">March</option>
+                                <option value="04">April</option>
+                                <option value="05">May</option>
+                                <option value="06">June</option>
+                                <option value="07">July</option>
+                                <option value="08">August</option>
+                                <option value="09">September</option>
+                                <option value="10">October</option>
+                                <option value="11">November</option>
+                                <option value="12">December</option>
+                            </select>
+                            <select id="googleBirthDay" required style="flex: 1; padding: 0.7rem; border: 1px solid #ddd; border-radius: 8px; color: #333;">
+                                <option value="">Day</option>
+                            </select>
+                            <select id="googleBirthYear" required style="flex: 1; padding: 0.7rem; border: 1px solid #ddd; border-radius: 8px; color: #333;">
+                                <option value="">Year</option>
+                            </select>
+                        </div>
+                        <small style="color: #666;">You must be at least 14 years old to sell on WEBVTEC</small>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label style="color: #333;">Business Name:</label>
+                        <input type="text" id="googleBusinessName" required style="width: 100%; padding: 0.7rem; border: 1px solid #ddd; border-radius: 8px; color: #333;">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label style="color: #333;">Phone Number:</label>
+                        <input type="tel" id="googleSellerPhone" required style="width: 100%; padding: 0.7rem; border: 1px solid #ddd; border-radius: 8px; color: #333;">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label style="color: #333;">Photo ID (Driver's License, Passport, etc.):</label>
+                        <input type="file" id="googlePhotoID" accept="image/*" required style="width: 100%; padding: 0.7rem; border: 1px solid #ddd; border-radius: 8px;">
+                        <small style="color: #666;">Upload a clear photo of your government-issued ID.</small>
+                        <div id="googleIdPreview" style="margin-top: 1rem; display: none;">
+                            <img id="googleIdPreviewImg" style="max-width: 300px; max-height: 200px; border-radius: 8px;">
+                            <div id="googleIdAnalysis" style="margin-top: 0.5rem;"></div>
+                        </div>
+                    </div>
+                    
+                    <button type="submit" class="btn" style="width: 100%;">Complete Registration & Pay $25</button>
+                </form>
+                
+                <p style="text-align: center; margin-top: 1rem; color: #666;">
+                    <a href="#" onclick="cancelGoogleSellerRegistration()" style="color: #ffd700;">Cancel and go back</a>
+                </p>
+            </div>
+        </div>
+    `;
+    
+    const sellerContent = document.querySelector('.seller-content');
+    sellerContent.appendChild(completionDiv);
+    
+    setupGoogleDateDropdowns();
+    setupGoogleFileHandlers();
+    window.pendingGoogleSeller = googleUser;
+}
+
+function setupGoogleDateDropdowns() {
+    const yearSelect = document.getElementById('googleBirthYear');
+    if (!yearSelect) return;
+    
+    const currentYear = new Date().getFullYear();
+    const minYear = currentYear - 100;
+    const maxYear = currentYear - 14;
+    
+    for (let year = maxYear; year >= minYear; year--) {
+        const option = document.createElement('option');
+        option.value = year;
+        option.textContent = year;
+        yearSelect.appendChild(option);
+    }
+}
+
+function setupGoogleFileHandlers() {
+    const googlePhotoIdInput = document.getElementById('googlePhotoID');
+    if (googlePhotoIdInput) {
+        googlePhotoIdInput.addEventListener('change', function(e) {
+            if (e.target.files[0]) {
+                handleIdUpload(e.target.files[0], 'googleIdPreview', 'googleIdPreviewImg', 'googleIdAnalysis');
+            }
+        });
+    }
+}
+
+function populateGoogleDayDropdown() {
+    const monthSelect = document.getElementById('googleBirthMonth');
+    const yearSelect = document.getElementById('googleBirthYear');
+    const daySelect = document.getElementById('googleBirthDay');
+    
+    if (!monthSelect || !yearSelect || !daySelect) return;
+    
+    const month = parseInt(monthSelect.value);
+    const year = parseInt(yearSelect.value);
+    
+    daySelect.innerHTML = '<option value="">Day</option>';
+    
+    if (month && year) {
+        const daysInMonth = new Date(year, month, 0).getDate();
+        
+        for (let day = 1; day <= daysInMonth; day++) {
+            const option = document.createElement('option');
+            option.value = day.toString().padStart(2, '0');
+            option.textContent = day;
+            daySelect.appendChild(option);
+        }
+    }
+}
+
+function completeGoogleSellerRegistration(event) {
+    event.preventDefault();
+    
+    if (!window.pendingGoogleSeller) {
+        showNotification('Session expired. Please try again.', 'error');
+        return;
+    }
+    
+    if (!uploadedIdData) {
+        showNotification('Please upload a photo of your ID', 'error');
+        return;
+    }
+    
+    if (!idVerificationResult || !idVerificationResult.overallVerified) {
+        showNotification('Please complete ID verification first', 'error');
+        return;
+    }
+    
+    const month = document.getElementById('googleBirthMonth').value;
+    const day = document.getElementById('googleBirthDay').value;
+    const year = document.getElementById('googleBirthYear').value;
+    
+    if (!month || !day || !year) {
+        showNotification('Please complete your date of birth', 'error');
+        return;
+    }
+    
+    const birthDate = `${year}-${month}-${day}`;
+    const dob = new Date(birthDate);
+    const today = new Date();
+    let age = today.getFullYear() - dob.getFullYear();
+    const monthDiff = today.getMonth() - dob.getMonth();
+    
+    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < dob.getDate())) {
+        age--;
+    }
+    
+    if (age < 14) {
+        showNotification('You must be at least 14 years old to become a seller on WEBVTEC.', 'error');
+        return;
+    }
+    
+    const sellerData = {
+        firstName: document.getElementById('googleSellerFirstName').value,
+        lastName: document.getElementById('googleSellerLastName').value,
+        dateOfBirth: birthDate,
+        businessName: document.getElementById('googleBusinessName').value,
+        email: window.pendingGoogleSeller.email,
+        phone: document.getElementById('googleSellerPhone').value,
+        photoIdData: uploadedIdData,
+        idVerificationResult: idVerificationResult,
+        subscriptionStatus: 'active',
+        joinDate: new Date().toISOString(),
+        products: [],
+        googleUser: true,
+        googleId: window.pendingGoogleSeller.uid,
+        photoURL: window.pendingGoogleSeller.photoURL
+    };
+    
+    db.collection('sellers').add(sellerData)
+        .then((docRef) => {
+            currentSeller = { id: docRef.id, ...sellerData };
+            
+            const completionDiv = document.getElementById('googleSellerCompletion');
+            if (completionDiv) {
+                completionDiv.remove();
+            }
+            window.pendingGoogleSeller = null;
+            
+            showNotification('Registration successful! Welcome to WEBVTEC Sellers!');
+            showSellerDash();
+        })
+        .catch((error) => {
+            console.error('Error completing Google seller registration:', error);
+            showNotification('Registration failed. Please try again.', 'error');
+        });
+}
+
+function cancelGoogleSellerRegistration() {
+    const completionDiv = document.getElementById('googleSellerCompletion');
+    if (completionDiv) {
+        completionDiv.remove();
+    }
+    window.pendingGoogleSeller = null;
+    document.getElementById('sellerAuth').style.display = 'block';
+}
+
+// Google Vision API ID Verification
+async function handleIdUpload(file, previewId, imgId, analysisId) {
     if (!file) return;
     
     if (file.size > 10 * 1024 * 1024) {
-        alert('File too large. Please choose an image under 10MB.');
+        showNotification('File too large. Please choose an image under 10MB.', 'error');
         return;
     }
     
     if (!file.type.startsWith('image/')) {
-        alert('Please select an image file.');
+        showNotification('Please select an image file.', 'error');
         return;
     }
     
     const reader = new FileReader();
-    reader.onload = function(e) {
+    reader.onload = async function(e) {
         const preview = document.getElementById(previewId);
         const img = document.getElementById(imgId);
-        img.src = e.target.result;
-        preview.style.display = 'block';
+        
+        if (preview && img) {
+            img.src = e.target.result;
+            preview.style.display = 'block';
+        }
         
         uploadedIdData = e.target.result;
         
-        if (analysisId) {
-            showGuidedVerification(analysisId);
+        if (analysisId && GOOGLE_VISION_API_KEY !== "YOUR_GOOGLE_VISION_API_KEY") {
+            await analyzeIdWithGoogleVision(e.target.result, analysisId);
+        } else if (analysisId) {
+            showManualVerification(analysisId);
         }
     };
     
     reader.readAsDataURL(file);
 }
 
-function showGuidedVerification(analysisId) {
+async function analyzeIdWithGoogleVision(imageData, analysisId) {
     const analysisDiv = document.getElementById(analysisId);
+    if (!analysisDiv) return;
     
+    analysisDiv.innerHTML = `
+        <div style="background: #f8f9fa; padding: 1.5rem; border-radius: 8px; color: #333; text-align: center;">
+            <div style="width: 40px; height: 40px; border: 4px solid #f3f3f3; border-top: 4px solid #ffd700; border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto 1rem;"></div>
+            <p>Analyzing ID document with Google Vision AI...</p>
+        </div>
+    `;
+    
+    // Add spinner CSS if not already present
+    if (!document.getElementById('spinnerCSS')) {
+        const style = document.createElement('style');
+        style.id = 'spinnerCSS';
+        style.textContent = `
+            @keyframes spin {
+                0% { transform: rotate(0deg); }
+                100% { transform: rotate(360deg); }
+            }
+        `;
+        document.head.appendChild(style);
+    }
+    
+    try {
+        const base64Data = imageData.split(',')[1];
+        
+        const response = await fetch(`https://vision.googleapis.com/v1/images:annotate?key=${GOOGLE_VISION_API_KEY}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                requests: [{
+                    image: {
+                        content: base64Data
+                    },
+                    features: [
+                        { type: 'DOCUMENT_TEXT_DETECTION', maxResults: 1 }
+                    ]
+                }]
+            })
+        });
+        
+        if (!response.ok) {
+            throw new Error(`Vision API error: ${response.status}`);
+        }
+        
+        const result = await response.json();
+        
+        if (result.responses[0].error) {
+            throw new Error(result.responses[0].error.message);
+        }
+        
+        const extractedText = result.responses[0].fullTextAnnotation?.text || '';
+        
+        if (!extractedText.trim()) {
+            throw new Error('No text detected in the image');
+        }
+        
+        const extractedData = extractIdInformation(extractedText);
+        displayGoogleVisionResults(extractedData, analysisDiv);
+        
+    } catch (error) {
+        console.error('Google Vision API error:', error);
+        analysisDiv.innerHTML = `
+            <div style="background: #f8d7da; color: #721c24; padding: 1rem; border-radius: 6px; margin-bottom: 1rem;">
+                <strong>ID analysis failed:</strong> ${error.message}<br>
+                <small>Please ensure the image is clear and try again, or complete manual verification below.</small>
+            </div>
+        `;
+        showManualVerification(analysisDiv.id);
+    }
+}
+
+function extractIdInformation(text) {
+    const patterns = {
+        names: [
+            /(?:FULL NAME|NAME|Given Name|SURNAME)[:\s]*([A-Z][A-Za-z\s]+)/gi,
+            /([A-Z][A-Z\s]{2,})(?=.*(?:DOB|Date|Birth|\d{2}[\/\-]\d{2}[\/\-]\d{4}))/gi
+        ],
+        dates: [
+            /(?:DOB|Date of Birth|Birth)[:\s]*(\d{1,2}[\/\-]\d{1,2}[\/\-]\d{4})/gi,
+            /(\d{1,2}[\/\-]\d{1,2}[\/\-]\d{4})/g
+        ]
+    };
+    
+    let extractedName = null;
+    let extractedDOB = null;
+    
+    // Extract name
+    for (const pattern of patterns.names) {
+        const matches = [...text.matchAll(pattern)];
+        for (const match of matches) {
+            const candidate = match[1]?.trim().replace(/\s+/g, ' ');
+            if (candidate && candidate.length > 3 && candidate.includes(' ')) {
+                extractedName = candidate;
+                break;
+            }
+        }
+        if (extractedName) break;
+    }
+    
+    // Extract date of birth
+    for (const pattern of patterns.dates) {
+        const matches = [...text.matchAll(pattern)];
+        for (const match of matches) {
+            const dateStr = match[1];
+            if (isValidBirthDate(dateStr)) {
+                extractedDOB = dateStr;
+                break;
+            }
+        }
+        if (extractedDOB) break;
+    }
+    
+    return { name: extractedName, dob: extractedDOB, rawText: text };
+}
+
+function isValidBirthDate(dateStr) {
+    const date = new Date(dateStr);
+    const year = date.getFullYear();
+    const today = new Date();
+    return !isNaN(date.getTime()) && 
+           year > 1900 && 
+           year <= today.getFullYear() && 
+           date <= today;
+}
+
+function displayGoogleVisionResults(data, analysisDiv) {
     const firstName = document.getElementById('sellerFirstName')?.value || 
                      document.getElementById('googleSellerFirstName')?.value || '';
     const lastName = document.getElementById('sellerLastName')?.value || 
                     document.getElementById('googleSellerLastName')?.value || '';
+    const formName = `${firstName} ${lastName}`.trim();
     
-    let dobInput = '';
-    if (document.getElementById('birthMonth')) {
-        const month = document.getElementById('birthMonth').value;
-        const day = document.getElementById('birthDay').value;
-        const year = document.getElementById('birthYear').value;
-        if (month && day && year) {
-            dobInput = `${month}/${day}/${year}`;
-        }
-    } else if (document.getElementById('googleBirthMonth')) {
-        const month = document.getElementById('googleBirthMonth').value;
-        const day = document.getElementById('googleBirthDay').value;
-        const year = document.getElementById('googleBirthYear').value;
-        if (month && day && year) {
-            dobInput = `${month}/${day}/${year}`;
-        }
+    let nameMatch = false;
+    let dobMatch = false;
+    
+    if (data.name && formName) {
+        const nameA = data.name.toLowerCase().replace(/[^a-z\s]/g, '').trim();
+        const nameB = formName.toLowerCase().replace(/[^a-z\s]/g, '').trim();
+        nameMatch = nameA.includes(nameB) || nameB.includes(nameA) || 
+                   similarity(nameA, nameB) > 0.8;
     }
     
-    analysisDiv.innerHTML = `
+    if (data.dob) {
+        dobMatch = true;
+    }
+    
+    let html = `
         <div style="background: #f8f9fa; padding: 1.5rem; border-radius: 8px; color: #333;">
-            <h4 style="margin: 0 0 1rem 0; color: #333;">Verify Your Information</h4>
-            <p style="margin-bottom: 1.5rem; color: #666;">Please confirm the information below matches what's shown on your uploaded ID:</p>
-            
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem;">
-                <div>
-                    <label style="font-weight: bold; color: #333;">Name on Form:</label>
-                    <p style="margin: 0.2rem 0; padding: 0.5rem; background: white; border-radius: 4px;">${firstName} ${lastName}</p>
-                </div>
-                <div>
-                    <label style="font-weight: bold; color: #333;">Date of Birth on Form:</label>
-                    <p style="margin: 0.2rem 0; padding: 0.5rem; background: white; border-radius: 4px;">${dobInput || 'Not provided'}</p>
-                </div>
-            </div>
-            
-            <div style="margin-bottom: 1.5rem;">
-                <label style="font-weight: bold; color: #333;">
-                    <input type="checkbox" id="nameConfirm" style="margin-right: 0.5rem;">
-                    I confirm my name appears exactly as shown above on my uploaded ID
-                </label>
-            </div>
-            
-            <div style="margin-bottom: 1.5rem;">
-                <label style="font-weight: bold; color: #333;">
-                    <input type="checkbox" id="dobConfirm" style="margin-right: 0.5rem;">
-                    I confirm my date of birth matches what's shown above on my uploaded ID
-                </label>
-            </div>
-            
-            <div style="margin-bottom: 1.5rem;">
-                <label style="font-weight: bold; color: #333;">
-                    <input type="checkbox" id="legalConfirm" style="margin-right: 0.5rem;">
-                    I certify under penalty of perjury that this information is accurate and the ID is genuine
-                </label>
-            </div>
-            
-            <button onclick="completeGuidedVerification('${analysisId}')" 
-                    style="background: #28a745; color: white; border: none; padding: 0.8rem 2rem; border-radius: 6px; font-weight: bold; cursor: pointer; width: 100%;">
-                Complete Verification
-            </button>
-            
-            <div id="verificationResult" style="margin-top: 1rem; display: none;"></div>
-        </div>
+            <h4 style="color: #333; margin-bottom: 1rem;">Google Vision ID Analysis Results</h4>
     `;
-}
-
-function completeGuidedVerification(analysisId) {
-    const nameConfirm = document.getElementById('nameConfirm').checked;
-    const dobConfirm = document.getElementById('dobConfirm').checked;
-    const legalConfirm = document.getElementById('legalConfirm').checked;
     
-    const resultDiv = document.getElementById('verificationResult');
-    
-    if (!nameConfirm || !dobConfirm || !legalConfirm) {
-        resultDiv.innerHTML = `
-            <div style="background: #f8d7da; color: #721c24; padding: 1rem; border-radius: 6px;">
-                Please check all boxes to confirm your information is accurate.
+    if (data.name) {
+        html += `
+            <div style="margin-bottom: 1rem;">
+                <strong>Extracted Name:</strong> ${data.name} 
+                <span style="color: ${nameMatch ? '#28a745' : '#dc3545'}; font-weight: bold;">
+                    ${nameMatch ? '✓ Match' : '✗ No Match'}
+                </span>
             </div>
         `;
-        resultDiv.style.display = 'block';
+    }
+    
+    if (data.dob) {
+        html += `
+            <div style="margin-bottom: 1rem;">
+                <strong>Extracted Date of Birth:</strong> ${data.dob} 
+                <span style="color: #28a745; font-weight: bold;">✓ Valid</span>
+            </div>
+        `;
+    }
+    
+    if (!data.name || !data.dob) {
+        html += `
+            <div style="background: #fff3cd; color: #856404; padding: 1rem; border-radius: 6px; margin: 1rem 0;">
+                <strong>Partial extraction:</strong> Some information could not be automatically detected.
+                ${!data.name ? 'Name not found. ' : ''}
+                ${!data.dob ? 'Date of birth not found. ' : ''}
+            </div>
+        `;
+    }
+    
+    const overallVerified = nameMatch && dobMatch;
+    
+    html += `
+        <div style="margin: 1.5rem 0;">
+            <label style="display: flex; align-items: center; gap: 0.5rem;">
+                <input type="checkbox" id="googleVisionConfirm" ${overallVerified ? 'checked' : ''}>
+                <span>I confirm this extracted information matches my uploaded ID</span>
+            </label>
+        </div>
+        
+        <button onclick="completeGoogleVisionVerification(${overallVerified})" 
+                style="background: #28a745; color: white; border: none; padding: 0.8rem 2rem; border-radius: 6px; font-weight: bold; cursor: pointer; width: 100%;">
+            Complete Verification
+        </button>
+        
+        <details style="margin-top: 1rem;">
+            <summary style="cursor: pointer; color: #666;">View extracted text (for debugging)</summary>
+            <pre style="background: white; padding: 0.5rem; font-size: 0.8rem; max-height: 200px; overflow-y: auto; border: 1px solid #ddd; border-radius: 4px; margin-top: 0.5rem;">${data.rawText}</pre>
+        </details>
+    </div>
+    `;
+    
+    analysisDiv.innerHTML = html;
+    
+    if (overallVerified) {
+        idVerificationResult = {
+            nameVerified: nameMatch,
+            dobVerified: dobMatch,
+            overallVerified: true,
+            extractedName: data.name,
+            extractedDOB: data.dob,
+            method: 'google_vision_api',
+            timestamp: new Date().toISOString()
+        };
+    }
+}
+
+function completeGoogleVisionVerification(autoVerified) {
+    const confirmCheckbox = document.getElementById('googleVisionConfirm');
+    
+    if (!confirmCheckbox || !confirmCheckbox.checked) {
+        showNotification('Please confirm the extracted information matches your ID', 'error');
         return;
     }
     
-    window.idVerificationResult = {
+    idVerificationResult = {
         nameVerified: true,
         dobVerified: true,
         overallVerified: true,
-        method: 'guided_self_verification',
+        method: autoVerified ? 'google_vision_auto' : 'google_vision_manual_confirm',
         timestamp: new Date().toISOString()
     };
     
-    resultDiv.innerHTML = `
-        <div style="background: #d4edda; color: #155724; padding: 1rem; border-radius: 6px;">
-            ✅ Verification completed successfully! You may now proceed with registration.
-        </div>
-    `;
-    resultDiv.style.display = 'block';
+    showNotification('ID verification completed successfully!');
     
-    const analysisDiv = document.getElementById(analysisId);
-    setTimeout(() => {
-        const form = analysisDiv.querySelector('div');
-        if (form) {
-            form.style.opacity = '0.5';
-            const button = analysisDiv.querySelector('button');
-            if (button) {
-                button.disabled = true;
-                button.textContent = 'Verification Complete';
-                button.style.background = '#6c757d';
-            }
-        }
-    }, 1000);
+    const analysisDiv = document.querySelector('#googleIdAnalysis, #idAnalysis');
+    if (analysisDiv) {
+        const successDiv = document.createElement('div');
+        successDiv.style.cssText = 'background: #d4edda; color: #155724; padding: 1rem; border-radius: 6px; margin-top: 1rem; text-align: center;';
+        successDiv.innerHTML = '<strong>✓ Verification Complete!</strong><br>You may now proceed with registration.';
+        analysisDiv.appendChild(successDiv);
+    }
 }
 
-// Regular seller registration
+function showManualVerification(analysisId) {
+    const analysisDiv = document.getElementById(analysisId);
+    if (!analysisDiv) return;
+    
+    analysisDiv.innerHTML = `
+        <div style="background: #f8f9fa; padding: 1.5rem; border-radius: 8px; color: #333;">
+            <h4 style="color: #333; margin-bottom: 1rem;">Manual ID Verification</h4>
+            <p style="margin-bottom: 1.5rem; color: #666;">Please confirm the information below matches what's shown on your uploaded ID:</p>
+            
+            <div style="margin-bottom: 1.5rem;">
+                <label style="font-weight: bold; color: #333;">
+                    <input type="checkbox" id="manualNameConfirm" style="margin-right: 0.5rem;">
+                    My name appears exactly as entered in the form on my uploaded ID
+                </label>
+            </div>
+            
+            <div style="margin-bottom: 1.5rem;">
+                <label style="font-weight: bold; color: #333;">
+                    <input type="checkbox" id="manualDobConfirm" style="margin-right: 0.5rem;">
+                    My date of birth matches what I entered in the form on my uploaded ID
+                </label>
+            </div>
+            
+            <div style="margin-bottom: 1.5rem;">
+                <label style="font-weight: bold; color: #333;">
+                    <input type="checkbox" id="manualLegalConfirm" style="margin-right: 0.5rem;">
+                    I certify this information is accurate and the ID is genuine
+                </label>
+            </div>
+            
+            <button onclick="completeManualVerification()" 
+                    style="background: #28a745; color: white; border: none; padding: 0.8rem 2rem; border-radius: 6px; font-weight: bold; cursor: pointer; width: 100%;">
+                Complete Manual Verification
+            </button>
+        </div>
+    `;
+}
+
+function completeManualVerification() {
+    const nameConfirm = document.getElementById('manualNameConfirm')?.checked;
+    const dobConfirm = document.getElementById('manualDobConfirm')?.checked;
+    const legalConfirm = document.getElementById('manualLegalConfirm')?.checked;
+    
+    if (!nameConfirm || !dobConfirm || !legalConfirm) {
+        showNotification('Please check all boxes to confirm your information is accurate', 'error');
+        return;
+    }
+    
+    idVerificationResult = {
+        nameVerified: true,
+        dobVerified: true,
+        overallVerified: true,
+        method: 'manual_verification',
+        timestamp: new Date().toISOString()
+    };
+    
+    showNotification('ID verification completed successfully!');
+}
+
+function similarity(s1, s2) {
+    const longer = s1.length > s2.length ? s1 : s2;
+    const shorter = s1.length > s2.length ? s2 : s1;
+    const editDistance = levenshteinDistance(longer, shorter);
+    return (longer.length - editDistance) / parseFloat(longer.length);
+}
+
+function levenshteinDistance(str1, str2) {
+    const matrix = [];
+    
+    for (let i = 0; i <= str2.length; i++) {
+        matrix[i] = [i];
+    }
+    
+    for (let j = 0; j <= str1.length; j++) {
+        matrix[0][j] = j;
+    }
+    
+    for (let i = 1; i <= str2.length; i++) {
+        for (let j = 1; j <= str1.length; j++) {
+            if (str2.charAt(i - 1) === str1.charAt(j - 1)) {
+                matrix[i][j] = matrix[i - 1][j - 1];
+            } else {
+                matrix[i][j] = Math.min(
+                    matrix[i - 1][j - 1] + 1,
+                    matrix[i][j - 1] + 1,
+                    matrix[i - 1][j] + 1
+                );
+            }
+        }
+    }
+    
+    return matrix[str2.length][str1.length];
+}
+
 function registerSeller(event) {
     event.preventDefault();
     
     if (!uploadedIdData) {
-        alert('Please upload a photo of your ID');
+        showNotification('Please upload a photo of your ID', 'error');
+        return;
+    }
+    
+    if (!idVerificationResult || !idVerificationResult.overallVerified) {
+        showNotification('Please complete ID verification first', 'error');
         return;
     }
     
     const birthDate = getFormattedBirthDate();
     if (!birthDate) {
-        alert('Please select your complete date of birth');
+        showNotification('Please select your complete date of birth', 'error');
         return;
     }
     
@@ -2707,7 +3443,7 @@ function registerSeller(event) {
     }
     
     if (age < 14) {
-        alert('You must be at least 14 years old to become a seller on WEBVTEC.');
+        showNotification('You must be at least 14 years old to become a seller on WEBVTEC.', 'error');
         return;
     }
     
@@ -2720,7 +3456,7 @@ function registerSeller(event) {
         password: document.getElementById('sellerPassword').value,
         phone: document.getElementById('sellerPhone').value,
         photoIdData: uploadedIdData,
-        idVerificationResult: window.idVerificationResult || { overallVerified: true },
+        idVerificationResult: idVerificationResult,
         subscriptionStatus: 'active',
         joinDate: new Date().toISOString(),
         products: []
@@ -2731,130 +3467,161 @@ function registerSeller(event) {
         .get()
         .then((querySnapshot) => {
             if (!querySnapshot.empty) {
-                alert('Email already registered. Please use a different email or sign in.');
+                showNotification('Email already registered. Please use a different email or sign in.', 'error');
                 return;
             }
             
             db.collection('sellers').add(sellerData)
                 .then((docRef) => {
                     currentSeller = { id: docRef.id, ...sellerData };
-                    alert('Registration successful! Welcome to WEBVTEC Sellers!');
+                    showNotification('Registration successful! Welcome to WEBVTEC Sellers!');
                     showSellerDash();
                 })
                 .catch((error) => {
                     console.error('Error registering seller:', error);
-                    alert('Registration failed. Please try again.');
+                    showNotification('Registration failed. Please try again.', 'error');
                 });
+        })
+        .catch((error) => {
+            console.error('Error checking email:', error);
+            showNotification('Registration failed. Please try again.', 'error');
         });
 }
 
-// Utility functions
-function submitReview(productId) {
-    const name = document.getElementById(`reviewName-${productId}`).value;
-    const text = document.getElementById(`reviewText-${productId}`).value;
-    const rating = window[`selectedRating-${productId}`] || 5;
-
-    if (!name || !text) {
-        alert('Please fill in all fields');
-        return;
-    }
-
-    const newReview = {
-        name: name,
-        rating: rating,
-        comment: text,
-        date: new Date().toISOString()
-    };
-
-    db.collection('products').doc(productId).update({
-        reviews: firebase.firestore.FieldValue.arrayUnion(newReview)
-    }).then(() => {
-        alert('Review submitted successfully!');
-        document.getElementById(`reviewName-${productId}`).value = '';
-        document.getElementById(`reviewText-${productId}`).value = '';
+function populateYearDropdowns() {
+    const yearSelects = ['birthYear', 'googleBirthYear'];
+    const currentYear = new Date().getFullYear();
+    const minYear = currentYear - 100;
+    const maxYear = currentYear - 14;
+    
+    yearSelects.forEach(selectId => {
+        const yearSelect = document.getElementById(selectId);
+        if (!yearSelect) return;
+        
+        yearSelect.innerHTML = '<option value="">Year</option>';
+        
+        for (let year = maxYear; year >= minYear; year--) {
+            const option = document.createElement('option');
+            option.value = year;
+            option.textContent = year;
+            yearSelect.appendChild(option);
+        }
     });
 }
 
-function toggleMenu() {
-    const sidebar = document.getElementById('sidebar');
-    sidebar.classList.toggle('open');
-}
-
-function toggleReviews(productId) {
-    const reviewsSection = document.getElementById(`reviews-${productId}`);
-    reviewsSection.classList.toggle('active');
-}
-
-function setRating(productId, rating) {
-    const stars = document.querySelectorAll(`#stars-${productId} .star`);
-    stars.forEach((star, index) => {
-        star.classList.toggle('active', index < rating);
-    });
-    window[`selectedRating-${productId}`] = rating;
-}
-
-function showSection(section) {
-    if (section === 'home') {
-        loadProductsFromFirebase();
-    }
-    toggleMenu();
-}
-
-function showRequestForm() {
-    const modal = document.createElement('div');
-    modal.className = 'modal';
-    modal.style.display = 'block';
-    modal.innerHTML = `
-        <div class="modal-content">
-            <span class="close" onclick="this.parentElement.parentElement.remove()">&times;</span>
-            <h2 style="color: #ffd700; margin-bottom: 1rem;">Request a Product</h2>
-            <form onsubmit="handleProductRequest(event)">
-                <div class="form-group">
-                    <label>Product Name:</label>
-                    <input type="text" required>
-                </div>
-                <div class="form-group">
-                    <label>Description:</label>
-                    <textarea rows="3" required></textarea>
-                </div>
-                <div class="form-group">
-                    <label>Your Email:</label>
-                    <input type="email" required>
-                </div>
-                <button type="submit" class="btn" style="width: 100%;">Submit Request</button>
-            </form>
-        </div>
-    `;
-    document.body.appendChild(modal);
-    toggleMenu();
-}
-
-function handleProductRequest(event) {
-    event.preventDefault();
-    alert('Product request submitted! We\'ll get back to you soon.');
-    event.target.closest('.modal').remove();
-}
-
-// Event listeners for modal and sidebar
-window.onclick = function(event) {
-    const modal = document.getElementById('loginModal');
-    if (event.target === modal) {
-        closeLogin();
-    }
+function populateDayDropdown() {
+    const monthSelect = document.getElementById('birthMonth');
+    const yearSelect = document.getElementById('birthYear');
+    const daySelect = document.getElementById('birthDay');
     
-    if (event.target.classList.contains('modal') && event.target !== modal) {
-        event.target.style.display = 'none';
+    if (!monthSelect || !yearSelect || !daySelect) return;
+    
+    const month = parseInt(monthSelect.value);
+    const year = parseInt(yearSelect.value);
+    
+    daySelect.innerHTML = '<option value="">Day</option>';
+    
+    if (month && year) {
+        const daysInMonth = new Date(year, month, 0).getDate();
+        
+        for (let day = 1; day <= daysInMonth; day++) {
+            const option = document.createElement('option');
+            option.value = day.toString().padStart(2, '0');
+            option.textContent = day;
+            daySelect.appendChild(option);
+        }
     }
 }
 
-document.addEventListener('click', function(event) {
-    const sidebar = document.getElementById('sidebar');
-    const menuToggle = document.querySelector('.menu-toggle');
+function getFormattedBirthDate() {
+    const month = document.getElementById('birthMonth')?.value;
+    const day = document.getElementById('birthDay')?.value;
+    const year = document.getElementById('birthYear')?.value;
     
-    if (sidebar && menuToggle && !sidebar.contains(event.target) && !menuToggle.contains(event.target)) {
-        sidebar.classList.remove('open');
+    if (month && day && year) {
+        return `${year}-${month}-${day}`;
+    }
+    return null;
+}
+
+document.addEventListener('keydown', function(event) {
+    if (event.key === 'Escape') {
+        closeAllModals();
+        closeProductDetail();
     }
 });
+
+document.addEventListener('keydown', function(event) {
+    if (event.key === 'Enter' && event.target.classList.contains('search-bar')) {
+        searchProducts();
+    }
+});
+
+document.addEventListener('keydown', function(event) {
+    if (event.key === 'Enter' && (
+        event.target.type === 'email' || 
+        event.target.type === 'password' || 
+        event.target.type === 'text' ||
+        event.target.type === 'tel'
+    )) {
+        const form = event.target.closest('form');
+        if (form) {
+            event.preventDefault();
+            const submitButton = form.querySelector('button[type="submit"]');
+            if (submitButton) {
+                submitButton.click();
+            }
+        }
+    }
+});
+
+function cleanup() {
+    const tempElements = document.querySelectorAll('[id*="temp"], [class*="temp"]');
+    tempElements.forEach(el => el.remove());
+    
+    uploadedIdData = null;
+    idVerificationResult = null;
+}
+
+window.addEventListener('beforeunload', cleanup);
+
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', function() {
+        console.log('E-commerce platform initialized');
+        
+        updateCartCount();
+        
+        const urlParams = new URLSearchParams(window.location.search);
+        const productId = urlParams.get('product');
+        if (productId) {
+            const checkProducts = setInterval(() => {
+                if (products.length > 0) {
+                    const product = products.find(p => p.id === productId);
+                    if (product) {
+                        showProductDetail(product);
+                    }
+                    clearInterval(checkProducts);
+                }
+            }, 500);
+        }
+    });
+} else {
+    console.log('E-commerce platform initialized (DOM already ready)');
+}
+
+if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+    window.ecommerceDebug = {
+        cart,
+        products,
+        currentUser,
+        currentSeller,
+        showNotification,
+        loadProductsFromFirebase,
+        clearCart,
+        cleanup
+    };
+}
+
 </script>
 </body>
-</html>
+        </html>
