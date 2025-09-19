@@ -935,6 +935,255 @@
     color: #007185 !important;
     border-bottom-color: #007185 !important;
 }
+
+
+/* Enhanced Seller Dashboard Styles */
+.dashboard-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+}
+
+.dashboard-stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.stat-card {
+    background: white;
+    padding: 2rem;
+    border-radius: 16px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+    border-left: 4px solid #007185;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.stat-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 30px rgba(0,0,0,0.15);
+}
+
+.stat-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 1rem;
+    font-size: 1.5rem;
+}
+
+.stat-card:nth-child(1) .stat-icon { background: rgba(0, 113, 133, 0.1); color: #007185; }
+.stat-card:nth-child(2) .stat-icon { background: rgba(40, 167, 69, 0.1); color: #28a745; }
+.stat-card:nth-child(3) .stat-icon { background: rgba(255, 193, 7, 0.1); color: #ffc107; }
+
+.dashboard-content-wrapper {
+    background: white;
+    border-radius: 16px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+    overflow: hidden;
+}
+
+.dashboard-tabs {
+    display: flex;
+    background: #f8f9fa;
+    border-bottom: 1px solid #e9ecef;
+}
+
+.dashboard-tab {
+    flex: 1;
+    padding: 1.2rem;
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-weight: 500;
+    color: #666;
+    transition: all 0.3s ease;
+    position: relative;
+}
+
+.dashboard-tab:hover {
+    background: rgba(0, 113, 133, 0.05);
+    color: #007185;
+}
+
+.dashboard-tab.active {
+    color: #007185;
+    background: white;
+}
+
+.dashboard-tab.active::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: #007185;
+}
+
+.product-form {
+    display: grid;
+    gap: 1.5rem;
+    padding: 2rem;
+}
+
+.form-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1.5rem;
+}
+
+.form-field label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: 600;
+    color: #333;
+    font-size: 0.9rem;
+}
+
+.form-field input,
+.form-field select,
+.form-field textarea {
+    width: 100%;
+    padding: 0.9rem;
+    border: 2px solid #e9ecef;
+    border-radius: 8px;
+    font-size: 1rem;
+    transition: border-color 0.3s ease;
+}
+
+.form-field input:focus,
+.form-field select:focus,
+.form-field textarea:focus {
+    outline: none;
+    border-color: #007185;
+    box-shadow: 0 0 0 3px rgba(0, 113, 133, 0.1);
+}
+
+.product-grid {
+    display: grid;
+    gap: 1rem;
+    padding: 2rem;
+}
+
+.dashboard-product-card {
+    display: flex;
+    gap: 1.5rem;
+    padding: 1.5rem;
+    background: white;
+    border: 2px solid #f1f3f4;
+    border-radius: 12px;
+    transition: all 0.3s ease;
+    position: relative;
+}
+
+.dashboard-product-card:hover {
+    border-color: #007185;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+}
+
+.product-image-dash {
+    width: 100px;
+    height: 100px;
+    border-radius: 8px;
+    object-fit: cover;
+    flex-shrink: 0;
+}
+
+.product-info-dash {
+    flex: 1;
+    min-width: 0;
+}
+
+.product-title-dash {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #333;
+    margin-bottom: 0.5rem;
+}
+
+.product-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    margin-bottom: 1rem;
+    font-size: 0.9rem;
+    color: #666;
+}
+
+.product-actions {
+    display: flex;
+    gap: 0.5rem;
+    flex-shrink: 0;
+    align-items: flex-start;
+}
+
+.btn-edit, .btn-delete {
+    padding: 0.5rem 1rem;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.85rem;
+    font-weight: 500;
+    transition: all 0.2s ease;
+}
+
+.btn-edit {
+    background: #007185;
+    color: white;
+}
+
+.btn-edit:hover {
+    background: #005a6b;
+}
+
+.btn-delete {
+    background: #dc3545;
+    color: white;
+}
+
+.btn-delete:hover {
+    background: #c82333;
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, #007185, #005a6b);
+    color: white;
+    border: none;
+    padding: 1rem 2rem;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.btn-primary:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 15px rgba(0, 113, 133, 0.3);
+}
+
+@media (max-width: 768px) {
+    .dashboard-product-card {
+        flex-direction: column;
+    }
+    
+    .product-image-dash {
+        width: 100%;
+        height: 200px;
+    }
+    
+    .product-actions {
+        justify-content: stretch;
+    }
+    
+    .btn-edit, .btn-delete {
+        flex: 1;
+    }
+    }
     </style>
 </head>
 <body>
@@ -1153,117 +1402,148 @@
     <!-- Main Content -->
     <div style="max-width: 1200px; margin: 0 auto; padding: 2rem;">
         <!-- Navigation Tabs -->
-        <div style="background: white; border-radius: 12px; padding: 0; margin-bottom: 2rem; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
-            <div style="display: flex; border-bottom: 1px solid #e9ecef;">
-            <button class="dashboard-tab active" onclick="showDashboardTab('overview', event)" style="flex: 1; padding: 1rem; background: none; border: none; cursor: pointer; font-weight: 500; color: #333; border-bottom: 3px solid #007185;">Overview</button>
-<button class="dashboard-tab" onclick="showDashboardTab('add-product', event)" style="flex: 1; padding: 1rem; background: none; border: none; cursor: pointer; font-weight: 500; color: #666; border-bottom: 3px solid transparent;">Add Product</button>
-<button class="dashboard-tab" onclick="showDashboardTab('my-products', event)" style="flex: 1; padding: 1rem; background: none; border: none; cursor: pointer; font-weight: 500; color: #666; border-bottom: 3px solid transparent;">My Products</button>
-            </div>
-        </div>
+<div class="dashboard-content-wrapper" style="margin-bottom: 2rem;">
+    <div class="dashboard-tabs">
+        <button class="dashboard-tab active" onclick="showDashboardTab('overview', event)">📊 Overview</button>
+        <button class="dashboard-tab" onclick="showDashboardTab('add-product', event)">➕ Add Product</button>
+        <button class="dashboard-tab" onclick="showDashboardTab('my-products', event)">📦 My Products</button>
+    </div>
+</div>
 
         <!-- Overview Tab -->
-        <div id="overview-tab" class="dashboard-content">
-            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1.5rem; margin-bottom: 2rem;">
-                <div style="background: white; padding: 1.5rem; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
-                    <h3 style="color: #333; margin: 0 0 0.5rem 0;">Total Products</h3>
-                    <div style="font-size: 2rem; font-weight: bold; color: #007185;" id="totalProducts">0</div>
-                </div>
-                <div style="background: white; padding: 1.5rem; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
-                    <h3 style="color: #333; margin: 0 0 0.5rem 0;">Monthly Fee</h3>
-                    <div style="font-size: 2rem; font-weight: bold; color: #28a745;">$25</div>
-                </div>
-                <div style="background: white; padding: 1.5rem; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
-                    <h3 style="color: #333; margin: 0 0 0.5rem 0;">Account Status</h3>
-                    <div style="font-size: 1.2rem; font-weight: bold; color: #28a745;">Active</div>
-                </div>
+<div id="overview-tab" class="dashboard-content">
+    <div class="dashboard-stats">
+        <div class="stat-card">
+            <div class="stat-icon">📦</div>
+            <div>
+                <h3 style="color: #333; margin: 0 0 0.5rem 0; font-size: 0.9rem; font-weight: 500;">Total Products</h3>
+                <div style="font-size: 2.2rem; font-weight: 700; color: #007185;" id="totalProducts">0</div>
             </div>
         </div>
+        <div class="stat-card">
+            <div class="stat-icon">💰</div>
+            <div>
+                <h3 style="color: #333; margin: 0 0 0.5rem 0; font-size: 0.9rem; font-weight: 500;">Monthly Fee</h3>
+                <div style="font-size: 2.2rem; font-weight: 700; color: #28a745;">$25</div>
+            </div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon">✅</div>
+            <div>
+                <h3 style="color: #333; margin: 0 0 0.5rem 0; font-size: 0.9rem; font-weight: 500;">Account Status</h3>
+                <div style="font-size: 1.4rem; font-weight: 600; color: #28a745;">Active</div>
+            </div>
+        </div>
+    </div>
+    
+    <div style="background: white; padding: 2rem; border-radius: 16px; box-shadow: 0 4px 20px rgba(0,0,0,0.1);">
+        <h3 style="color: #333; margin-bottom: 1rem;">Quick Stats</h3>
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
+            <div style="text-align: center; padding: 1rem; background: #f8f9fa; border-radius: 8px;">
+                <div style="font-size: 1.5rem; font-weight: 600; color: #007185;" id="activeProducts">0</div>
+                <div style="color: #666; font-size: 0.9rem;">Active Products</div>
+            </div>
+            <div style="text-align: center; padding: 1rem; background: #f8f9fa; border-radius: 8px;">
+                <div style="font-size: 1.5rem; font-weight: 600; color: #28a745;">$0</div>
+                <div style="color: #666; font-size: 0.9rem;">Avg Product Price</div>
+            </div>
+        </div>
+    </div>
+</div>
 
         <!-- Add Product Tab -->
-        <div id="add-product-tab" class="dashboard-content" style="display: none;">
-            <div style="background: white; padding: 2rem; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
-                <h3 style="color: #333; margin: 0 0 1.5rem 0;">Add New Product</h3>
-                <form id="dashboardAddProductForm" onsubmit="handleDashboardAddProduct(event)">
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 1.5rem;">
-                        <div>
-                            <label style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: #333;">Product Name</label>
-                            <input type="text" id="dashboardProductName" required style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 6px; font-size: 1rem;">
-                        </div>
-                        <div>
-                            <label style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: #333;">Price ($)</label>
-                            <input type="number" id="dashboardProductPrice" step="0.01" min="0" required style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 6px; font-size: 1rem;">
-                        </div>
-                    </div>
-                    
-                    <div style="margin-bottom: 1.5rem;">
-                        <label style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: #333;">Description</label>
-                        <textarea id="dashboardProductDescription" rows="3" required style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 6px; font-size: 1rem; resize: vertical;"></textarea>
-                    </div>
-                    
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 1.5rem;">
-                        <div>
-                            <label style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: #333;">Category</label>
-                            <select id="dashboardProductCategory" required style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 6px; font-size: 1rem;">
-                                <option value="">Select Category</option>
-                                <option value="electronics">Electronics</option>
-                                <option value="clothing">Clothing</option>
-                                <option value="home">Home</option>
-                                <option value="beauty">Beauty</option>
-                                <option value="sports">Sports</option>
-                                <option value="books">Books</option>
-                                <option value="toys">Toys</option>
-                                <option value="automotive">Automotive</option>
-                                <option value="jewelry">Jewelry</option>
-                                <option value="health">Health</option>
-                                <option value="music">Music</option>
-                            </select>
-                        </div>
-                        <div>
-    <label style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: #333;">Knutsford Delivery Time</label>
-    <select id="dashboardKnutsfordDelivery" required style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 6px; font-size: 1rem;">
-        <option value="">Select Knutsford Delivery Time</option>
-        <option value="1-2">1-2 days</option>
-        <option value="3-5">3-5 days</option>
-        <option value="5-7">5-7 days</option>
-        <option value="7-10">7-10 days</option>
-        <option value="10-14">10-14 days</option>
-        <option value="14-21">14-21 days</option>
-    </select>
-                        </div>
-                    </div>
-
-                    <div style="margin-bottom: 1.5rem;">
-    <label style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: #333;">Tara Delivery Time</label>
-    <select id="dashboardTaraDelivery" required style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 6px; font-size: 1rem;">
-        <option value="">Select Tara Delivery Time</option>
-        <option value="1-2">1-2 days</option>
-        <option value="3-5">3-5 days</option>
-        <option value="5-7">5-7 days</option>
-        <option value="7-10">7-10 days</option>
-        <option value="10-14">10-14 days</option>
-        <option value="14-21">14-21 days</option>
-                    </select>
-                    </div>
-                    
-                    <div style="margin-bottom: 2rem;">
-                        <label style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: #333;">Image URL</label>
-                        <input type="url" id="dashboardProductImage" required style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 6px; font-size: 1rem;">
-                    </div>
-                    
-                    <button type="submit" style="background: #007185; color: white; border: none; padding: 0.75rem 2rem; border-radius: 6px; font-size: 1rem; cursor: pointer; font-weight: 500;">Add Product</button>
-                </form>
-            </div>
+<div id="add-product-tab" class="dashboard-content" style="display: none;">
+    <div class="dashboard-content-wrapper">
+        <div style="padding: 2rem; border-bottom: 1px solid #e9ecef;">
+            <h3 style="color: #333; margin: 0; font-size: 1.4rem; font-weight: 600;">Add New Product</h3>
+            <p style="color: #666; margin: 0.5rem 0 0 0;">Fill in the details below to add a new product to your store.</p>
         </div>
-
-        <!-- My Products Tab -->
-        <div id="my-products-tab" class="dashboard-content" style="display: none;">
-            <div style="background: white; padding: 2rem; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
-                <h3 style="color: #333; margin: 0 0 1.5rem 0;">My Products</h3>
-                <div id="dashboardProductsList">
-                    <!-- Products will be loaded here -->
+        
+        <form id="dashboardAddProductForm" onsubmit="handleDashboardAddProduct(event)" class="product-form">
+            <div class="form-row">
+                <div class="form-field">
+                    <label>Product Name</label>
+                    <input type="text" id="dashboardProductName" required placeholder="Enter product name">
+                </div>
+                <div class="form-field">
+                    <label>Price ($)</label>
+                    <input type="number" id="dashboardProductPrice" step="0.01" min="0" required placeholder="0.00">
                 </div>
             </div>
+            
+            <div class="form-field">
+                <label>Description</label>
+                <textarea id="dashboardProductDescription" rows="4" required placeholder="Describe your product..."></textarea>
+            </div>
+            
+            <div class="form-row">
+                <div class="form-field">
+                    <label>Category</label>
+                    <select id="dashboardProductCategory" required>
+                        <option value="">Select Category</option>
+                        <option value="electronics">Electronics</option>
+                        <option value="clothing">Clothing</option>
+                        <option value="home">Home</option>
+                        <option value="beauty">Beauty</option>
+                        <option value="sports">Sports</option>
+                        <option value="books">Books</option>
+                        <option value="toys">Toys</option>
+                        <option value="automotive">Automotive</option>
+                        <option value="jewelry">Jewelry</option>
+                        <option value="health">Health</option>
+                        <option value="music">Music</option>
+                    </select>
+                </div>
+                <div class="form-field">
+                    <label>Image URL</label>
+                    <input type="url" id="dashboardProductImage" required placeholder="https://example.com/image.jpg">
+                </div>
+            </div>
+            
+            <div class="form-row">
+                <div class="form-field">
+                    <label>Knutsford Delivery Time</label>
+                    <select id="dashboardKnutsfordDelivery" required>
+                        <option value="">Select Delivery Time</option>
+                        <option value="1-2">1-2 days</option>
+                        <option value="3-5">3-5 days</option>
+                        <option value="5-7">5-7 days</option>
+                        <option value="7-10">7-10 days</option>
+                        <option value="10-14">10-14 days</option>
+                        <option value="14-21">14-21 days</option>
+                    </select>
+                </div>
+                <div class="form-field">
+                    <label>Tara Delivery Time</label>
+                    <select id="dashboardTaraDelivery" required>
+                        <option value="">Select Delivery Time</option>
+                        <option value="1-2">1-2 days</option>
+                        <option value="3-5">3-5 days</option>
+                        <option value="5-7">5-7 days</option>
+                        <option value="7-10">7-10 days</option>
+                        <option value="10-14">10-14 days</option>
+                        <option value="14-21">14-21 days</option>
+                    </select>
+                </div>
+            </div>
+            
+            <button type="submit" class="btn-primary">Add Product</button>
+        </form>
+    </div>
+</div>
+
+        <!-- My Products Tab -->
+<div id="my-products-tab" class="dashboard-content" style="display: none;">
+    <div class="dashboard-content-wrapper">
+        <div style="padding: 2rem; border-bottom: 1px solid #e9ecef;">
+            <h3 style="color: #333; margin: 0; font-size: 1.4rem; font-weight: 600;">My Products</h3>
+            <p style="color: #666; margin: 0.5rem 0 0 0;">Manage your product listings below.</p>
         </div>
+        <div id="dashboardProductsList" class="product-grid">
+            <!-- Products will be loaded here -->
+        </div>
+    </div>
+</div>
 
         
     </div>
@@ -1287,6 +1567,92 @@
         <p style="text-align: center; margin-top: 1rem;">
             <a href="#" style="color: #ffd700;" onclick="closeForgotPassword(); showLogin();">Back to Sign In</a>
         </p>
+    </div>
+</div>
+
+
+
+<!-- Edit Product Modal -->
+<div id="editProductModal" class="modal">
+    <div class="modal-content" style="max-width: 600px; padding: 2rem;">
+        <span class="close" onclick="closeEditProduct()">&times;</span>
+        <h2 style="color: #333; margin-bottom: 1rem; text-align: center;">Edit Product</h2>
+        
+        <form id="editProductForm" onsubmit="handleEditProduct(event)" class="product-form">
+            <input type="hidden" id="editProductId">
+            
+            <div class="form-row">
+                <div class="form-field">
+                    <label>Product Name</label>
+                    <input type="text" id="editProductName" required>
+                </div>
+                <div class="form-field">
+                    <label>Price ($)</label>
+                    <input type="number" id="editProductPrice" step="0.01" min="0" required>
+                </div>
+            </div>
+            
+            <div class="form-field">
+                <label>Description</label>
+                <textarea id="editProductDescription" rows="3" required></textarea>
+            </div>
+            
+            <div class="form-row">
+                <div class="form-field">
+                    <label>Category</label>
+                    <select id="editProductCategory" required>
+                        <option value="">Select Category</option>
+                        <option value="electronics">Electronics</option>
+                        <option value="clothing">Clothing</option>
+                        <option value="home">Home</option>
+                        <option value="beauty">Beauty</option>
+                        <option value="sports">Sports</option>
+                        <option value="books">Books</option>
+                        <option value="toys">Toys</option>
+                        <option value="automotive">Automotive</option>
+                        <option value="jewelry">Jewelry</option>
+                        <option value="health">Health</option>
+                        <option value="music">Music</option>
+                    </select>
+                </div>
+                <div class="form-field">
+                    <label>Image URL</label>
+                    <input type="url" id="editProductImage" required>
+                </div>
+            </div>
+            
+            <div class="form-row">
+                <div class="form-field">
+                    <label>Knutsford Delivery Time</label>
+                    <select id="editKnutsfordDelivery" required>
+                        <option value="">Select Delivery Time</option>
+                        <option value="1-2">1-2 days</option>
+                        <option value="3-5">3-5 days</option>
+                        <option value="5-7">5-7 days</option>
+                        <option value="7-10">7-10 days</option>
+                        <option value="10-14">10-14 days</option>
+                        <option value="14-21">14-21 days</option>
+                    </select>
+                </div>
+                <div class="form-field">
+                    <label>Tara Delivery Time</label>
+                    <select id="editTaraDelivery" required>
+                        <option value="">Select Delivery Time</option>
+                        <option value="1-2">1-2 days</option>
+                        <option value="3-5">3-5 days</option>
+                        <option value="5-7">5-7 days</option>
+                        <option value="7-10">7-10 days</option>
+                        <option value="10-14">10-14 days</option>
+                        <option value="14-21">14-21 days</option>
+                    </select>
+                </div>
+            </div>
+            
+            <div style="display: flex; gap: 1rem; margin-top: 2rem;">
+                <button type="submit" class="btn-primary" style="flex: 1;">Update Product</button>
+                <button type="button" onclick="closeEditProduct()" style="flex: 1; background: #6c757d; color: white; border: none; padding: 1rem; border-radius: 8px; cursor: pointer;">Cancel</button>
+            </div>
+        </form>
     </div>
 </div>
 <script>
@@ -1896,6 +2262,7 @@ window.onclick = function(event) {
     const sellerModal = document.getElementById('sellerModal');
     const sellerDashboard = document.getElementById('sellerDashboard');
     const forgotModal = document.getElementById('forgotPasswordModal');
+    const editModal = document.getElementById('editProductModal');
     
     if (event.target === modal) {
         closeLogin();
@@ -1913,12 +2280,17 @@ window.onclick = function(event) {
         closeForgotPassword();
     }
     
+    if (event.target === editModal) {
+        closeEditProduct();
+    }
+    
     // Handle other modals
     if (event.target.classList.contains('modal') && 
         event.target !== modal && 
         event.target !== sellerModal && 
         event.target !== sellerDashboard && 
-        event.target !== forgotModal) {
+        event.target !== forgotModal &&
+        event.target !== editModal) {
         event.target.style.display = 'none';
     }
 }
@@ -2343,33 +2715,27 @@ function loadDashboardProducts() {
 
 function createDashboardProductCard(product) {
     const card = document.createElement('div');
-    card.style.cssText = `
-        display: flex;
-        gap: 1rem;
-        padding: 1rem;
-        border: 1px solid #e9ecef;
-        border-radius: 8px;
-        margin-bottom: 1rem;
-        align-items: center;
-    `;
+    card.className = 'dashboard-product-card';
     
     let deliveryInfo = [];
-if (product.knutsfordDelivery) deliveryInfo.push(`Knutsford: ${product.knutsfordDelivery} days`);
-if (product.taraDelivery) deliveryInfo.push(`Tara: ${product.taraDelivery} days`);
-const deliveryDisplay = deliveryInfo.length > 0 ? deliveryInfo.join(' | ') : 'Not set';
+    if (product.knutsfordDelivery) deliveryInfo.push(`Knutsford: ${product.knutsfordDelivery} days`);
+    if (product.taraDelivery) deliveryInfo.push(`Tara: ${product.taraDelivery} days`);
+    const deliveryDisplay = deliveryInfo.length > 0 ? deliveryInfo.join(' | ') : 'Not set';
     
     card.innerHTML = `
-        <img src="${product.image}" alt="${product.name}" style="width: 80px; height: 80px; object-fit: cover; border-radius: 6px; flex-shrink: 0;">
-        <div style="flex: 1;">
-            <h4 style="color: #333; margin: 0 0 0.5rem 0; font-size: 1.1rem;">${product.name}</h4>
-            <p style="color: #666; margin: 0.2rem 0; font-size: 0.9rem;">${product.description}</p>
-            <p style="color: #333; margin: 0.2rem 0; font-weight: bold;">$${product.price}</p>
-            <p style="color: #666; margin: 0.2rem 0; font-size: 0.85rem;">Category: ${product.category}</p>
-            <p style="color: #666; margin: 0.2rem 0; font-size: 0.85rem;">Delivery: ${deliveryDisplay}</p>
+        <img src="${product.image}" alt="${product.name}" class="product-image-dash">
+        <div class="product-info-dash">
+            <h4 class="product-title-dash">${product.name}</h4>
+            <p style="color: #666; margin: 0.5rem 0; font-size: 0.9rem; line-height: 1.4;">${product.description}</p>
+            <div class="product-meta">
+                <span><strong>$${product.price}</strong></span>
+                <span>Category: ${product.category}</span>
+                <span>Delivery: ${deliveryDisplay}</span>
             </div>
-            <div style="display: flex; flex-direction: column; gap: 0.5rem;">
-            <button onclick="editDashboardProduct('${product.id}')" style="padding: 0.4rem 1rem; background: #007185; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 0.85rem;">Edit</button>
-            <button onclick="deleteDashboardProduct('${product.id}')" style="padding: 0.4rem 1rem; background: #dc3545; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 0.85rem;">Delete</button>
+        </div>
+        <div class="product-actions">
+            <button class="btn-edit" onclick="editDashboardProduct('${product.id}')">Edit</button>
+            <button class="btn-delete" onclick="deleteDashboardProduct('${product.id}')">Delete</button>
         </div>
     `;
     
@@ -2557,6 +2923,65 @@ function handleForgotPassword(event) {
         .catch((error) => {
             console.error('Password reset error:', error);
             alert('Error sending reset email: ' + error.message);
+        });
+}
+
+
+function editDashboardProduct(productId) {
+    // Get product data
+    db.collection('products').doc(productId).get()
+        .then((doc) => {
+            if (doc.exists) {
+                const product = doc.data();
+                
+                // Populate edit form
+                document.getElementById('editProductId').value = productId;
+                document.getElementById('editProductName').value = product.name;
+                document.getElementById('editProductPrice').value = product.price;
+                document.getElementById('editProductDescription').value = product.description;
+                document.getElementById('editProductCategory').value = product.category;
+                document.getElementById('editProductImage').value = product.image;
+                document.getElementById('editKnutsfordDelivery').value = product.knutsfordDelivery || '';
+                document.getElementById('editTaraDelivery').value = product.taraDelivery || '';
+                
+                // Show modal
+                document.getElementById('editProductModal').style.display = 'block';
+            }
+        })
+        .catch((error) => {
+            console.error('Error loading product:', error);
+            alert('Error loading product details');
+        });
+}
+
+function closeEditProduct() {
+    document.getElementById('editProductModal').style.display = 'none';
+}
+
+function handleEditProduct(event) {
+    event.preventDefault();
+    
+    const productId = document.getElementById('editProductId').value;
+    const updatedProduct = {
+        name: document.getElementById('editProductName').value,
+        description: document.getElementById('editProductDescription').value,
+        price: parseFloat(document.getElementById('editProductPrice').value),
+        category: document.getElementById('editProductCategory').value,
+        image: document.getElementById('editProductImage').value,
+        knutsfordDelivery: document.getElementById('editKnutsfordDelivery').value,
+        taraDelivery: document.getElementById('editTaraDelivery').value,
+        updatedAt: new Date().toISOString()
+    };
+    
+    // Update product in Firestore
+    db.collection('products').doc(productId).update(updatedProduct)
+        .then(() => {
+            alert('Product updated successfully!');
+            closeEditProduct();
+        })
+        .catch((error) => {
+            console.error('Error updating product:', error);
+            alert('Error updating product: ' + error.message);
         });
 }
 </script>
