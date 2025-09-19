@@ -1423,8 +1423,8 @@ header button:hover {
 <div class="dashboard-content-wrapper" style="margin-bottom: 2rem;">
     <div class="dashboard-tabs">
         <button class="dashboard-tab active" onclick="showDashboardTab('overview', event)">📊 Overview</button>
-        <button class="dashboard-tab" onclick="showDashboardTab('add-product', event)">➕ Add Product</button>
         <button class="dashboard-tab" onclick="showDashboardTab('my-products', event)">📦 My Products</button>
+        <button class="dashboard-tab" onclick="showDashboardTab('add-product', event)">➕ Add Product</button>
     </div>
 </div>
 
@@ -1448,21 +1448,7 @@ header button:hover {
     </div>
 </div>
     
-    <div style="background: white; padding: 2rem; border-radius: 16px; box-shadow: 0 4px 20px rgba(0,0,0,0.1);">
-        <h3 style="color: #333; margin-bottom: 1rem;">Quick Stats</h3>
-        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
-            <div style="text-align: center; padding: 1rem; background: #f8f9fa; border-radius: 8px;">
-                <div style="font-size: 1.5rem; font-weight: 600; color: #007185;" id="activeProducts">0</div>
-                <div style="color: #666; font-size: 0.9rem;">Active Products</div>
-            </div>
-            <div style="text-align: center; padding: 1rem; background: #f8f9fa; border-radius: 8px;">
-                <div style="font-size: 1.5rem; font-weight: 600; color: #28a745;">$0</div>
-                <div style="color: #666; font-size: 0.9rem;">Avg Product Price</div>
-            </div>
-        </div>
-    </div>
-</div>
-
+    
         <!-- Add Product Tab -->
 <div id="add-product-tab" class="dashboard-content" style="display: none;">
     <div class="dashboard-content-wrapper">
