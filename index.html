@@ -928,7 +928,7 @@
 </div>
 
 
-        <!-- Categories Section -->
+        
 <!-- Categories Section -->
 <div class="categories-section" style="padding: 0.5rem 5px; margin-bottom: 0.5rem;">
     <div class="categories-scroll" style="display: flex; gap: 0.8rem; overflow-x: auto; padding: 0.3rem 0; scrollbar-width: none; -ms-overflow-style: none;">
@@ -969,6 +969,12 @@
                 <div class="form-group">
                     <label>Password:</label>
                     <input type="password" id="password" required minlength="6">
+                </div>
+
+                <div class="form-group">
+    <label>Password:</label>
+    <input type="password" id="password" required minlength="6">
+    <a href="#" onclick="showForgotPassword()" style="color: #ffd700; font-size: 0.8rem; text-decoration: none; margin-top: 0.3rem; display: block;">Forgot Password?</a>
                 </div>
 
                 <!-- Google Sign In Button (only show when not signed in) -->
@@ -1074,6 +1080,14 @@
                     By signing up as a seller, you agree to pay a monthly subscription fee of $25. This will be charged to your account monthly.
                 </p>
             </div>
+
+    <!-- Add Google Sign-In for Sellers -->
+    <button type="button" onclick="signUpSellerWithGoogle()" class="google-btn" style="width: 100%; margin-bottom: 1rem; padding: 0.7rem; border: 1px solid #ddd; border-radius: 8px; background: white; color: #333; font-size: 0.9rem; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px;">
+        <img src="https://developers.google.com/identity/images/g-logo.png" alt="Google" style="width: 16px; height: 16px;">
+        Continue with Google
+    </button>
+    <div style="text-align: center; margin: 1rem 0; color: #ccc; font-size: 0.85rem;">OR</div>
+    
             
             <button type="submit" class="btn" style="width: 100%; font-size: 1rem; padding: 0.8rem;">Sign Up as Seller ($25/month)</button>
         </form>
@@ -1148,6 +1162,28 @@
                 <!-- Products will be loaded here -->
             </div>
         </div>
+    </div>
+</div>
+
+
+    <!-- Forgot Password Modal -->
+<div id="forgotPasswordModal" class="modal">
+    <div class="modal-content" style="max-width: 400px;">
+        <span class="close" onclick="closeForgotPassword()">&times;</span>
+        <h2 style="color: #ffd700; margin-bottom: 1rem; text-align: center;">Reset Password</h2>
+        <p style="color: #ccc; text-align: center; margin-bottom: 1.5rem; font-size: 0.9rem;">Enter your email address and we'll send you a link to reset your password.</p>
+        
+        <form id="forgotPasswordForm" onsubmit="handleForgotPassword(event)">
+            <div class="form-group">
+                <label>Email:</label>
+                <input type="email" id="forgotEmail" required>
+            </div>
+            <button type="submit" class="btn" style="width: 100%;">Send Reset Link</button>
+        </form>
+        
+        <p style="text-align: center; margin-top: 1rem;">
+            <a href="#" style="color: #ffd700;" onclick="closeForgotPassword(); showLogin();">Back to Sign In</a>
+        </p>
     </div>
 </div>
 <script>
@@ -1355,26 +1391,86 @@ function showLoginForm() {
 
 function showUserProfile() {
     if (currentUser) {
-        // Hide login elements, show profile
-        document.getElementById('googleSignInSection').style.display = 'none';
-        document.getElementById('authFormSection').style.display = 'none';
-        document.getElementById('userInfo').style.display = 'block';
-        document.getElementById('modalTitle').textContent = 'Profile';
-        
-        // Update user info
-        document.getElementById('userName').textContent = currentUser.displayName || 'User';
-        document.getElementById('userEmail').textContent = currentUser.email;
-        
-        if (currentUser.photoURL) {
-            document.getElementById('userPhoto').src = currentUser.photoURL;
-            document.getElementById('userPhoto').style.display = 'block';
-        } else {
-            document.getElementById('userPhoto').style.display = 'none';
-        }
-        
-        // Show modal
-        document.getElementById('loginModal').style.display = 'block';
+        // Check if user is a seller first
+        db.collection('sellers').doc(currentUser.uid).get()
+            .then((doc) => {
+                // Hide login elements, show profile
+                document.getElementById('googleSignInSection').style.display = 'none';
+                document.getElementById('authFormSection').style.display = 'none';
+                document.getElementById('userInfo').style.display = 'block';
+                document.getElementById('modalTitle').textContent = 'Profile';
+                
+                // Update user info
+                document.getElementById('userName').textContent = currentUser.displayName || 'User';
+                document.getElementById('userEmail').textContent = currentUser.email;
+                
+                if (currentUser.photoURL) {
+                    document.getElementById('userPhoto').src = currentUser.photoURL;
+                    document.getElementById('userPhoto').style.display = 'block';
+                } else {
+                    document.getElementById('userPhoto').style.display = 'none';
+                }
+                
+                // Update userInfo section to include seller dashboard if applicable
+                const userInfoDiv = document.getElementById('userInfo');
+                const existingButtons = userInfoDiv.querySelector('.profile-buttons');
+                if (existingButtons) existingButtons.remove();
+                
+                const buttonsDiv = document.createElement('div');
+                buttonsDiv.className = 'profile-buttons';
+                buttonsDiv.style.cssText = 'display: flex; flex-direction: column; gap: 0.8rem; margin-top: 1rem;';
+                
+                if (doc.exists) {
+                    // User is a seller - show seller dashboard button
+                    buttonsDiv.innerHTML = `
+                        <button onclick="closeLogin(); showSellerDashboard();" class="btn" style="width: 100%;">Seller Dashboard</button>
+                        <button onclick="signOut()" class="btn" style="width: 100%;">Sign Out</button>
+                    `;
+                } else {
+                    // User is not a seller - show option to become seller
+                    buttonsDiv.innerHTML = `
+                        <button onclick="closeLogin(); showSellerSignup();" class="btn" style="width: 100%; background: #28a745;">Become a Seller</button>
+                        <button onclick="signOut()" class="btn" style="width: 100%;">Sign Out</button>
+                    `;
+                }
+                
+                // Replace the sign out button
+                const existingSignOut = userInfoDiv.querySelector('button');
+                if (existingSignOut) {
+                    existingSignOut.replaceWith(buttonsDiv);
+                } else {
+                    userInfoDiv.appendChild(buttonsDiv);
+                }
+                
+                // Show modal
+                document.getElementById('loginModal').style.display = 'block';
+            })
+            .catch((error) => {
+                console.error('Error checking seller status:', error);
+                // Fallback to basic profile
+                showBasicProfile();
+            });
     }
+}
+
+function showBasicProfile() {
+    // Basic profile without seller check (fallback)
+    document.getElementById('googleSignInSection').style.display = 'none';
+    document.getElementById('authFormSection').style.display = 'none';
+    document.getElementById('userInfo').style.display = 'block';
+    document.getElementById('modalTitle').textContent = 'Profile';
+    
+    document.getElementById('userName').textContent = currentUser.displayName || 'User';
+    document.getElementById('userEmail').textContent = currentUser.email;
+    
+    if (currentUser.photoURL) {
+        document.getElementById('userPhoto').src = currentUser.photoURL;
+        document.getElementById('userPhoto').style.display = 'block';
+    } else {
+        document.getElementById('userPhoto').style.display = 'none';
+    }
+    
+    document.getElementById('loginModal').style.display = 'block';
 }
 
 function closeLogin() {
@@ -1677,6 +1773,7 @@ window.onclick = function(event) {
     const modal = document.getElementById('loginModal');
     const sellerModal = document.getElementById('sellerModal');
     const sellerDashboard = document.getElementById('sellerDashboard');
+    const forgotModal = document.getElementById('forgotPasswordModal');
     
     if (event.target === modal) {
         closeLogin();
@@ -1690,8 +1787,16 @@ window.onclick = function(event) {
         closeSellerDashboard();
     }
     
+    if (event.target === forgotModal) {
+        closeForgotPassword();
+    }
+    
     // Handle other modals
-    if (event.target.classList.contains('modal') && event.target !== modal && event.target !== sellerModal && event.target !== sellerDashboard) {
+    if (event.target.classList.contains('modal') && 
+        event.target !== modal && 
+        event.target !== sellerModal && 
+        event.target !== sellerDashboard && 
+        event.target !== forgotModal) {
         event.target.style.display = 'none';
     }
 }
@@ -1888,47 +1993,69 @@ function handleSellerSignup(event) {
         email: document.getElementById('sellerEmail').value,
         password: document.getElementById('sellerPassword').value,
         phone: document.getElementById('sellerPhone').value,
-        businessName: document.getElementById('sellerBusiness').value,
+        businessName: document.getElementById('sellerBusiness').value
     };
     
-    // Create user account first
+    // Check if this is a Google sign-up completion
+    if (window.pendingSellerUser) {
+        // Complete Google seller registration
+        completeGoogleSellerRegistration(formData);
+    } else {
+        // Regular email/password registration
+        createEmailSellerAccount(formData);
+    }
+}
+
+function createEmailSellerAccount(formData) {
     auth.createUserWithEmailAndPassword(formData.email, formData.password)
         .then((result) => {
             const user = result.user;
-            
-            // Update user profile
-            return user.updateProfile({
-                displayName: `${formData.firstName} ${formData.lastName}`
-            }).then(() => {
-                // Save seller data to Firestore
-                return db.collection('sellers').doc(user.uid).set({
-                    uid: user.uid,
-                    firstName: formData.firstName,
-                    lastName: formData.lastName,
-                    dateOfBirth: formData.dateOfBirth,
-                    email: formData.email,
-                    phone: formData.phone,
-                    businessName: formData.businessName,
-                    subscriptionStatus: 'active',
-                    monthlyFee: 25,
-                    joinedDate: new Date().toISOString(),
-                    isSeller: true,
-                    products: []
-                });
-            });
-        })
-        .then(() => {
-            currentUser = auth.currentUser;
-            updateAuthUI();
-            closeSellerSignup();
-            alert('Seller account created successfully! Welcome to WEB VTEC marketplace. You can now start selling products.');
-            // Auto-open seller dashboard
-            setTimeout(() => showSellerDashboard(), 1000);
+            return completeSellerRegistration(user, formData);
         })
         .catch((error) => {
-            console.error('Seller signup error:', error);
+            console.error('Email seller signup error:', error);
             alert('Error creating seller account: ' + error.message);
         });
+}
+
+function completeGoogleSellerRegistration(formData) {
+    const user = window.pendingSellerUser;
+    completeSellerRegistration(user, formData)
+        .then(() => {
+            delete window.pendingSellerUser;
+        });
+}
+
+function completeSellerRegistration(user, formData) {
+    // Update user profile
+    return user.updateProfile({
+        displayName: `${formData.firstName} ${formData.lastName}`
+    }).then(() => {
+        // Save seller data to Firestore
+        return db.collection('sellers').doc(user.uid).set({
+            uid: user.uid,
+            firstName: formData.firstName,
+            lastName: formData.lastName,
+            dateOfBirth: formData.dateOfBirth,
+            email: formData.email,
+            phone: formData.phone,
+            businessName: formData.businessName,
+            subscriptionStatus: 'active',
+            monthlyFee: 25,
+            joinedDate: new Date().toISOString(),
+            isSeller: true,
+            products: []
+        });
+    }).then(() => {
+        currentUser = user;
+        updateAuthUI();
+        closeSellerSignup();
+        alert('Seller account created successfully! Welcome to WEBVTEC marketplace.');
+        setTimeout(() => showSellerDashboard(), 1000);
+    }).catch((error) => {
+        console.error('Seller registration error:', error);
+        alert('Error completing seller registration: ' + error.message);
+    });
 }
 
 let currentCategory = 'all';
@@ -2174,6 +2301,85 @@ function deleteProduct(productId) {
             showSellerSignup();
         });
     }
+
+
+
+    // Google Sign-Up for Sellers
+function signUpSellerWithGoogle() {
+    auth.signInWithPopup(googleProvider)
+        .then((result) => {
+            const user = result.user;
+            // Check if user already exists as seller
+            return db.collection('sellers').doc(user.uid).get()
+                .then((doc) => {
+                    if (!doc.exists) {
+                        // New seller - collect additional info
+                        collectSellerInfo(user);
+                    } else {
+                        // Already a seller
+                        currentUser = user;
+                        updateAuthUI();
+                        closeSellerSignup();
+                        alert('Welcome back! You are already registered as a seller.');
+                        showSellerDashboard();
+                    }
+                });
+        })
+        .catch((error) => {
+            console.error('Google seller sign-up error:', error);
+            alert('Error with Google sign-up: ' + error.message);
+        });
+}
+
+function collectSellerInfo(user) {
+    // Pre-fill form with Google data
+    const names = (user.displayName || '').split(' ');
+    document.getElementById('sellerFirstName').value = names[0] || '';
+    document.getElementById('sellerLastName').value = names.slice(1).join(' ') || '';
+    document.getElementById('sellerEmail').value = user.email || '';
+    
+    // Hide Google button, show message
+    const googleBtn = document.querySelector('#sellerModal .google-btn');
+    if (googleBtn) {
+        googleBtn.style.display = 'none';
+    }
+    
+    // Add notice
+    const form = document.getElementById('sellerSignupForm');
+    const notice = document.createElement('div');
+    notice.style.cssText = 'background: rgba(40, 167, 69, 0.1); padding: 0.8rem; border-radius: 6px; margin-bottom: 1rem; border: 1px solid rgba(40, 167, 69, 0.3);';
+    notice.innerHTML = '<p style="color: #28a745; font-size: 0.85rem; margin: 0;">Google account connected! Please complete the seller information below.</p>';
+    form.insertBefore(notice, form.firstChild);
+    
+    // Store user temporarily
+    window.pendingSellerUser = user;
+}
+
+// Forgot Password
+function showForgotPassword() {
+    closeLogin();
+    document.getElementById('forgotPasswordModal').style.display = 'block';
+}
+
+function closeForgotPassword() {
+    document.getElementById('forgotPasswordModal').style.display = 'none';
+    document.getElementById('forgotEmail').value = '';
+}
+
+function handleForgotPassword(event) {
+    event.preventDefault();
+    const email = document.getElementById('forgotEmail').value;
+    
+    auth.sendPasswordResetEmail(email)
+        .then(() => {
+            alert('Password reset email sent! Check your inbox.');
+            closeForgotPassword();
+        })
+        .catch((error) => {
+            console.error('Password reset error:', error);
+            alert('Error sending reset email: ' + error.message);
+        });
+}
 </script>
 </body>
 </html>
