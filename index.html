@@ -2455,6 +2455,7 @@ async function performIdVerification(imageData, analysisId) {
         
         console.log('OCR Result:', result);
         console.log('Extracted text:', result.data.text);
+        debugOCRResults(result.data.text);
         console.log('Confidence:', result.data.confidence);
         
         await worker.terminate();
@@ -3338,188 +3339,153 @@ function extractDatesImproved(text) {
 
 // Improved name matching with fuzzy matching
 function verifyNameMatchImproved(firstName, lastName, extractedNames, fullText) {
-    let bestMatch = { verified: false, confidence: 0, matchedText: '', details: '' };
+    console.log('=== NAME VERIFICATION DEBUG ===');
+    console.log('Input names:', { firstName, lastName });
     
-    console.log('Checking names:', { firstName, lastName });
-    console.log('Against patterns:', extractedNames);
+    // Normalize all text for comparison
+    const firstNorm = firstName.toLowerCase().trim();
+    const lastNorm = lastName.toLowerCase().trim();
+    const fullTextNorm = fullText.toLowerCase();
     
-    // Also check the full text directly for name components
-    const fullTextLower = fullText.toLowerCase();
+    console.log('Checking for:', firstNorm, 'and', lastNorm);
     
-    // Check each extracted name pattern
-    extractedNames.forEach(extractedName => {
-        const nameParts = extractedName.split(/\s+/);
-        
-        let firstNameMatch = false;
-        let lastNameMatch = false;
-        let firstScore = 0;
-        let lastScore = 0;
-        
-        // Check for first name matches
-        nameParts.forEach(part => {
-            if (part === firstName) {
-                firstNameMatch = true;
-                firstScore = 1.0;
-            } else if (part.includes(firstName) || firstName.includes(part)) {
-                if (part.length >= 3 && firstName.length >= 3) {
-                    firstNameMatch = true;
-                    firstScore = Math.max(firstScore, 0.8);
-                }
-            } else if (calculateSimilarity(part, firstName) > 0.7) {
-                firstNameMatch = true;
-                firstScore = Math.max(firstScore, 0.7);
-            }
-        });
-        
-        // Check for last name matches
-        nameParts.forEach(part => {
-            if (part === lastName) {
-                lastNameMatch = true;
-                lastScore = 1.0;
-            } else if (part.includes(lastName) || lastName.includes(part)) {
-                if (part.length >= 3 && lastName.length >= 3) {
-                    lastNameMatch = true;
-                    lastScore = Math.max(lastScore, 0.8);
-                }
-            } else if (calculateSimilarity(part, lastName) > 0.7) {
-                lastNameMatch = true;
-                lastScore = Math.max(lastScore, 0.7);
-            }
-        });
-        
-        const overallScore = (firstScore + lastScore) / 2;
-        
-        if (firstNameMatch && lastNameMatch && overallScore > bestMatch.confidence) {
-            bestMatch = {
-                verified: overallScore >= 0.7,
-                confidence: overallScore,
-                matchedText: extractedName,
-                details: `First: ${firstScore.toFixed(2)}, Last: ${lastScore.toFixed(2)}`
-            };
-        }
-    });
+    // Method 1: Simple substring search in full text
+    const firstFound = fullTextNorm.includes(firstNorm);
+    const lastFound = fullTextNorm.includes(lastNorm);
     
-    // Also check the full text directly
-    const firstInText = fullTextLower.includes(firstName);
-    const lastInText = fullTextLower.includes(lastName);
+    console.log('Direct text search:', { firstFound, lastFound });
     
-    if (firstInText && lastInText && bestMatch.confidence < 0.8) {
-        bestMatch = {
+    if (firstFound && lastFound) {
+        return {
             verified: true,
-            confidence: 0.8,
-            matchedText: `Found "${firstName}" and "${lastName}" in text`,
-            details: 'Direct text match'
+            confidence: 0.9,
+            matchedText: `Found "${firstNorm}" and "${lastNorm}" in extracted text`,
+            details: 'Direct substring match'
         };
     }
     
-    console.log('Name match result:', bestMatch);
-    return bestMatch;
+    // Method 2: Check extracted name patterns
+    for (let extractedName of extractedNames) {
+        const extractedNorm = extractedName.toLowerCase();
+        console.log('Checking pattern:', extractedNorm);
+        
+        if (extractedNorm.includes(firstNorm) && extractedNorm.includes(lastNorm)) {
+            return {
+                verified: true,
+                confidence: 0.8,
+                matchedText: extractedName,
+                details: 'Pattern match'
+            };
+        }
+    }
+    
+    // Method 3: Partial matches (at least one name found)
+    if (firstFound || lastFound) {
+        return {
+            verified: false,
+            confidence: 0.5,
+            matchedText: `Partial match: ${firstFound ? firstName : ''} ${lastFound ? lastName : ''}`,
+            details: 'Only one name found'
+        };
+    }
+    
+    return {
+        verified: false,
+        confidence: 0,
+        matchedText: 'No matches found',
+        details: 'Names not detected in text'
+    };
 }
 
+    
 // Improved date matching with better format conversion
 function verifyDateMatchImproved(inputDob, extractedDates) {
+    console.log('=== DATE VERIFICATION DEBUG ===');
+    console.log('Input DOB:', inputDob);
+    console.log('Extracted dates:', extractedDates);
+    
     if (!inputDob) {
-        return { verified: false, confidence: 0, matchedText: '', details: 'No input date provided' };
+        return { verified: false, confidence: 0, matchedText: 'No input date' };
     }
     
     const inputDate = new Date(inputDob);
-    let bestMatch = { verified: false, confidence: 0, matchedText: '', details: '' };
+    const targetDay = inputDate.getDate();
+    const targetMonth = inputDate.getMonth() + 1; // JavaScript months are 0-based
+    const targetYear = inputDate.getFullYear();
     
-    console.log('Checking input date:', inputDob, 'parsed as:', inputDate);
-    console.log('Against extracted dates:', extractedDates);
+    console.log('Looking for:', { targetDay, targetMonth, targetYear });
     
-    extractedDates.forEach(datePattern => {
-        try {
-            const extractedDate = parseExtractedDateImproved(datePattern);
-            console.log('Parsed extracted date:', extractedDate, 'from:', datePattern);
+    for (let datePattern of extractedDates) {
+        const dateText = typeof datePattern === 'string' ? datePattern : datePattern.original;
+        console.log('Checking date pattern:', dateText);
+        
+        // Extract all numbers from the date text
+        const numbers = dateText.match(/\d+/g);
+        if (!numbers || numbers.length < 3) continue;
+        
+        console.log('Numbers found:', numbers);
+        
+        // Try different interpretations
+        for (let i = 0; i <= numbers.length - 3; i++) {
+            const num1 = parseInt(numbers[i]);
+            const num2 = parseInt(numbers[i + 1]);
+            const num3 = parseInt(numbers[i + 2]);
             
-            if (extractedDate) {
-                const matches = 
-                    extractedDate.getFullYear() === inputDate.getFullYear() &&
-                    extractedDate.getMonth() === inputDate.getMonth() &&
-                    extractedDate.getDate() === inputDate.getDate();
-                
-                if (matches) {
-                    bestMatch = {
-                        verified: true,
-                        confidence: 1.0,
-                        matchedText: datePattern.original || datePattern,
-                        details: `Matched: ${extractedDate.toDateString()}`
-                    };
-                }
+            // Try MM/DD/YYYY
+            if (num1 === targetMonth && num2 === targetDay && num3 === targetYear) {
+                return {
+                    verified: true,
+                    confidence: 1.0,
+                    matchedText: dateText,
+                    details: `MM/DD/YYYY match: ${num1}/${num2}/${num3}`
+                };
             }
-        } catch (error) {
-            console.log('Error parsing date:', datePattern, error);
+            
+            // Try DD/MM/YYYY
+            if (num2 === targetMonth && num1 === targetDay && num3 === targetYear) {
+                return {
+                    verified: true,
+                    confidence: 1.0,
+                    matchedText: dateText,
+                    details: `DD/MM/YYYY match: ${num1}/${num2}/${num3}`
+                };
+            }
+            
+            // Try YYYY/MM/DD
+            if (num1 === targetYear && num2 === targetMonth && num3 === targetDay) {
+                return {
+                    verified: true,
+                    confidence: 1.0,
+                    matchedText: dateText,
+                    details: `YYYY/MM/DD match: ${num1}/${num2}/${num3}`
+                };
+            }
         }
-    });
+    }
     
-    console.log('Date match result:', bestMatch);
-    return bestMatch;
+    return {
+        verified: false,
+        confidence: 0,
+        matchedText: 'No matching date found',
+        details: `Could not find ${targetMonth}/${targetDay}/${targetYear} in extracted text`
+    };
 }
 
-// Improved date parsing with better format handling
-function parseExtractedDateImproved(datePattern) {
-    const monthNames = {
-        'jan': 0, 'january': 0,
-        'feb': 1, 'february': 1,
-        'mar': 2, 'march': 2,
-        'apr': 3, 'april': 3,
-        'may': 4,
-        'jun': 5, 'june': 5,
-        'jul': 6, 'july': 6,
-        'aug': 7, 'august': 7,
-        'sep': 8, 'september': 8,
-        'oct': 9, 'october': 9,
-        'nov': 10, 'november': 10,
-        'dec': 11, 'december': 11
-    };
+    // Add this function to help debug what OCR is actually seeing
+function debugOCRResults(extractedText) {
+    console.log('=== OCR DEBUG INFO ===');
+    console.log('Full extracted text:');
+    console.log(extractedText);
+    console.log('\nText length:', extractedText.length);
+    console.log('Lines:', extractedText.split('\n'));
+    console.log('Words:', extractedText.split(/\s+/));
     
-    const dateText = typeof datePattern === 'string' ? datePattern : datePattern.original;
-    const groups = typeof datePattern === 'object' ? datePattern.groups : null;
-    
-    // Handle DD MMM YYYY format (11 SEP 2008)
-    const ddMmmYyyy = /(\d{1,2})\s+(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)\w*\s+(\d{4})/i.exec(dateText);
-    if (ddMmmYyyy) {
-        const day = parseInt(ddMmmYyyy[1]);
-        const monthName = ddMmmYyyy[2].toLowerCase().substring(0, 3);
-        const year = parseInt(ddMmmYyyy[3]);
-        const month = monthNames[monthName];
-        
-        if (month !== undefined) {
-            return new Date(year, month, day);
-        }
+    // Show character codes for invisible characters
+    console.log('\nCharacter analysis:');
+    for (let i = 0; i < Math.min(100, extractedText.length); i++) {
+        const char = extractedText[i];
+        console.log(`"${char}" (${char.charCodeAt(0)})`);
     }
-    
-    // Handle MM/DD/YYYY format
-    const mmDdYyyy = /(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})/.exec(dateText);
-    if (mmDdYyyy) {
-        const part1 = parseInt(mmDdYyyy[1]);
-        const part2 = parseInt(mmDdYyyy[2]);
-        const year = parseInt(mmDdYyyy[3]);
-        
-        // Assume MM/DD/YYYY for US documents
-        if (part1 <= 12 && part2 <= 31) {
-            return new Date(year, part1 - 1, part2);
-        }
-        // Try DD/MM/YYYY if first assumption fails
-        if (part2 <= 12 && part1 <= 31) {
-            return new Date(year, part2 - 1, part1);
-        }
-    }
-    
-    // Handle YYYY/MM/DD format
-    const yyyyMmDd = /(\d{4})[\/\-](\d{1,2})[\/\-](\d{1,2})/.exec(dateText);
-    if (yyyyMmDd) {
-        const year = parseInt(yyyyMmDd[1]);
-        const month = parseInt(yyyyMmDd[2]);
-        const day = parseInt(yyyyMmDd[3]);
-        
-        if (month >= 1 && month <= 12 && day >= 1 && day <= 31) {
-            return new Date(year, month - 1, day);
-        }
-    }
-    
-    return null;
 }
 
 // Simple string similarity calculation
