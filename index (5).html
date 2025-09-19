@@ -1,0 +1,2564 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WEBVTEC - Products</title>
+    <style>
+    * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+    font-family: 'Arial', sans-serif;
+    background: #FFFFFF;
+    min-height: 100vh;
+    color: white;
+    padding-top: 70px;
+        }
+
+        .top-header {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    padding: 1rem;
+    background: #261A4C;
+    z-index: 1002;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-top: 0px !important;
+    margin-bottom: 0px !important;
+        }
+
+.top-header .logo {
+    font-size: 2rem;
+    font-weight: bold;
+    color: black;
+    text-shadow: 
+        -2px -2px 0 #ffd700,
+        2px -2px 0 #ffd700,
+        -2px 2px 0 #ffd700,
+        2px 2px 0 #ffd700,
+        -2px 0 0 #ffd700,
+        2px 0 0 #ffd700,
+        0 -2px 0 #ffd700,
+        0 2px 0 #ffd700;
+}
+
+.top-header .menu-toggle {
+    position: absolute;
+    left: 1rem;
+    background: rgba(255, 215, 0, 0.9);
+    color: #333;
+    border: none;
+    padding: 0.5rem;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 1.2rem;
+}
+
+        /* Header */
+        .header {
+    background: rgba(0, 0, 0, 0.3);
+    padding: 0.5rem 1rem;
+    backdrop-filter: blur(10px);
+    border-bottom: 2px solid #ffd700;
+    margin-top: 0px !important;
+    margin-bottom: 0px !important;
+    position: relative;
+    z-index: 1001; /* Changed from 1500 to 1001 */
+        }
+
+        .header-top {
+         display: flex;
+         justify-content: center;
+         align-items: center;
+         margin-bottom: 0rem;
+         position: relative;
+        }
+
+        .logo {
+    font-size: 2rem;
+    font-weight: bold;
+    color: black;
+    text-shadow: 
+        -2px -2px 0 #ffd700,
+        2px -2px 0 #ffd700,
+        -2px 2px 0 #ffd700,
+        2px 2px 0 #ffd700,
+        -2px 0 0 #ffd700,
+        2px 0 0 #ffd700,
+        0 -2px 0 #ffd700,
+        0 2px 0 #ffd700;
+        }
+
+        .user-actions {
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+    position: absolute;
+    width: 100%;
+    justify-content: space-between;
+    padding: 0 30px;
+    top: 50px; /* Reduced from 60px */
+        }
+
+        .btn {
+            padding: 0.5rem 1rem;
+            border: none;
+            border-radius: 25px;
+            background: linear-gradient(45deg, #ffd700, #ffed4a);
+            color: #333;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(255, 215, 0, 0.3);
+        }
+
+        .search-container {
+    position: relative;
+    max-width: 600px;
+    margin: 0 auto;
+        }
+        
+        .search-bar {
+            width: 100%;
+            padding: 1rem;
+            border: none;
+            border-radius: 25px;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            color: white;
+            font-size: 1rem;
+            border: 2px solid rgba(255, 215, 0, 0.3);
+        }
+
+        .search-bar::placeholder {
+            color: rgba(255, 255, 255, 0.7);
+        }
+
+        .search-bar:focus {
+            outline: none;
+            border-color: #ffd700;
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        /* Sidebar Menu */
+        .sidebar {
+            position: fixed;
+            left: 0;
+            top: 0;
+            width: 250px;
+            height: 100vh;
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(10px);
+            padding-top: 2rem;
+            z-index: 1000;
+            transform: translateX(-100%);
+            transition: transform 0.3s ease;
+        }
+
+        .sidebar.open {
+            transform: translateX(0);
+        }
+
+        .menu-toggle {
+            position: fixed;
+            top: 1rem;
+            left: 1rem;
+            z-index: 1001;
+            background: rgba(255, 215, 0, 0.9);
+            color: #333;
+            border: none;
+            padding: 0.5rem;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1.2rem;
+        }
+
+        .sidebar ul {
+            list-style: none;
+        }
+
+        .sidebar ul li {
+            padding: 1rem 2rem;
+            border-bottom: 1px solid rgba(255, 215, 0, 0.2);
+        }
+
+        .sidebar ul li a {
+            color: white;
+            text-decoration: none;
+            font-weight: 500;
+            transition: color 0.3s ease;
+        }
+
+        .sidebar ul li:hover {
+            background: rgba(255, 215, 0, 0.1);
+        }
+
+        .sidebar ul li a:hover {
+            color: #ffd700;
+        }
+
+        /* Main Content */
+        .main-content {
+    margin-left: 0;
+    padding: 1rem 4px;
+    max-width: 800px;
+    margin: 0 auto;
+    transition: margin-left 0.3s ease;
+        }
+
+        .products-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    margin-top: 1rem;
+    padding: 0 5px;
+        }
+
+        /* REPLACE THIS SECTION - Find .product-card in your CSS and replace with: */
+.product-card {
+    background: white;
+    border-radius: 12px;
+    padding: 8px;
+    border: 1px solid #e0e0e0;
+    display: flex;
+    gap: 15px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    transition: all 0.3s ease;
+    overflow: hidden;
+    cursor: pointer;
+    min-height: 200px;
+    user-select: none;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+}
+        
+.product-card:hover:not(:has(.add-to-cart:hover)) {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+
+        
+.product-image {
+    width: 200px;
+    min-height: 250px;
+    background: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    margin-left: 0;
+}
+        
+.product-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+}
+
+.product-details {
+    flex: 1;
+    padding: 5px 15px 15px 0;
+    display: flex;
+    flex-direction: column;
+}
+
+.product-header {
+    margin-bottom: 1rem;
+}
+
+.product-title {
+    font-size: 1.8rem;
+    font-weight: bold;
+    color: #333;
+    margin-bottom: 0.5rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.product-description {
+    font-size: 1.2rem;
+    color: #666;
+    margin-bottom: 1rem;
+    text-transform: uppercase;
+    font-style: italic;
+}
+
+.rating-section {
+    margin-bottom: 2rem;
+}
+
+.rating-section h4 {
+    font-size: 1.1rem;
+    color: #333;
+    margin-bottom: 0.5rem;
+    text-transform: uppercase;
+}
+
+/* Add this CSS to ensure review count is visible */
+.review-count {
+    color: #333;
+    font-size: 1.2rem;
+    margin-left: 5px;
+}
+        
+/* CSS Update for Stars Display */
+.stars {
+    display: flex;
+    gap: 3px;
+    margin-bottom: 0.5rem;
+    align-items: center;
+}
+
+.star {
+    color: #ffa500;
+    font-size: 1.5rem;
+    line-height: 1;
+}
+
+.star.empty {
+    color: #ddd;
+}
+
+.product-price {
+    font-size: 2.5rem;
+    font-weight: bold;
+    color: #333;
+    margin-bottom: 2rem;
+    text-transform: uppercase;
+    font-style: italic;
+}
+
+
+        .view-reviews {
+            padding: 0.5rem 1rem;
+            background: transparent;
+            color: #0066c0;
+            border: 1px solid #0066c0;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.85rem;
+        }
+
+        .view-reviews:hover {
+            background: #0066c0;
+            color: white;
+        }
+
+        /* Reviews Section */
+        .reviews-section {
+            margin-top: 1rem;
+            display: none;
+        }
+
+        .reviews-section.active {
+            display: block;
+        }
+
+        .review-form {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 1rem;
+            border-radius: 10px;
+            margin-bottom: 1rem;
+        }
+
+        .review-form input, .review-form textarea {
+            width: 100%;
+            padding: 0.5rem;
+            margin-bottom: 0.5rem;
+            border: none;
+            border-radius: 5px;
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            border: 1px solid rgba(255, 215, 0, 0.3);
+        }
+
+        .review-form input::placeholder, .review-form textarea::placeholder {
+            color: rgba(255, 255, 255, 0.6);
+        }
+
+        .reviews-list {
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        .review-item {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 1rem;
+            border-radius: 8px;
+            margin-bottom: 0.5rem;
+            border-left: 3px solid #ffd700;
+        }
+
+        .review-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 0.5rem;
+        }
+
+        .reviewer-name {
+            font-weight: bold;
+            color: #ffd700;
+        }
+
+        .review-stars {
+            color: #ffd700;
+        }
+
+        .cart-count {
+            background: #ff4757;
+            color: white;
+            border-radius: 50%;
+            padding: 0.2rem 0.5rem;
+            font-size: 0.8rem;
+            position: absolute;
+            top: -5px;
+            right: -5px;
+        }
+
+        /* Login Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 2000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(5px);
+        }
+
+        .modal-content {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            margin: 10% auto;
+            padding: 2rem;
+            border-radius: 15px;
+            width: 90%;
+            max-width: 400px;
+            border: 2px solid #ffd700;
+        }
+
+        .close {
+            color: #ffd700;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .form-group {
+            margin-bottom: 1rem;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: #ffd700;
+        }
+
+        .form-group input, .form-group textarea, .form-group select {
+    width: 100%;
+    padding: 0.7rem;
+    border: none;
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.1);
+    color: white;
+    border: 1px solid rgba(255, 215, 0, 0.3);
+}
+
+.form-group select option {
+    background: #333;
+    color: white;
+}
+        @keyframes shimmer {
+            0% { transform: translateX(-100%) translateY(-100%) rotate(45deg); }
+            100% { transform: translateX(100%) translateY(100%) rotate(45deg); }
+        }
+
+
+/* REPLACE THIS SECTION - Find .add-to-cart in your CSS and replace with: */
+.add-to-cart {
+    background: #ffd814;
+    color: #333;
+    border: none;
+    padding: 0.3rem 2rem;
+    border-radius: 50px;
+    font-weight: bold;
+    font-size: 1.1rem;
+    cursor: pointer;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-top: auto;
+    position: relative;
+    z-index: 10;
+    user-select: none;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    outline: none;
+}
+
+.add-to-cart:hover {
+    background: #f7ca00;
+    transform: scale(1.02);
+}
+
+.add-to-cart:active {
+    transform: scale(0.98);
+    background: #f7ca00;
+}
+
+.add-to-cart:focus {
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(255, 216, 20, 0.5);
+}
+    
+
+/* REPLACE the mobile responsive .add-to-cart rule with this: */
+@media (max-width: 768px) {
+    .header-top {
+        flex-direction: column;
+        gap: 1rem;
+    }
+
+    .product-card {
+        flex-direction: row;
+        padding: 12px;
+        gap: 12px;
+        min-height: 200px;
+        user-select: none;
+        -webkit-user-select: none;
+        -moz-user-select: none;
+        -ms-user-select: none;
+    }
+    
+    .product-image {
+        width: 130px;
+        min-height: 180px;
+        background: white;
+        flex-shrink: 0;
+    }
+    
+    .product-details {
+        padding: 8px 12px 12px 0;
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+    }
+
+    .product-title {
+        font-size: 1.3rem;
+        margin-bottom: 0.3rem;
+    }
+
+    .product-description {
+        font-size: 0.9rem;
+        margin-bottom: 0.8rem;
+    }
+
+    .rating-section {
+        margin-bottom: 0.8rem;
+    }
+
+    .rating-section h4 {
+        display: none;
+    }
+
+    .stars {
+        gap: 2px;
+    }
+
+    .star {
+        font-size: 1.2rem;
+    }
+
+    .product-price {
+        font-size: 1.8rem;
+        margin-bottom: 1rem;
+    }
+
+    .add-to-cart {
+        padding: 0.6rem 1.5rem;
+        font-size: 1rem;
+        margin-top: auto;
+        user-select: none !important;
+        -webkit-user-select: none !important;
+        -moz-user-select: none !important;
+        -ms-user-select: none !important;
+        outline: none !important;
+        -webkit-tap-highlight-color: transparent !important;
+    }
+
+    *, *::before, *::after {
+    -webkit-tap-highlight-color: transparent;
+    -webkit-touch-callout: none;
+    }
+
+    .main-content {
+        padding: 0.5rem 4px;
+    }
+    
+    .products-grid {
+        gap: 0.8rem;
+        padding: 0 5px;
+    }
+}
+    
+        .search-btn {
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: linear-gradient(45deg, #ffd700, #ffed4a);
+    color: #333;
+    border: none;
+    padding: 0.8rem 1rem;
+    border-radius: 20px;
+    cursor: pointer;
+    font-size: 1rem;
+    transition: all 0.3s ease;
+}
+
+.search-btn:hover {
+    transform: translateY(-50%) scale(1.05);
+    box-shadow: 0 5px 15px rgba(255, 215, 0, 0.3);
+}
+
+
+        /* Only change this - keep everything else the same */
+.product-detail-view {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100vh;
+    background: white;
+    z-index: 1003;
+    overflow-y: auto;
+    padding: 0;
+}
+        
+.product-detail-view.active {
+    display: block;
+}
+
+.detail-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+    background: white;
+    padding: 20px 0;
+    border-bottom: 1px solid #ddd;
+    position: relative;
+}
+        
+.detail-close {
+    background: #f0f0f0;
+    border: none;
+    padding: 10px 15px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 16px;
+}
+
+.product-gallery {
+    text-align: center;
+    margin-bottom: 2rem;
+}
+
+.product-gallery img {
+    width: 100%;
+    max-width: 400px;
+    height: auto;
+}
+
+.product-options {
+    display: flex;
+    gap: 1rem;
+    margin: 2rem 0;
+    overflow-x: auto;
+}
+
+.option-button {
+    background: #f0f0f0;
+    border: 2px solid #ddd;
+    padding: 10px 20px;
+    border-radius: 8px;
+    cursor: pointer;
+    white-space: nowrap;
+    color: #333;
+}
+
+.option-button.selected {
+    border-color: #007185;
+    background: #e7f3ff;
+}
+
+.detail-price {
+    font-size: 2rem;
+    font-weight: bold;
+    color: #333;
+    margin: 1rem 0;
+}
+
+.detail-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    margin: 2rem 0;
+}
+
+.detail-add-to-cart {
+    background: #ffd814;
+    color: #333;
+    border: none;
+    padding: 12px;
+    border-radius: 8px;
+    font-weight: bold;
+    cursor: pointer;
+    font-size: 16px;
+}
+
+
+.google-btn {
+    transition: all 0.3s ease;
+}
+
+.google-btn:hover {
+    background: #f8f9fa !important;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.google-btn:active {
+    transform: scale(0.98);
+}
+
+.close {
+    color: #ffd700;
+    float: right;
+    font-size: 28px;
+    font-weight: bold;
+    cursor: pointer;
+    line-height: 1;
+    z-index: 1;
+    position: relative;
+}
+
+.close:hover,
+.close:focus {
+    color: #fff;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+
+.categories-scroll::-webkit-scrollbar {
+    display: none;
+}
+
+.category-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(255, 215, 0, 0.3);
+}
+
+.category-btn.active {
+    background: #333 !important;
+    color: #ffd700 !important;
+}
+
+
+
+/* Compact modal styles */
+@media (max-width: 768px) {
+    .modal-content {
+        margin: 5% auto !important;
+        width: 95% !important;
+        max-width: 95% !important;
+        max-height: 90vh;
+        overflow-y: auto;
+    }
+    
+    #sellerModal .modal-content {
+        padding: 1rem !important;
+    }
+    
+    #sellerModal h2 {
+        font-size: 1.1rem !important;
+        margin-bottom: 0.5rem !important;
+    }
+    
+    #sellerModal p {
+        font-size: 0.8rem !important;
+        margin-bottom: 1rem !important;
+    }
+    
+    #sellerModal .form-group {
+        margin-bottom: 0.6rem !important;
+    }
+    
+    #sellerModal label {
+        font-size: 0.8rem !important;
+        margin-bottom: 0.3rem !important;
+    }
+    
+    #sellerModal input,
+    #sellerModal textarea,
+    #sellerModal select {
+        padding: 0.4rem !important;
+        font-size: 0.8rem !important;
+    }
+    
+    #sellerModal button {
+        padding: 0.6rem !important;
+        font-size: 0.9rem !important;
+    }
+        }
+
+
+    .sell-btn {
+    display: inline-flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+    padding: 0.5rem 0.8rem !important;
+    background: transparent !important;
+    color: #333 !important;
+    border: none !important;
+    border-radius: 0 !important;
+    font-weight: bold !important;
+    font-size: 0.85rem !important;
+    letter-spacing: 0.3px !important;
+    text-align: center !important;
+    min-height: auto !important;
+    max-width: fit-content !important;
+    transition: all 0.2s ease !important;
+    cursor: pointer !important;
+    margin: 0 !important;
+}
+
+.sell-btn:hover {
+    background: rgba(51, 51, 51, 0.08) !important;
+    border-radius: 6px !important;
+    transform: none !important;
+}
+
+.sell-icon {
+    margin-bottom: 0.2rem;
+    color: #333;
+    line-height: 1;
+}
+
+.sell-icon svg {
+    width: 30px;
+    height: 30px;
+    display: block;
+}
+
+
+.category-btn {
+    transition: all 0.2s ease !important;
+    text-align: center !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+}
+
+.category-btn:hover {
+    transform: translateY(-1px) !important;
+    box-shadow: 0 2px 8px rgba(255, 215, 0, 0.2) !important;
+}
+
+.categories-scroll {
+    justify-content: flex-start !important;
+    align-items: center !important;
+}
+
+
+.dashboard-tab:hover {
+    background: #f8f9fa !important;
+}
+
+.dashboard-tab.active {
+    color: #007185 !important;
+    border-bottom-color: #007185 !important;
+}
+
+.dashboard-content {
+    animation: fadeIn 0.3s ease-in-out;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+
+.dashboard-content {
+    animation: fadeIn 0.3s ease-in-out;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.dashboard-tab {
+    transition: all 0.2s ease !important;
+}
+
+.dashboard-tab:hover {
+    background: #f8f9fa !important;
+}
+
+.dashboard-tab.active {
+    color: #007185 !important;
+    border-bottom-color: #007185 !important;
+}
+    </style>
+</head>
+<body>
+    
+<!-- Top Header -->
+<header class="top-header">
+    <div class="logo">WEB VTEC</div>
+</header>
+
+
+    <!-- Header -->
+    <header class="header">
+    <div style="display: flex; justify-content: space-around; align-items: center; margin-bottom: 10px;">
+        <button class="btn" onclick="showLogin()">👤 Sign In</button>
+        <button class="btn sell-btn" onclick="handleSellerButton()">
+    <div class="sell-icon">
+        <svg width="32" height="32" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M12 3L2 12h3v8h6v-6h2v6h6v-8h3L12 3zm0 2.8l6 6V20h-2v-6H8v6H6v-8.2l6-6z"/>
+            <path d="M4 6h2v2H4zm14 0h2v2h-2z"/>
+        </svg>
+    </div>
+    SELL ON WEB VTEC
+        </button>
+        <button class="btn" onclick="showCart()" style="position: relative;">
+            🛒 Cart <span class="cart-count" id="cartCount">0</span>
+        </button>
+    </div>
+
+        
+<div class="search-container">
+    <input type="text" class="search-bar" placeholder="Search for products..." onkeyup="searchProducts()">
+    <button class="search-btn" onclick="searchProducts()">🔍</button>
+</div>
+
+
+        
+<!-- Categories Section -->
+<div class="categories-section" style="padding: 0.5rem 5px; margin-bottom: 0.5rem;">
+    <div class="categories-scroll" style="display: flex; gap: 0.8rem; overflow-x: auto; padding: 0.3rem 0; scrollbar-width: none; -ms-overflow-style: none;">
+        <button class="category-btn active" onclick="filterByCategory('all')" style="background: #333; color: #ffd700; border: none; padding: 0.6rem 1.2rem; border-radius: 20px; white-space: nowrap; cursor: pointer; font-weight: bold; min-width: 70px; font-size: 0.85rem; text-align: center; display: flex; align-items: center; justify-content: center;">All</button>
+        <button class="category-btn" onclick="filterByCategory('electronics')" style="background: #ffd700; color: #333; border: none; padding: 0.6rem 1.2rem; border-radius: 20px; white-space: nowrap; cursor: pointer; font-weight: bold; min-width: 90px; font-size: 0.85rem; text-align: center; display: flex; align-items: center; justify-content: center;">Electronics</button>
+        <button class="category-btn" onclick="filterByCategory('clothing')" style="background: #ffd700; color: #333; border: none; padding: 0.6rem 1.2rem; border-radius: 20px; white-space: nowrap; cursor: pointer; font-weight: bold; min-width: 80px; font-size: 0.85rem; text-align: center; display: flex; align-items: center; justify-content: center;">Clothing</button>
+        <button class="category-btn" onclick="filterByCategory('home')" style="background: #ffd700; color: #333; border: none; padding: 0.6rem 1.2rem; border-radius: 20px; white-space: nowrap; cursor: pointer; font-weight: bold; min-width: 70px; font-size: 0.85rem; text-align: center; display: flex; align-items: center; justify-content: center;">Home</button>
+        <button class="category-btn" onclick="filterByCategory('beauty')" style="background: #ffd700; color: #333; border: none; padding: 0.6rem 1.2rem; border-radius: 20px; white-space: nowrap; cursor: pointer; font-weight: bold; min-width: 70px; font-size: 0.85rem; text-align: center; display: flex; align-items: center; justify-content: center;">Beauty</button>
+        <button class="category-btn" onclick="filterByCategory('sports')" style="background: #ffd700; color: #333; border: none; padding: 0.6rem 1.2rem; border-radius: 20px; white-space: nowrap; cursor: pointer; font-weight: bold; min-width: 70px; font-size: 0.85rem; text-align: center; display: flex; align-items: center; justify-content: center;">Sports</button>
+        <button class="category-btn" onclick="filterByCategory('books')" style="background: #ffd700; color: #333; border: none; padding: 0.6rem 1.2rem; border-radius: 20px; white-space: nowrap; cursor: pointer; font-weight: bold; min-width: 70px; font-size: 0.85rem; text-align: center; display: flex; align-items: center; justify-content: center;">Books</button>
+        <button class="category-btn" onclick="filterByCategory('toys')" style="background: #ffd700; color: #333; border: none; padding: 0.6rem 1.2rem; border-radius: 20px; white-space: nowrap; cursor: pointer; font-weight: bold; min-width: 70px; font-size: 0.85rem; text-align: center; display: flex; align-items: center; justify-content: center;">Toys</button>
+        <button class="category-btn" onclick="filterByCategory('automotive')" style="background: #ffd700; color: #333; border: none; padding: 0.6rem 1.2rem; border-radius: 20px; white-space: nowrap; cursor: pointer; font-weight: bold; min-width: 95px; font-size: 0.85rem; text-align: center; display: flex; align-items: center; justify-content: center;">Automotive</button>
+        <button class="category-btn" onclick="filterByCategory('jewelry')" style="background: #ffd700; color: #333; border: none; padding: 0.6rem 1.2rem; border-radius: 20px; white-space: nowrap; cursor: pointer; font-weight: bold; min-width: 80px; font-size: 0.85rem; text-align: center; display: flex; align-items: center; justify-content: center;">Jewelry</button>
+        <button class="category-btn" onclick="filterByCategory('health')" style="background: #ffd700; color: #333; border: none; padding: 0.6rem 1.2rem; border-radius: 20px; white-space: nowrap; cursor: pointer; font-weight: bold; min-width: 70px; font-size: 0.85rem; text-align: center; display: flex; align-items: center; justify-content: center;">Health</button>
+        <button class="category-btn" onclick="filterByCategory('music')" style="background: #ffd700; color: #333; border: none; padding: 0.6rem 1.2rem; border-radius: 20px; white-space: nowrap; cursor: pointer; font-weight: bold; min-width: 70px; font-size: 0.85rem; text-align: center; display: flex; align-items: center; justify-content: center;">Music</button>
+    </div>
+</div>
+    </header>
+
+        <div class="products-grid" id="productsGrid">
+            <!-- Products will be loaded here -->
+        </div>
+    </main>
+
+    <!-- Login Modal -->
+<div id="loginModal" class="modal">
+    <div class="modal-content">
+        <span class="close" onclick="closeLogin()">&times;</span>
+        <h2 style="color: #ffd700; margin-bottom: 1rem;" id="modalTitle">Sign In</h2>
+        
+        <!-- Email/Password Form -->
+        <div id="authFormSection">
+            <form id="authForm" onsubmit="handleEmailAuth(event)">
+                <div class="form-group">
+                    <label>Email:</label>
+                    <input type="email" id="email" required>
+                </div>
+                <div class="form-group">
+                    <label>Password:</label>
+                    <input type="password" id="password" required minlength="6">
+                </div>
+
+                <div class="form-group">
+    <label>Password:</label>
+    <input type="password" id="password" required minlength="6">
+    <a href="#" onclick="showForgotPassword()" style="color: #ffd700; font-size: 0.8rem; text-decoration: none; margin-top: 0.3rem; display: block;">Forgot Password?</a>
+                </div>
+
+                <!-- Google Sign In Button (only show when not signed in) -->
+        <div id="googleSignInSection">
+            <button type="button" onclick="signInWithGoogle()" class="google-btn" style="width: 100%; margin-bottom: 1rem; padding: 0.7rem; border: 1px solid #ddd; border-radius: 8px; background: white; color: #333; font-size: 1rem; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px;">
+                <img src="https://developers.google.com/identity/images/g-logo.png" alt="Google" style="width: 18px; height: 18px;">
+                Continue with Google
+            </button>
+            <div style="text-align: center; margin: 1rem 0; color: #ccc;">OR</div>
+        </div>
+                
+                <button type="submit" class="btn" style="width: 100%;" id="authSubmitBtn">Sign In</button>
+            </form>
+            <p style="text-align: center; margin-top: 1rem;" id="switchSection">
+                <span id="switchText">Don't have an account?</span> 
+                <a href="#" style="color: #ffd700;" onclick="toggleAuthMode()" id="switchLink">Sign Up</a>
+            </p>
+        </div>
+        
+        <!-- User Profile Display (centered, hidden by default) -->
+        <div id="userInfo" style="display: none; text-align: center; margin-top: 1rem;">
+            <div style="display: flex; flex-direction: column; align-items: center; gap: 1rem;">
+                <img id="userPhoto" style="width: 80px; height: 80px; border-radius: 50%; border: 3px solid #ffd700; display: none;">
+                <div>
+                    <p id="userName" style="color: #ffd700; font-size: 1.2rem; margin: 0;"></p>
+                    <p id="userEmail" style="color: #ccc; font-size: 0.9rem; margin: 0.5rem 0;"></p>
+                </div>
+                <button onclick="signOut()" class="btn" style="margin-top: 1rem;">Sign Out</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+    <!-- Seller Signup Modal -->
+<div id="sellerModal" class="modal">
+    <div class="modal-content" style="max-width: 450px; padding: 1.5rem;">
+        <span class="close" onclick="closeSellerSignup()">&times;</span>
+        <h2 style="color: #ffd700; margin-bottom: 1rem; text-align: center; font-size: 1.3rem;">BECOME A WEB VTEC Seller</h2>
+        <p style="color: #ccc; text-align: center; margin-bottom: 1.5rem; font-size: 0.9rem;">Join our marketplace and start selling today!</p>
+        
+        <form id="sellerSignupForm" onsubmit="handleSellerSignup(event)">
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                <div class="form-group" style="margin-bottom: 0.8rem;">
+                    <label style="font-size: 0.9rem;">First Name:</label>
+                    <input type="text" id="sellerFirstName" required style="padding: 0.5rem; font-size: 0.9rem;">
+                </div>
+                <div class="form-group" style="margin-bottom: 0.8rem;">
+                    <label style="font-size: 0.9rem;">Last Name:</label>
+                    <input type="text" id="sellerLastName" required style="padding: 0.5rem; font-size: 0.9rem;">
+                </div>
+            </div>
+            
+            <div class="form-group" style="margin-bottom: 0.8rem;">
+                <label style="font-size: 0.9rem;">Date of Birth:</label>
+                <div style="display: flex; gap: 0.5rem;">
+                    <select id="sellerMonth" required style="flex: 1; padding: 0.5rem; border: none; border-radius: 6px; background: rgba(255, 255, 255, 0.1); color: white; border: 1px solid rgba(255, 215, 0, 0.3); font-size: 0.9rem;">
+                        <option value="">Month</option>
+                        <option value="01">Jan</option>
+                        <option value="02">Feb</option>
+                        <option value="03">Mar</option>
+                        <option value="04">Apr</option>
+                        <option value="05">May</option>
+                        <option value="06">Jun</option>
+                        <option value="07">Jul</option>
+                        <option value="08">Aug</option>
+                        <option value="09">Sep</option>
+                        <option value="10">Oct</option>
+                        <option value="11">Nov</option>
+                        <option value="12">Dec</option>
+                    </select>
+                    <select id="sellerDay" required style="flex: 1; padding: 0.5rem; border: none; border-radius: 6px; background: rgba(255, 255, 255, 0.1); color: white; border: 1px solid rgba(255, 215, 0, 0.3); font-size: 0.9rem;">
+                        <option value="">Day</option>
+                    </select>
+                    <select id="sellerYear" required style="flex: 1; padding: 0.5rem; border: none; border-radius: 6px; background: rgba(255, 255, 255, 0.1); color: white; border: 1px solid rgba(255, 215, 0, 0.3); font-size: 0.9rem;">
+                        <option value="">Year</option>
+                    </select>
+                </div>
+            </div>
+            
+            <div class="form-group" style="margin-bottom: 0.8rem;">
+                <label style="font-size: 0.9rem;">Email:</label>
+                <input type="email" id="sellerEmail" required style="padding: 0.5rem; font-size: 0.9rem;">
+            </div>
+            
+            <div class="form-group" style="margin-bottom: 0.8rem;">
+                <label style="font-size: 0.9rem;">Password:</label>
+                <input type="password" id="sellerPassword" required minlength="6" style="padding: 0.5rem; font-size: 0.9rem;">
+            </div>
+            
+            <div class="form-group" style="margin-bottom: 0.8rem;">
+                <label style="font-size: 0.9rem;">Phone Number:</label>
+                <input type="tel" id="sellerPhone" required style="padding: 0.5rem; font-size: 0.9rem;">
+            </div>
+            
+            <div class="form-group" style="margin-bottom: 0.8rem;">
+                <label style="font-size: 0.9rem;">Business Name:</label>
+                <input type="text" id="sellerBusiness" required style="padding: 0.5rem; font-size: 0.9rem;">
+            </div>
+            
+            <div style="background: rgba(255, 215, 0, 0.1); padding: 0.8rem; border-radius: 6px; margin: 1rem 0; border: 1px solid rgba(255, 215, 0, 0.3);">
+                <p style="color: #ffd700; font-size: 0.8rem; margin: 0;">
+                    By signing up as a seller, you agree to pay a monthly subscription fee of $25. This will be charged to your account monthly.
+                </p>
+            </div>
+
+    <!-- Add Google Sign-In for Sellers -->
+    <button type="button" onclick="signUpSellerWithGoogle()" class="google-btn" style="width: 100%; margin-bottom: 1rem; padding: 0.7rem; border: 1px solid #ddd; border-radius: 8px; background: white; color: #333; font-size: 0.9rem; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px;">
+        <img src="https://developers.google.com/identity/images/g-logo.png" alt="Google" style="width: 16px; height: 16px;">
+        Continue with Google
+    </button>
+    <div style="text-align: center; margin: 1rem 0; color: #ccc; font-size: 0.85rem;">OR</div>
+    
+            
+            <button type="submit" class="btn" style="width: 100%; font-size: 1rem; padding: 0.8rem;">Sign Up as Seller ($25/month)</button>
+        </form>
+    </div>
+</div>
+
+
+<!-- Seller Dashboard Page -->
+<div id="sellerDashboardPage" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100vh; background: #f8f9fa; z-index: 2000; overflow-y: auto;">
+    <!-- Header -->
+    <header style="background: white; padding: 1rem 2rem; box-shadow: 0 2px 4px rgba(0,0,0,0.1); position: sticky; top: 0; z-index: 100;">
+        <div style="display: flex; justify-content: space-between; align-items: center; max-width: 1200px; margin: 0 auto;">
+            <div style="display: flex; align-items: center; gap: 1rem;">
+                <button onclick="closeSellerDashboardPage()" style="background: #6c757d; color: white; border: none; padding: 0.5rem 1rem; border-radius: 6px; cursor: pointer;">← Back to Store</button>
+                <h1 style="color: #333; margin: 0; font-size: 1.8rem;">Seller Dashboard</h1>
+            </div>
+            <div style="color: #666; font-size: 0.9rem;" id="sellerWelcome">Welcome, Seller!</div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <div style="max-width: 1200px; margin: 0 auto; padding: 2rem;">
+        <!-- Navigation Tabs -->
+        <div style="background: white; border-radius: 12px; padding: 0; margin-bottom: 2rem; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+            <div style="display: flex; border-bottom: 1px solid #e9ecef;">
+            <button class="dashboard-tab active" onclick="showDashboardTab('overview', event)" style="flex: 1; padding: 1rem; background: none; border: none; cursor: pointer; font-weight: 500; color: #333; border-bottom: 3px solid #007185;">Overview</button>
+<button class="dashboard-tab" onclick="showDashboardTab('add-product', event)" style="flex: 1; padding: 1rem; background: none; border: none; cursor: pointer; font-weight: 500; color: #666; border-bottom: 3px solid transparent;">Add Product</button>
+<button class="dashboard-tab" onclick="showDashboardTab('my-products', event)" style="flex: 1; padding: 1rem; background: none; border: none; cursor: pointer; font-weight: 500; color: #666; border-bottom: 3px solid transparent;">My Products</button>
+            </div>
+        </div>
+
+        <!-- Overview Tab -->
+        <div id="overview-tab" class="dashboard-content">
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1.5rem; margin-bottom: 2rem;">
+                <div style="background: white; padding: 1.5rem; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+                    <h3 style="color: #333; margin: 0 0 0.5rem 0;">Total Products</h3>
+                    <div style="font-size: 2rem; font-weight: bold; color: #007185;" id="totalProducts">0</div>
+                </div>
+                <div style="background: white; padding: 1.5rem; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+                    <h3 style="color: #333; margin: 0 0 0.5rem 0;">Monthly Fee</h3>
+                    <div style="font-size: 2rem; font-weight: bold; color: #28a745;">$25</div>
+                </div>
+                <div style="background: white; padding: 1.5rem; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+                    <h3 style="color: #333; margin: 0 0 0.5rem 0;">Account Status</h3>
+                    <div style="font-size: 1.2rem; font-weight: bold; color: #28a745;">Active</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Add Product Tab -->
+        <div id="add-product-tab" class="dashboard-content" style="display: none;">
+            <div style="background: white; padding: 2rem; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+                <h3 style="color: #333; margin: 0 0 1.5rem 0;">Add New Product</h3>
+                <form id="dashboardAddProductForm" onsubmit="handleDashboardAddProduct(event)">
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 1.5rem;">
+                        <div>
+                            <label style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: #333;">Product Name</label>
+                            <input type="text" id="dashboardProductName" required style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 6px; font-size: 1rem;">
+                        </div>
+                        <div>
+                            <label style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: #333;">Price ($)</label>
+                            <input type="number" id="dashboardProductPrice" step="0.01" min="0" required style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 6px; font-size: 1rem;">
+                        </div>
+                    </div>
+                    
+                    <div style="margin-bottom: 1.5rem;">
+                        <label style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: #333;">Description</label>
+                        <textarea id="dashboardProductDescription" rows="3" required style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 6px; font-size: 1rem; resize: vertical;"></textarea>
+                    </div>
+                    
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 1.5rem;">
+                        <div>
+                            <label style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: #333;">Category</label>
+                            <select id="dashboardProductCategory" required style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 6px; font-size: 1rem;">
+                                <option value="">Select Category</option>
+                                <option value="electronics">Electronics</option>
+                                <option value="clothing">Clothing</option>
+                                <option value="home">Home</option>
+                                <option value="beauty">Beauty</option>
+                                <option value="sports">Sports</option>
+                                <option value="books">Books</option>
+                                <option value="toys">Toys</option>
+                                <option value="automotive">Automotive</option>
+                                <option value="jewelry">Jewelry</option>
+                                <option value="health">Health</option>
+                                <option value="music">Music</option>
+                            </select>
+                        </div>
+                        <div>
+    <label style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: #333;">Knutsford Delivery Time</label>
+    <select id="dashboardKnutsfordDelivery" required style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 6px; font-size: 1rem;">
+        <option value="">Select Knutsford Delivery Time</option>
+        <option value="1-2">1-2 days</option>
+        <option value="3-5">3-5 days</option>
+        <option value="5-7">5-7 days</option>
+        <option value="7-10">7-10 days</option>
+        <option value="10-14">10-14 days</option>
+        <option value="14-21">14-21 days</option>
+    </select>
+                        </div>
+                    </div>
+
+                    <div style="margin-bottom: 1.5rem;">
+    <label style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: #333;">Tara Delivery Time</label>
+    <select id="dashboardTaraDelivery" required style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 6px; font-size: 1rem;">
+        <option value="">Select Tara Delivery Time</option>
+        <option value="1-2">1-2 days</option>
+        <option value="3-5">3-5 days</option>
+        <option value="5-7">5-7 days</option>
+        <option value="7-10">7-10 days</option>
+        <option value="10-14">10-14 days</option>
+        <option value="14-21">14-21 days</option>
+                    </select>
+                    </div>
+                    
+                    <div style="margin-bottom: 2rem;">
+                        <label style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: #333;">Image URL</label>
+                        <input type="url" id="dashboardProductImage" required style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 6px; font-size: 1rem;">
+                    </div>
+                    
+                    <button type="submit" style="background: #007185; color: white; border: none; padding: 0.75rem 2rem; border-radius: 6px; font-size: 1rem; cursor: pointer; font-weight: 500;">Add Product</button>
+                </form>
+            </div>
+        </div>
+
+        <!-- My Products Tab -->
+        <div id="my-products-tab" class="dashboard-content" style="display: none;">
+            <div style="background: white; padding: 2rem; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+                <h3 style="color: #333; margin: 0 0 1.5rem 0;">My Products</h3>
+                <div id="dashboardProductsList">
+                    <!-- Products will be loaded here -->
+                </div>
+            </div>
+        </div>
+
+        
+    </div>
+</div>
+
+    <!-- Forgot Password Modal -->
+<div id="forgotPasswordModal" class="modal">
+    <div class="modal-content" style="max-width: 400px;">
+        <span class="close" onclick="closeForgotPassword()">&times;</span>
+        <h2 style="color: #ffd700; margin-bottom: 1rem; text-align: center;">Reset Password</h2>
+        <p style="color: #ccc; text-align: center; margin-bottom: 1.5rem; font-size: 0.9rem;">Enter your email address and we'll send you a link to reset your password.</p>
+        
+        <form id="forgotPasswordForm" onsubmit="handleForgotPassword(event)">
+            <div class="form-group">
+                <label>Email:</label>
+                <input type="email" id="forgotEmail" required>
+            </div>
+            <button type="submit" class="btn" style="width: 100%;">Send Reset Link</button>
+        </form>
+        
+        <p style="text-align: center; margin-top: 1rem;">
+            <a href="#" style="color: #ffd700;" onclick="closeForgotPassword(); showLogin();">Back to Sign In</a>
+        </p>
+    </div>
+</div>
+<script>
+// Firebase configuration - MOVE THIS TO THE TOP
+const firebaseConfig = {
+    apiKey: "AIzaSyD01uGyvyD9vyXa6SFAqxqEdEFuedc-b5M",
+    authDomain: "e-commerce-f2233.firebaseapp.com",
+    projectId: "e-commerce-f2233",
+    storageBucket: "e-commerce-f2233.firebasestorage.app",
+    messagingSenderId: "363586978941",
+    appId: "1:363586978941:web:35b3b34237bca75b405d14"
+};
+
+// Initialize Firebase FIRST
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
+const auth = firebase.auth();
+
+// Initialize Google provider
+const googleProvider = new firebase.auth.GoogleAuthProvider();
+googleProvider.addScope('email');
+googleProvider.addScope('profile');
+
+// THEN declare other variables
+let cart = [];
+let products = [];
+let currentUser = null;
+let isSignUpMode = false;
+
+// Replace your DOMContentLoaded listener with this:
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('DOM loaded');
+    console.log('Firebase available:', typeof firebase !== 'undefined');
+    console.log('Firebase Auth available:', typeof firebase !== 'undefined' && !!firebase.auth);
+    console.log('Auth instance:', auth);
+    
+    loadProductsFromFirebase();
+    updateCartCount();
+});
+
+// Authentication Functions
+function signInWithGoogle() {
+    console.log('Google sign-in button clicked');
+    
+    // Check if Firebase Auth is loaded
+    if (typeof firebase === 'undefined' || !firebase.auth) {
+        console.error('Firebase Auth not loaded');
+        alert('Authentication system not ready. Please refresh the page.');
+        return;
+    }
+    
+    console.log('Attempting Google sign-in...');
+    
+    auth.signInWithPopup(googleProvider)
+        .then((result) => {
+            currentUser = result.user;
+            console.log('Google sign-in successful:', currentUser);
+            updateAuthUI();
+            closeLogin();
+            alert(`Welcome ${currentUser.displayName || currentUser.email}!`);
+        })
+        .catch((error) => {
+            console.error('Google sign-in error:', error);
+            console.error('Error code:', error.code);
+            console.error('Error message:', error.message);
+            
+            let errorMessage = 'Error signing in with Google: ';
+            switch(error.code) {
+                case 'auth/popup-closed-by-user':
+                    errorMessage += 'Sign-in cancelled.';
+                    break;
+                case 'auth/popup-blocked':
+                    errorMessage += 'Pop-up blocked. Please allow pop-ups.';
+                    break;
+                case 'auth/unauthorized-domain':
+                    errorMessage += 'Domain not authorized. Contact support.';
+                    break;
+                default:
+                    errorMessage += error.message;
+            }
+            alert(errorMessage);
+        });
+}
+
+function handleEmailAuth(event) {
+    event.preventDefault();
+    const email = document.getElementById('email').value;
+    const password = document.getElementById('password').value;
+    
+    if (isSignUpMode) {
+        // Sign Up
+        auth.createUserWithEmailAndPassword(email, password)
+            .then((result) => {
+                currentUser = result.user;
+                console.log('Sign up successful:', currentUser);
+                updateAuthUI();
+                closeLogin();
+                alert('Account created successfully!');
+            })
+            .catch((error) => {
+                console.error('Sign up error:', error);
+                alert('Error creating account: ' + error.message);
+            });
+    } else {
+        // Sign In
+        auth.signInWithEmailAndPassword(email, password)
+            .then((result) => {
+                currentUser = result.user;
+                console.log('Sign in successful:', currentUser);
+                updateAuthUI();
+                closeLogin();
+            })
+            .catch((error) => {
+                console.error('Sign in error:', error);
+                alert('Error signing in: ' + error.message);
+            });
+    }
+}
+
+function signOut() {
+    auth.signOut().then(() => {
+        currentUser = null;
+        updateAuthUI();
+        closeLogin(); // Close modal after sign out
+        alert('You have been signed out successfully.');
+        console.log('User signed out');
+    }).catch((error) => {
+        console.error('Sign out error:', error);
+        alert('Error signing out. Please try again.');
+    });
+}
+
+function toggleAuthMode() {
+    isSignUpMode = !isSignUpMode;
+    updateAuthModalUI();
+}
+
+function updateAuthModalUI() {
+    const modalTitle = document.getElementById('modalTitle');
+    const submitBtn = document.getElementById('authSubmitBtn');
+    const switchText = document.getElementById('switchText');
+    const switchLink = document.getElementById('switchLink');
+    
+    if (isSignUpMode) {
+        modalTitle.textContent = 'Sign Up';
+        submitBtn.textContent = 'Sign Up';
+        switchText.textContent = 'Already have an account?';
+        switchLink.textContent = 'Sign In';
+    } else {
+        modalTitle.textContent = 'Sign In';
+        submitBtn.textContent = 'Sign In';
+        switchText.textContent = "Don't have an account?";
+        switchLink.textContent = 'Sign Up';
+    }
+}
+
+function updateAuthUI() {
+    const signInBtn = document.querySelector('.btn[onclick="showLogin()"]');
+    
+    if (currentUser) {
+        // User is signed in
+        const displayName = currentUser.displayName || 'User';
+        const firstName = displayName.split(' ')[0]; // Get first name only
+        signInBtn.innerHTML = `👤 ${firstName}`;
+        signInBtn.onclick = showUserProfile;
+    } else {
+        // User is signed out
+        signInBtn.innerHTML = '👤 Sign In';
+        signInBtn.onclick = showLogin;
+    }
+    
+    // Also update detail page if it exists
+    updateDetailPageAuth();
+}
+
+function showLogin() {
+    const modal = document.getElementById('loginModal');
+    
+    if (currentUser) {
+        // User is signed in - show profile
+        showUserProfile();
+    } else {
+        // User not signed in - show login form
+        showLoginForm();
+    }
+}
+
+function showLoginForm() {
+    // Reset to sign-in mode
+    isSignUpMode = false;
+    updateAuthModalUI();
+    
+    // Show login elements, hide profile
+    document.getElementById('googleSignInSection').style.display = 'block';
+    document.getElementById('authFormSection').style.display = 'block';
+    document.getElementById('userInfo').style.display = 'none';
+    
+    // Clear form
+    document.getElementById('email').value = '';
+    document.getElementById('password').value = '';
+    
+    // Show modal
+    document.getElementById('loginModal').style.display = 'block';
+}
+
+function showUserProfile() {
+    if (currentUser) {
+        // Check if user is a seller first
+        db.collection('sellers').doc(currentUser.uid).get()
+            .then((doc) => {
+                // Hide login elements, show profile
+                document.getElementById('googleSignInSection').style.display = 'none';
+                document.getElementById('authFormSection').style.display = 'none';
+                document.getElementById('userInfo').style.display = 'block';
+                document.getElementById('modalTitle').textContent = 'Profile';
+                
+                // Update user info
+                document.getElementById('userName').textContent = currentUser.displayName || 'User';
+                document.getElementById('userEmail').textContent = currentUser.email;
+                
+                if (currentUser.photoURL) {
+                    document.getElementById('userPhoto').src = currentUser.photoURL;
+                    document.getElementById('userPhoto').style.display = 'block';
+                } else {
+                    document.getElementById('userPhoto').style.display = 'none';
+                }
+                
+                // Update userInfo section to include seller dashboard if applicable
+                const userInfoDiv = document.getElementById('userInfo');
+                const existingButtons = userInfoDiv.querySelector('.profile-buttons');
+                if (existingButtons) existingButtons.remove();
+                
+                const buttonsDiv = document.createElement('div');
+                buttonsDiv.className = 'profile-buttons';
+                buttonsDiv.style.cssText = 'display: flex; flex-direction: column; gap: 0.8rem; margin-top: 1rem;';
+                
+                if (doc.exists) {
+                    // User is a seller - show seller dashboard button
+                    buttonsDiv.innerHTML = `
+                        <button onclick="closeLogin(); showSellerDashboard();" class="btn" style="width: 100%;">Seller Dashboard</button>
+                        <button onclick="signOut()" class="btn" style="width: 100%;">Sign Out</button>
+                    `;
+                } else {
+                    // User is not a seller - show option to become seller
+                    buttonsDiv.innerHTML = `
+                        <button onclick="closeLogin(); showSellerSignup();" class="btn" style="width: 100%; background: #28a745;">Become a Seller</button>
+                        <button onclick="signOut()" class="btn" style="width: 100%;">Sign Out</button>
+                    `;
+                }
+                
+                // Replace the sign out button
+                const existingSignOut = userInfoDiv.querySelector('button');
+                if (existingSignOut) {
+                    existingSignOut.replaceWith(buttonsDiv);
+                } else {
+                    userInfoDiv.appendChild(buttonsDiv);
+                }
+                
+                // Show modal
+                document.getElementById('loginModal').style.display = 'block';
+            })
+            .catch((error) => {
+                console.error('Error checking seller status:', error);
+                // Fallback to basic profile
+                showBasicProfile();
+            });
+    }
+}
+
+function showBasicProfile() {
+    // Basic profile without seller check (fallback)
+    document.getElementById('googleSignInSection').style.display = 'none';
+    document.getElementById('authFormSection').style.display = 'none';
+    document.getElementById('userInfo').style.display = 'block';
+    document.getElementById('modalTitle').textContent = 'Profile';
+    
+    document.getElementById('userName').textContent = currentUser.displayName || 'User';
+    document.getElementById('userEmail').textContent = currentUser.email;
+    
+    if (currentUser.photoURL) {
+        document.getElementById('userPhoto').src = currentUser.photoURL;
+        document.getElementById('userPhoto').style.display = 'block';
+    } else {
+        document.getElementById('userPhoto').style.display = 'none';
+    }
+    
+    document.getElementById('loginModal').style.display = 'block';
+}
+
+function closeLogin() {
+    document.getElementById('loginModal').style.display = 'none';
+}
+
+// Replace your existing handleLogin function with this:
+function handleLogin(event) {
+    event.preventDefault();
+    // This function is now handled by handleEmailAuth
+}
+
+// Add Firebase Auth State Observer
+auth.onAuthStateChanged((user) => {
+    currentUser = user;
+    updateAuthUI();
+    if (user) {
+        console.log('User is signed in:', user);
+    } else {
+        console.log('User is signed out');
+    }
+});
+
+function loadProductsFromFirebase() {
+    db.collection('products').onSnapshot((snapshot) => {
+        products = [];
+        snapshot.forEach((doc) => {
+            products.push({
+                id: doc.id,
+                ...doc.data()
+            });
+        });
+        displayProducts(); // This will refresh the display
+    });
+}
+
+function displayProducts() {
+    const grid = document.getElementById('productsGrid');
+    grid.innerHTML = '';
+
+    products.forEach(product => {
+        const productCard = createProductCard(product);
+        grid.appendChild(productCard);
+    });
+}
+
+function createProductCard(product) {
+    const card = document.createElement('div');
+    card.className = 'product-card';
+    
+    const reviews = product.reviews || [];
+    const reviewCount = reviews.length;
+    const avgRating = reviews.length > 0 
+        ? reviews.reduce((sum, review) => sum + review.rating, 0) / reviews.length 
+        : 0;
+    
+    const starsHTML = Array.from({length: 5}, (_, i) => {
+        if (i < Math.floor(avgRating)) {
+            return `<span class="star">★</span>`;
+        } else {
+            return `<span class="star empty">☆</span>`;
+        }
+    }).join('');
+    
+    // Truncate description to first 50 characters
+    const fullDescription = product.description || 'DESCRIPTION';
+    const truncatedDescription = fullDescription.length > 50 
+        ? fullDescription.substring(0, 50) + '...' 
+        : fullDescription;
+    
+    // Get seller info and calculate delivery
+    const sellerInfo = product.sellerBusinessName ? `Sold by ${product.sellerBusinessName}` : '';
+    let deliveryInfo = '';
+
+if (product.knutsfordDelivery || product.taraDelivery) {
+    let deliveryParts = [];
+    
+    if (product.knutsfordDelivery) {
+        const knutsfordDates = calculateDeliveryDates(product.knutsfordDelivery);
+        deliveryParts.push(`Knutsford: ${knutsfordDates.start} - ${knutsfordDates.end}`);
+    }
+    
+    if (product.taraDelivery) {
+        const taraDates = calculateDeliveryDates(product.taraDelivery);
+        deliveryParts.push(`Tara: ${taraDates.start} - ${taraDates.end}`);
+    }
+    
+    deliveryInfo = deliveryParts.join(' | ');
+}
+    
+    card.innerHTML = `
+        <div class="product-image">
+            <img src="${product.image}" alt="${product.name}">
+        </div>
+        <div class="product-details">
+            <div class="product-header">
+                <h3 class="product-title">${product.name}</h3>
+                <p class="product-description">${truncatedDescription}</p>
+            </div>
+            <div class="rating-section">
+                <div class="stars">${starsHTML} <span class="review-count">(${reviewCount})</span></div>
+            </div>
+            ${deliveryInfo ? `<p style="color: #007185; font-size: 0.9rem; margin: 0.5rem 0;">${deliveryInfo}</p>` : ''}
+            ${sellerInfo ? `<p style="color: #666; font-size: 0.9rem; font-weight: bold; margin: 0.3rem 0;">${sellerInfo}</p>` : ''}
+            <div class="product-price">$${product.price}</div>
+            <button class="add-to-cart" data-product-id="${product.id}">Add to cart</button>
+        </div>
+    `;
+    
+    const addToCartBtn = card.querySelector('.add-to-cart');
+    addToCartBtn.addEventListener('click', function(e) {
+        e.stopPropagation();
+        e.preventDefault();
+        addToCart(product.id);
+        return false;
+    });
+    
+    card.addEventListener('click', function(e) {
+        if (!e.target.classList.contains('add-to-cart')) {
+            showProductDetail(product);
+        }
+    });
+    
+    return card;
+    }
+    
+// Also add this function to handle button clicks properly:
+function addToCart(productId) {
+    const product = products.find(p => p.id === productId);
+    const existingItem = cart.find(item => item.id === productId);
+    
+    if (existingItem) {
+        existingItem.quantity += 1;
+    } else {
+        cart.push({ ...product, quantity: 1 });
+    }
+    
+    updateCartCount();
+    showCartNotification(product.name);
+    
+    // Prevent any further event bubbling
+    return false;
+}
+
+function submitReview(productId) {
+    const name = document.getElementById(`reviewName-${productId}`).value;
+    const text = document.getElementById(`reviewText-${productId}`).value;
+    const rating = window[`selectedRating-${productId}`] || 5;
+
+    if (!name || !text) {
+        alert('Please fill in all fields');
+        return;
+    }
+
+    const newReview = {
+        name: name,
+        rating: rating,
+        comment: text,
+        date: new Date().toISOString()
+    };
+
+    db.collection('products').doc(productId).update({
+        reviews: firebase.firestore.FieldValue.arrayUnion(newReview)
+    }).then(() => {
+        alert('Review submitted successfully!');
+        // Clear form
+        document.getElementById(`reviewName-${productId}`).value = '';
+        document.getElementById(`reviewText-${productId}`).value = '';
+    });
+}
+
+// Keep all other existing functions (toggleMenu, setRating, updateCartCount, showCart, etc.)
+function toggleMenu() {
+    const sidebar = document.getElementById('sidebar');
+    sidebar.classList.toggle('open');
+}
+
+function toggleReviews(productId) {
+    const reviewsSection = document.getElementById(`reviews-${productId}`);
+    reviewsSection.classList.toggle('active');
+}
+
+function setRating(productId, rating) {
+    const stars = document.querySelectorAll(`#stars-${productId} .star`);
+    stars.forEach((star, index) => {
+        star.classList.toggle('active', index < rating);
+    });
+    window[`selectedRating-${productId}`] = rating;
+}
+
+function updateCartCount() {
+    const count = cart.reduce((total, item) => total + item.quantity, 0);
+    document.getElementById('cartCount').textContent = count;
+}
+
+function showCartNotification(productName) {
+    const notification = document.createElement('div');
+    notification.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        background: linear-gradient(45deg, #ffd700, #ffed4a);
+        color: #333;
+        padding: 1rem;
+        border-radius: 10px;
+        z-index: 3000;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+    `;
+    notification.textContent = `${productName} added to cart!`;
+    document.body.appendChild(notification);
+    
+    setTimeout(() => {
+        notification.remove();
+    }, 3000);
+}
+
+function showCart() {
+    if (cart.length === 0) {
+        alert('Your cart is empty!');
+        return;
+    }
+    
+    let cartHTML = '<h3>Your Cart:</h3>';
+    let total = 0;
+    
+    cart.forEach(item => {
+        const itemTotal = item.price * item.quantity;
+        total += itemTotal;
+        cartHTML += `
+            <div style="display: flex; justify-content: space-between; padding: 0.5rem 0; border-bottom: 1px solid #ccc;">
+                <span>${item.name} x${item.quantity}</span>
+                <span>$${itemTotal.toFixed(2)}</span>
+            </div>
+        `;
+    });
+    
+    cartHTML += `<br><strong>Total: $${total.toFixed(2)}</strong>`;
+    cartHTML += `<br><br><button onclick="checkout()" class="btn">Checkout with PayPal</button>`;
+    
+    const modal = document.createElement('div');
+    modal.className = 'modal';
+    modal.style.display = 'block';
+    modal.innerHTML = `
+        <div class="modal-content">
+            <span class="close" onclick="this.parentElement.parentElement.remove()">&times;</span>
+            ${cartHTML}
+        </div>
+    `;
+    document.body.appendChild(modal);
+}
+
+function checkout() {
+    const total = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+    alert(`Checkout total: $${total.toFixed(2)}\n\nPayPal integration would be implemented with your actual client ID.`);
+    cart = [];
+    updateCartCount();
+}
+
+function searchProducts() {
+    const searchInput = document.querySelector('.search-bar');
+    const searchTerm = searchInput.value.toLowerCase();
+    const filteredProducts = products.filter(product => 
+        product.name.toLowerCase().includes(searchTerm) || 
+        product.description.toLowerCase().includes(searchTerm)
+    );
+    
+    const grid = document.getElementById('productsGrid');
+    grid.innerHTML = '';
+    
+    filteredProducts.forEach(product => {
+        const productCard = createProductCard(product);
+        grid.appendChild(productCard);
+    });
+}
+
+function showSection(section) {
+    if (section === 'home') {
+        loadProductsFromFirebase();
+    }
+    toggleMenu();
+}
+
+function showRequestForm() {
+    const modal = document.createElement('div');
+    modal.className = 'modal';
+    modal.style.display = 'block';
+    modal.innerHTML = `
+        <div class="modal-content">
+            <span class="close" onclick="this.parentElement.parentElement.remove()">&times;</span>
+            <h2 style="color: #ffd700; margin-bottom: 1rem;">Request a Product</h2>
+            <form onsubmit="handleProductRequest(event)">
+                <div class="form-group">
+                    <label>Product Name:</label>
+                    <input type="text" required>
+                </div>
+                <div class="form-group">
+                    <label>Description:</label>
+                    <textarea rows="3" required></textarea>
+                </div>
+                <div class="form-group">
+                    <label>Your Email:</label>
+                    <input type="email" required>
+                </div>
+                <button type="submit" class="btn" style="width: 100%;">Submit Request</button>
+            </form>
+        </div>
+    `;
+    document.body.appendChild(modal);
+    toggleMenu();
+}
+
+function handleProductRequest(event) {
+    event.preventDefault();
+    alert('Product request submitted! We\'ll get back to you soon.');
+    event.target.closest('.modal').remove();
+}
+
+window.onclick = function(event) {
+    const modal = document.getElementById('loginModal');
+    const sellerModal = document.getElementById('sellerModal');
+    const sellerDashboard = document.getElementById('sellerDashboard');
+    const forgotModal = document.getElementById('forgotPasswordModal');
+    
+    if (event.target === modal) {
+        closeLogin();
+    }
+    
+    if (event.target === sellerModal) {
+        closeSellerSignup();
+    }
+    
+    if (event.target === sellerDashboard) {
+        closeSellerDashboard();
+    }
+    
+    if (event.target === forgotModal) {
+        closeForgotPassword();
+    }
+    
+    // Handle other modals
+    if (event.target.classList.contains('modal') && 
+        event.target !== modal && 
+        event.target !== sellerModal && 
+        event.target !== sellerDashboard && 
+        event.target !== forgotModal) {
+        event.target.style.display = 'none';
+    }
+}
+    
+document.addEventListener('click', function(event) {
+    const sidebar = document.getElementById('sidebar');
+    const menuToggle = document.querySelector('.menu-toggle');
+    
+    if (!sidebar.contains(event.target) && !menuToggle.contains(event.target)) {
+        sidebar.classList.remove('open');
+    }
+});
+
+function showProductDetail(product) {
+    // Create or show detailed view
+    let detailView = document.getElementById('productDetailView');
+    if (!detailView) {
+        detailView = document.createElement('div');
+        detailView.id = 'productDetailView';
+        detailView.className = 'product-detail-view';
+        document.body.appendChild(detailView);
+    }
+    
+    const reviews = product.reviews || [];
+    const avgRating = reviews.length > 0 
+        ? reviews.reduce((sum, review) => sum + review.rating, 0) / reviews.length 
+        : 0;
+    
+    const starsHTML = Array.from({length: 5}, (_, i) => {
+        const starClass = i < Math.floor(avgRating) ? 'star' : 'star empty';
+        return `<span class="${starClass}">★</span>`;
+    }).join('');
+    
+    detailView.innerHTML = `
+        <!-- Top header that stays at top -->
+        <header class="top-header">
+            <div class="logo">WEBVTEC</div>
+        </header>
+        
+        <!-- Second header that scrolls with content -->
+        <header class="header" style="position: relative; width: 100%; z-index: 999; margin: 0; top: 70px;">
+            <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
+                <button class="btn" onclick="showLogin()" id="detailSignInBtn">👤 Sign In</button>
+                <button class="btn" onclick="showCart()" style="position: relative;">
+                    🛒 Cart <span class="cart-count">${document.getElementById('cartCount').textContent}</span>
+                </button>
+            </div>
+            <div class="search-container">
+                <input type="text" class="search-bar" placeholder="Search for products..." onkeyup="searchProducts()">
+                <button class="search-btn" onclick="searchProducts()">🔍</button>
+            </div>
+        </header>
+
+        <!-- Product content starts immediately after second header -->
+        <div style="padding: 20px; margin-top: 50px;">
+            
+            <h2 style="text-align: left; color: #333; margin: 0.5rem 0; font-size: 1.5rem; font-weight: bold; text-transform: uppercase;">${product.name}</h2>
+            
+            <div class="stars" style="justify-content: flex-start; margin-bottom: 1rem;">
+                ${starsHTML} <span style="color: #666; margin-left: 10px;">(${reviews.length})</span>
+            </div>
+            
+            <h3 style="color: #333; font-size: 1.2rem; margin-bottom: 1rem; text-transform: uppercase; font-style: italic; font-weight: normal;">${product.description || 'PRODUCT DESCRIPTION'}</h3>
+            
+            <div class="product-gallery">
+                <img src="${product.image}" alt="${product.name}">
+            </div>
+            
+            <div style="display: flex; justify-content: space-between; align-items: center; margin: 1rem 0;">
+                <div class="detail-price" style="margin: 0;">$${product.price}</div>
+                <button class="detail-share" onclick="shareProduct('${product.id}', '${product.name}')" style="background: transparent; border: none; cursor: pointer; color: #333; padding: 8px;">
+                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="18" cy="5" r="3"></circle>
+                        <circle cx="6" cy="12" r="3"></circle>
+                        <circle cx="18" cy="19" r="3"></circle>
+                        <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line>
+                        <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line>
+                    </svg>
+                </button>
+            </div>
+            
+            <div class="product-options">
+                <button class="option-button selected">Standard</button>
+                <button class="option-button">Premium</button>
+                <button class="option-button">Deluxe</button>
+            </div>
+            
+            <div class="detail-actions">
+                <button class="detail-add-to-cart" onclick="addToCart('${product.id}'); closeProductDetail();">Add to Cart</button>
+            </div>
+            
+            <div style="margin-top: 2rem;">
+                <h3 style="color: #333;">Product Details</h3>
+                <p style="color: #666;">${product.description || 'Detailed product information goes here.'}</p>
+            </div>
+            
+            <div style="margin-top: 2rem;">
+                <h3 style="color: #333;">Customer Reviews</h3>
+                <div class="reviews-list">
+                    ${reviews.map(review => `
+                        <div class="review-item" style="background: #f9f9f9; color: #333;">
+                            <div class="review-header">
+                                <span class="reviewer-name" style="color: #333;">${review.name}</span>
+                                <span class="review-stars" style="color: #ffa500;">${'★'.repeat(review.rating)}${'☆'.repeat(5-review.rating)}</span>
+                            </div>
+                            <p>${review.comment}</p>
+                        </div>
+                    `).join('')}
+                </div>
+            </div>
+        </div>
+    `;
+    
+    detailView.classList.add('active');
+    // Update auth state for detail page
+setTimeout(() => updateDetailPageAuth(), 100);
+}
+        
+function closeProductDetail() {
+    const detailView = document.getElementById('productDetailView');
+    if (detailView) {
+        detailView.classList.remove('active');
+    }
+}
+
+function shareProduct(productId, productName) {
+    const productUrl = `${window.location.origin}${window.location.pathname}?product=${productId}`;
+    const shareText = `Check out ${productName} on WEBVTEC!`;
+    
+    if (navigator.share) {
+        // Use native share API (mobile devices)
+        navigator.share({
+            title: productName,
+            text: shareText,
+            url: productUrl
+        });
+    } else {
+        // Fallback: copy link to clipboard
+        navigator.clipboard.writeText(productUrl).then(() => {
+            alert('Product link copied to clipboard!');
+        }).catch(() => {
+            // If clipboard fails, show the link
+            prompt('Copy this link to share:', productUrl);
+        });
+    }
+}
+
+
+function updateDetailPageAuth() {
+    const detailSignInBtn = document.getElementById('detailSignInBtn');
+    if (detailSignInBtn) {
+        if (currentUser) {
+            const displayName = currentUser.displayName || 'User';
+            const firstName = displayName.split(' ')[0];
+            detailSignInBtn.innerHTML = `👤 ${firstName}`;
+            detailSignInBtn.onclick = showUserProfile;
+        } else {
+            detailSignInBtn.innerHTML = '👤 Sign In';
+            detailSignInBtn.onclick = showLogin;
+        }
+    }
+}
+
+
+
+// Seller and Category Functions
+function showSellerSignup() {
+    document.getElementById('sellerModal').style.display = 'block';
+    populateDatePickers();
+}
+function closeSellerSignup() {
+    document.getElementById('sellerModal').style.display = 'none';
+}
+
+function handleSellerSignup(event) {
+    event.preventDefault();
+    
+    // Get date of birth
+    const month = document.getElementById('sellerMonth').value;
+    const day = document.getElementById('sellerDay').value;
+    const year = document.getElementById('sellerYear').value;
+    
+    if (!month || !day || !year) {
+        alert('Please select your complete date of birth');
+        return;
+    }
+    
+    const dateOfBirth = `${year}-${month}-${day}`;
+    
+    const formData = {
+        firstName: document.getElementById('sellerFirstName').value,
+        lastName: document.getElementById('sellerLastName').value,
+        dateOfBirth: dateOfBirth,
+        email: document.getElementById('sellerEmail').value,
+        password: document.getElementById('sellerPassword').value,
+        phone: document.getElementById('sellerPhone').value,
+        businessName: document.getElementById('sellerBusiness').value
+    };
+    
+    // Check if this is a Google sign-up completion
+    if (window.pendingSellerUser) {
+        // Complete Google seller registration
+        completeGoogleSellerRegistration(formData);
+    } else {
+        // Regular email/password registration
+        createEmailSellerAccount(formData);
+    }
+}
+
+function createEmailSellerAccount(formData) {
+    auth.createUserWithEmailAndPassword(formData.email, formData.password)
+        .then((result) => {
+            const user = result.user;
+            return completeSellerRegistration(user, formData);
+        })
+        .catch((error) => {
+            console.error('Email seller signup error:', error);
+            alert('Error creating seller account: ' + error.message);
+        });
+}
+
+function completeGoogleSellerRegistration(formData) {
+    const user = window.pendingSellerUser;
+    completeSellerRegistration(user, formData)
+        .then(() => {
+            delete window.pendingSellerUser;
+        });
+}
+
+function completeSellerRegistration(user, formData) {
+    // Update user profile
+    return user.updateProfile({
+        displayName: `${formData.firstName} ${formData.lastName}`
+    }).then(() => {
+        // Save seller data to Firestore
+        return db.collection('sellers').doc(user.uid).set({
+            uid: user.uid,
+            firstName: formData.firstName,
+            lastName: formData.lastName,
+            dateOfBirth: formData.dateOfBirth,
+            email: formData.email,
+            phone: formData.phone,
+            businessName: formData.businessName,
+            subscriptionStatus: 'active',
+            monthlyFee: 25,
+            joinedDate: new Date().toISOString(),
+            isSeller: true,
+            products: []
+        });
+    }).then(() => {
+        currentUser = user;
+        updateAuthUI();
+        closeSellerSignup();
+        alert('Seller account created successfully! Welcome to WEBVTEC marketplace.');
+        setTimeout(() => showSellerDashboard(), 1000);
+    }).catch((error) => {
+        console.error('Seller registration error:', error);
+        alert('Error completing seller registration: ' + error.message);
+    });
+}
+
+let currentCategory = 'all';
+
+function filterByCategory(category) {
+    currentCategory = category;
+    
+    // Update active button
+    document.querySelectorAll('.category-btn').forEach(btn => {
+        btn.classList.remove('active');
+        btn.style.background = '#ffd700';
+        btn.style.color = '#333';
+    });
+    
+    event.target.classList.add('active');
+    event.target.style.background = '#333';
+    event.target.style.color = '#ffd700';
+    
+    // Filter products
+    displayFilteredProducts(category);
+}
+
+function displayFilteredProducts(category) {
+    const grid = document.getElementById('productsGrid');
+    grid.innerHTML = '';
+
+    let filteredProducts = products;
+    if (category !== 'all') {
+        filteredProducts = products.filter(product => 
+            product.category && product.category.toLowerCase() === category.toLowerCase()
+        );
+    }
+
+    filteredProducts.forEach(product => {
+        const productCard = createProductCard(product);
+        grid.appendChild(productCard);
+    });
+    
+    if (filteredProducts.length === 0) {
+        grid.innerHTML = '<div style="text-align: center; color: #666; padding: 2rem;">No products found in this category.</div>';
+    }
+}
+
+
+
+    // Date picker population
+function populateDatePickers() {
+    const daySelect = document.getElementById('sellerDay');
+    const yearSelect = document.getElementById('sellerYear');
+    
+    // Populate days
+    for (let i = 1; i <= 31; i++) {
+        const option = document.createElement('option');
+        option.value = i.toString().padStart(2, '0');
+        option.textContent = i;
+        daySelect.appendChild(option);
+    }
+    
+    // Populate years (from 1950 to current year - 13 for minimum age)
+    const currentYear = new Date().getFullYear();
+    const minYear = currentYear - 13;
+    for (let i = minYear; i >= 1950; i--) {
+        const option = document.createElement('option');
+        option.value = i;
+        option.textContent = i;
+        yearSelect.appendChild(option);
+    }
+}
+
+// Format date for display
+function formatDate(dateString) {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+}
+
+
+// Show seller dashboard as full page
+function showSellerDashboard() {
+    document.getElementById('sellerDashboardPage').style.display = 'block';
+    document.body.style.overflow = 'hidden'; // Prevent background scroll
+    
+    // Load seller info
+    if (currentUser) {
+        db.collection('sellers').doc(currentUser.uid).get()
+            .then((doc) => {
+                if (doc.exists) {
+                    const sellerData = doc.data();
+                    document.getElementById('sellerWelcome').textContent = `Welcome, ${sellerData.businessName}!`;
+                }
+            });
+    }
+    
+    // Load overview data
+    loadDashboardOverview();
+    loadDashboardProducts();
+}
+
+function closeSellerDashboardPage() {
+    document.getElementById('sellerDashboardPage').style.display = 'none';
+    document.body.style.overflow = 'auto'; // Restore scroll
+}
+
+function showDashboardTab(tabName, event) {
+    // Hide all tabs
+    document.querySelectorAll('.dashboard-content').forEach(tab => {
+        tab.style.display = 'none';
+    });
+    
+    // Remove active class from all buttons
+    document.querySelectorAll('.dashboard-tab').forEach(btn => {
+        btn.classList.remove('active');
+        btn.style.color = '#666';
+        btn.style.borderBottomColor = 'transparent';
+    });
+    
+    // Show selected tab
+    document.getElementById(tabName + '-tab').style.display = 'block';
+    
+    // Activate clicked button
+    if (event && event.target) {
+        event.target.classList.add('active');
+        event.target.style.color = '#007185';
+        event.target.style.borderBottomColor = '#007185';
+    }
+    
+    // Load tab-specific content
+    if (tabName === 'my-products') {
+        loadDashboardProducts();
+    }
+}
+    
+function loadDashboardOverview() {
+    if (!currentUser) return;
+    
+    db.collection('products')
+        .where('sellerId', '==', currentUser.uid)
+        .onSnapshot((snapshot) => {
+            document.getElementById('totalProducts').textContent = snapshot.size;
+        });
+}
+
+function loadDashboardProducts() {
+    if (!currentUser) return;
+    
+    db.collection('products')
+        .where('sellerId', '==', currentUser.uid)
+        .onSnapshot((snapshot) => {
+            const productsList = document.getElementById('dashboardProductsList');
+            productsList.innerHTML = '';
+            
+            if (snapshot.empty) {
+                productsList.innerHTML = '<p style="color: #666; text-align: center; padding: 2rem;">No products added yet. Add your first product!</p>';
+                return;
+            }
+            
+            snapshot.forEach((doc) => {
+                const product = { id: doc.id, ...doc.data() };
+                const productElement = createDashboardProductCard(product);
+                productsList.appendChild(productElement);
+            });
+        });
+}
+
+function createDashboardProductCard(product) {
+    const card = document.createElement('div');
+    card.style.cssText = `
+        display: flex;
+        gap: 1rem;
+        padding: 1rem;
+        border: 1px solid #e9ecef;
+        border-radius: 8px;
+        margin-bottom: 1rem;
+        align-items: center;
+    `;
+    
+    let deliveryInfo = [];
+if (product.knutsfordDelivery) deliveryInfo.push(`Knutsford: ${product.knutsfordDelivery} days`);
+if (product.taraDelivery) deliveryInfo.push(`Tara: ${product.taraDelivery} days`);
+const deliveryDisplay = deliveryInfo.length > 0 ? deliveryInfo.join(' | ') : 'Not set';
+    
+    card.innerHTML = `
+        <img src="${product.image}" alt="${product.name}" style="width: 80px; height: 80px; object-fit: cover; border-radius: 6px; flex-shrink: 0;">
+        <div style="flex: 1;">
+            <h4 style="color: #333; margin: 0 0 0.5rem 0; font-size: 1.1rem;">${product.name}</h4>
+            <p style="color: #666; margin: 0.2rem 0; font-size: 0.9rem;">${product.description}</p>
+            <p style="color: #333; margin: 0.2rem 0; font-weight: bold;">$${product.price}</p>
+            <p style="color: #666; margin: 0.2rem 0; font-size: 0.85rem;">Category: ${product.category}</p>
+            <p style="color: #666; margin: 0.2rem 0; font-size: 0.85rem;">Delivery: ${deliveryDisplay}</p>
+            </div>
+            <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+            <button onclick="editDashboardProduct('${product.id}')" style="padding: 0.4rem 1rem; background: #007185; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 0.85rem;">Edit</button>
+            <button onclick="deleteDashboardProduct('${product.id}')" style="padding: 0.4rem 1rem; background: #dc3545; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 0.85rem;">Delete</button>
+        </div>
+    `;
+    
+    return card;
+}
+
+function handleDashboardAddProduct(event) {
+    event.preventDefault();
+    
+    if (!currentUser) {
+        alert('You must be signed in to add products');
+        return;
+    }
+    
+    const knutsfordDelivery = document.getElementById('dashboardKnutsfordDelivery').value;
+    const taraDelivery = document.getElementById('dashboardTaraDelivery').value;
+    
+    const productData = {
+        name: document.getElementById('dashboardProductName').value,
+        description: document.getElementById('dashboardProductDescription').value,
+        price: parseFloat(document.getElementById('dashboardProductPrice').value),
+        category: document.getElementById('dashboardProductCategory').value,
+        image: document.getElementById('dashboardProductImage').value,
+        knutsfordDelivery: knutsfordDelivery,
+        taraDelivery: taraDelivery,
+        sellerId: currentUser.uid,
+        sellerBusinessName: '',
+        reviews: [],
+        createdAt: new Date().toISOString()
+    };
+    
+    // Get seller's business name
+    db.collection('sellers').doc(currentUser.uid).get()
+        .then((doc) => {
+            if (doc.exists) {
+                productData.sellerBusinessName = doc.data().businessName;
+                
+                // Add product to Firestore
+                return db.collection('products').add(productData);
+            } else {
+                throw new Error('Seller profile not found');
+            }
+        })
+        .then(() => {
+            alert('Product added successfully!');
+            document.getElementById('dashboardAddProductForm').reset();
+            showDashboardTab('my-products');
+        })
+        .catch((error) => {
+            console.error('Error adding product:', error);
+            alert('Error adding product: ' + error.message);
+        });
+}
+
+function editDashboardProduct(productId) {
+    alert('Edit functionality coming soon!');
+}
+
+function deleteDashboardProduct(productId) {
+    if (confirm('Are you sure you want to delete this product?')) {
+        db.collection('products').doc(productId).delete()
+            .then(() => {
+                alert('Product deleted successfully!');
+            })
+            .catch((error) => {
+                console.error('Error deleting product:', error);
+                alert('Error deleting product: ' + error.message);
+            });
+    }
+}
+
+// Helper function to calculate delivery dates
+function calculateDeliveryDates(deliveryDays) {
+    const [minDays, maxDays] = deliveryDays.split('-').map(Number);
+    const today = new Date();
+    
+    const startDate = new Date(today);
+    startDate.setDate(today.getDate() + minDays);
+    
+    const endDate = new Date(today);
+    endDate.setDate(today.getDate() + maxDays);
+    
+    return {
+        start: startDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+        end: endDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+    };
+}
+
+
+
+    function handleSellerButton() {
+    if (!currentUser) {
+        showSellerSignup();
+        return;
+    }
+    
+    // Check if user is already a seller
+    db.collection('sellers').doc(currentUser.uid).get()
+        .then((doc) => {
+            if (doc.exists) {
+                showSellerDashboard();
+            } else {
+                showSellerSignup();
+            }
+        })
+        .catch((error) => {
+            console.error('Error checking seller status:', error);
+            showSellerSignup();
+        });
+    }
+
+
+
+    // Google Sign-Up for Sellers
+function signUpSellerWithGoogle() {
+    auth.signInWithPopup(googleProvider)
+        .then((result) => {
+            const user = result.user;
+            // Check if user already exists as seller
+            return db.collection('sellers').doc(user.uid).get()
+                .then((doc) => {
+                    if (!doc.exists) {
+                        // New seller - collect additional info
+                        collectSellerInfo(user);
+                    } else {
+                        // Already a seller
+                        currentUser = user;
+                        updateAuthUI();
+                        closeSellerSignup();
+                        alert('Welcome back! You are already registered as a seller.');
+                        showSellerDashboard();
+                    }
+                });
+        })
+        .catch((error) => {
+            console.error('Google seller sign-up error:', error);
+            alert('Error with Google sign-up: ' + error.message);
+        });
+}
+
+function collectSellerInfo(user) {
+    // Pre-fill form with Google data
+    const names = (user.displayName || '').split(' ');
+    document.getElementById('sellerFirstName').value = names[0] || '';
+    document.getElementById('sellerLastName').value = names.slice(1).join(' ') || '';
+    document.getElementById('sellerEmail').value = user.email || '';
+    
+    // Hide Google button, show message
+    const googleBtn = document.querySelector('#sellerModal .google-btn');
+    if (googleBtn) {
+        googleBtn.style.display = 'none';
+    }
+    
+    // Add notice
+    const form = document.getElementById('sellerSignupForm');
+    const notice = document.createElement('div');
+    notice.style.cssText = 'background: rgba(40, 167, 69, 0.1); padding: 0.8rem; border-radius: 6px; margin-bottom: 1rem; border: 1px solid rgba(40, 167, 69, 0.3);';
+    notice.innerHTML = '<p style="color: #28a745; font-size: 0.85rem; margin: 0;">Google account connected! Please complete the seller information below.</p>';
+    form.insertBefore(notice, form.firstChild);
+    
+    // Store user temporarily
+    window.pendingSellerUser = user;
+}
+
+// Forgot Password
+function showForgotPassword() {
+    closeLogin();
+    document.getElementById('forgotPasswordModal').style.display = 'block';
+}
+
+function closeForgotPassword() {
+    document.getElementById('forgotPasswordModal').style.display = 'none';
+    document.getElementById('forgotEmail').value = '';
+}
+
+function handleForgotPassword(event) {
+    event.preventDefault();
+    const email = document.getElementById('forgotEmail').value;
+    
+    auth.sendPasswordResetEmail(email)
+        .then(() => {
+            alert('Password reset email sent! Check your inbox.');
+            closeForgotPassword();
+        })
+        .catch((error) => {
+            console.error('Password reset error:', error);
+            alert('Error sending reset email: ' + error.message);
+        });
+}
+</script>
+</body>
+</html>
