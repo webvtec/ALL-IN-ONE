@@ -1909,7 +1909,6 @@ function handleSellerSignup(event) {
                     email: formData.email,
                     phone: formData.phone,
                     businessName: formData.businessName,
-                    address: formData.address,
                     subscriptionStatus: 'active',
                     monthlyFee: 25,
                     joinedDate: new Date().toISOString(),
@@ -1922,7 +1921,7 @@ function handleSellerSignup(event) {
             currentUser = auth.currentUser;
             updateAuthUI();
             closeSellerSignup();
-            alert('Seller account created successfully! Welcome to WEBVTEC marketplace. You can now start selling products.');
+            alert('Seller account created successfully! Welcome to WEB VTEC marketplace. You can now start selling products.');
             // Auto-open seller dashboard
             setTimeout(() => showSellerDashboard(), 1000);
         })
