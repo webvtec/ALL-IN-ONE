@@ -943,40 +943,7 @@
     color: white;
 }
 
-.dashboard-stats {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 2rem;
-    margin-bottom: 2rem;
-    max-width: 800px;
-    margin-left: auto;
-    margin-right: auto;
-}
-        
-.stat-card {
-    background: white;
-    padding: 2rem;
-    border-radius: 16px;
-    box-shadow: 0 4px 20px rgba(0,0,0,0.1);
-    border-left: 4px solid #007185;
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
-}
 
-.stat-card:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 8px 30px rgba(0,0,0,0.15);
-}
-
-.stat-icon {
-    width: 48px;
-    height: 48px;
-    border-radius: 12px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    margin-bottom: 1rem;
-    font-size: 1.5rem;
-}
 
 .stat-card:nth-child(1) .stat-icon { background: rgba(0, 113, 133, 0.1); color: #007185; }
 .stat-card:nth-child(2) .stat-icon { background: rgba(40, 167, 69, 0.1); color: #28a745; }
@@ -1180,11 +1147,6 @@ header button:hover {
     .dashboard-product-card {
         flex-direction: column;
     }
-
-    .dashboard-stats {
-        grid-template-columns: 1fr;
-        gap: 1.5rem;
-    }
     
     .product-image-dash {
         width: 100%;
@@ -1198,7 +1160,21 @@ header button:hover {
     .btn-edit, .btn-delete {
         flex: 1;
     }
+    
+    .dashboard-content div[style*="display: flex"] {
+        flex-direction: row !important;
+        gap: 1rem !important;
     }
+    
+    .dashboard-content div[style*="min-width: 180px"] {
+        min-width: 140px !important;
+        padding: 1.2rem 1rem !important;
+    }
+    
+    .dashboard-content div[style*="font-size: 1.8rem"] {
+        font-size: 1.5rem !important;
+    }
+}
     </style>
 </head>
 <body>
@@ -1403,16 +1379,16 @@ header button:hover {
 
 <!-- Seller Dashboard Page -->
 <div id="sellerDashboardPage" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100vh; background: #f8f9fa; z-index: 2000; overflow-y: auto;">
-    <!-- Header -->
-<header style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 2rem 0; position: sticky; top: 0; z-index: 100;">
+<!-- Header -->
+<header style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 1.5rem 0; position: sticky; top: 0; z-index: 100;">
     <div style="max-width: 1200px; margin: 0 auto; padding: 0 2rem;">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
-            <button onclick="closeSellerDashboardPage()" style="background: rgba(255,255,255,0.2); color: white; border: 1px solid rgba(255,255,255,0.3); padding: 0.8rem 1.5rem; border-radius: 25px; cursor: pointer; font-size: 0.9rem; transition: all 0.3s ease; backdrop-filter: blur(10px);">← Back to Store</button>
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+            <button onclick="closeSellerDashboardPage()" style="background: rgba(255,255,255,0.2); color: white; border: 1px solid rgba(255,255,255,0.3); padding: 0.6rem 1.2rem; border-radius: 20px; cursor: pointer; font-size: 0.85rem; transition: all 0.3s ease; backdrop-filter: blur(10px);">← Back to Store</button>
             <div style="text-align: center;">
-                <h1 style="color: white; margin: 0; font-size: 2.5rem; font-weight: 300; letter-spacing: 1px;">Seller Dashboard</h1>
-                <p style="color: rgba(255,255,255,0.9); margin: 0.5rem 0 0 0; font-size: 1.1rem;" id="sellerWelcome">Welcome back!</p>
+                <h1 style="color: white; margin: 0; font-size: 1.8rem; font-weight: 500;">Seller Dashboard</h1>
+                <p style="color: rgba(255,255,255,0.9); margin: 0.3rem 0 0 0; font-size: 0.9rem;" id="sellerWelcome">Welcome back!</p>
             </div>
-            <div style="width: 60px; height: 60px; background: rgba(255,255,255,0.2); border: 2px solid rgba(255,255,255,0.3); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: 600; font-size: 1.5rem; backdrop-filter: blur(10px);" id="sellerAvatar">S</div>
+            <div style="width: 45px; height: 45px; background: rgba(255,255,255,0.2); border: 2px solid rgba(255,255,255,0.3); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: 600; font-size: 1.2rem; backdrop-filter: blur(10px);" id="sellerAvatar">S</div>
         </div>
     </div>
 </header>
@@ -1430,20 +1406,16 @@ header button:hover {
 
         <!-- Overview Tab -->
 <div id="overview-tab" class="dashboard-content">
-    <div class="dashboard-stats">
-        <div class="stat-card">
-            <div class="stat-icon">📦</div>
-            <div>
-                <h3 style="color: #333; margin: 0 0 0.5rem 0; font-size: 0.9rem; font-weight: 500;">Total Products</h3>
-                <div style="font-size: 2.2rem; font-weight: 700; color: #007185;" id="totalProducts">0</div>
-            </div>
+    <div style="display: flex; gap: 1.5rem; justify-content: center; margin-bottom: 2rem;">
+        <div style="background: white; padding: 1.5rem; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); text-align: center; min-width: 180px;">
+            <div style="width: 40px; height: 40px; background: rgba(0, 113, 133, 0.1); color: #007185; border-radius: 10px; display: flex; align-items: center; justify-content: center; margin: 0 auto 1rem auto; font-size: 1.2rem;">📦</div>
+            <h3 style="color: #666; margin: 0 0 0.5rem 0; font-size: 0.85rem; font-weight: 500; text-transform: uppercase;">Total Products</h3>
+            <div style="font-size: 1.8rem; font-weight: 700; color: #007185;" id="totalProducts">0</div>
         </div>
-        <div class="stat-card">
-            <div class="stat-icon">💰</div>
-            <div>
-                <h3 style="color: #333; margin: 0 0 0.5rem 0; font-size: 0.9rem; font-weight: 500;">Monthly Revenue</h3>
-                <div style="font-size: 2.2rem; font-weight: 700; color: #28a745;">$0</div>
-            </div>
+        <div style="background: white; padding: 1.5rem; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); text-align: center; min-width: 180px;">
+            <div style="width: 40px; height: 40px; background: rgba(40, 167, 69, 0.1); color: #28a745; border-radius: 10px; display: flex; align-items: center; justify-content: center; margin: 0 auto 1rem auto; font-size: 1.2rem;">💰</div>
+            <h3 style="color: #666; margin: 0 0 0.5rem 0; font-size: 0.85rem; font-weight: 500; text-transform: uppercase;">Monthly Revenue</h3>
+            <div style="font-size: 1.8rem; font-weight: 700; color: #28a745;">$0</div>
         </div>
     </div>
 </div>
