@@ -912,6 +912,29 @@
     from { opacity: 0; transform: translateY(10px); }
     to { opacity: 1; transform: translateY(0); }
 }
+
+
+.dashboard-content {
+    animation: fadeIn 0.3s ease-in-out;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.dashboard-tab {
+    transition: all 0.2s ease !important;
+}
+
+.dashboard-tab:hover {
+    background: #f8f9fa !important;
+}
+
+.dashboard-tab.active {
+    color: #007185 !important;
+    border-bottom-color: #007185 !important;
+}
     </style>
 </head>
 <body>
@@ -1197,17 +1220,30 @@
                             </select>
                         </div>
                         <div>
-                            <label style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: #333;">Delivery Time</label>
-                            <select id="dashboardDeliveryDays" required style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 6px; font-size: 1rem;">
-                                <option value="">Select Delivery Time</option>
-                                <option value="1-2">1-2 days</option>
-                                <option value="3-5">3-5 days</option>
-                                <option value="5-7">5-7 days</option>
-                                <option value="7-10">7-10 days</option>
-                                <option value="10-14">10-14 days</option>
-                                <option value="14-21">14-21 days</option>
-                            </select>
+    <label style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: #333;">Knutsford Delivery Time</label>
+    <select id="dashboardKnutsfordDelivery" required style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 6px; font-size: 1rem;">
+        <option value="">Select Knutsford Delivery Time</option>
+        <option value="1-2">1-2 days</option>
+        <option value="3-5">3-5 days</option>
+        <option value="5-7">5-7 days</option>
+        <option value="7-10">7-10 days</option>
+        <option value="10-14">10-14 days</option>
+        <option value="14-21">14-21 days</option>
+    </select>
                         </div>
+                    </div>
+
+                    <div style="margin-bottom: 1.5rem;">
+    <label style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: #333;">Tara Delivery Time</label>
+    <select id="dashboardTaraDelivery" required style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 6px; font-size: 1rem;">
+        <option value="">Select Tara Delivery Time</option>
+        <option value="1-2">1-2 days</option>
+        <option value="3-5">3-5 days</option>
+        <option value="5-7">5-7 days</option>
+        <option value="7-10">7-10 days</option>
+        <option value="10-14">10-14 days</option>
+        <option value="14-21">14-21 days</option>
+                    </select>
                     </div>
                     
                     <div style="margin-bottom: 2rem;">
@@ -1618,11 +1654,22 @@ function createProductCard(product) {
     // Get seller info and calculate delivery
     const sellerInfo = product.sellerBusinessName ? `Sold by ${product.sellerBusinessName}` : '';
     let deliveryInfo = '';
+
+if (product.knutsfordDelivery || product.taraDelivery) {
+    let deliveryParts = [];
     
-    if (product.deliveryDays) {
-        const delivery = calculateDeliveryDates(product.deliveryDays);
-        deliveryInfo = `Delivery: ${delivery.start} - ${delivery.end}`;
+    if (product.knutsfordDelivery) {
+        const knutsfordDates = calculateDeliveryDates(product.knutsfordDelivery);
+        deliveryParts.push(`Knutsford: ${knutsfordDates.start} - ${knutsfordDates.end}`);
     }
+    
+    if (product.taraDelivery) {
+        const taraDates = calculateDeliveryDates(product.taraDelivery);
+        deliveryParts.push(`Tara: ${taraDates.start} - ${taraDates.end}`);
+    }
+    
+    deliveryInfo = deliveryParts.join(' | ');
+}
     
     card.innerHTML = `
         <div class="product-image">
@@ -2313,7 +2360,10 @@ function createDashboardProductCard(product) {
         align-items: center;
     `;
     
-    const deliveryInfo = product.deliveryDays ? `${product.deliveryDays} days` : 'Not set';
+    let deliveryInfo = [];
+if (product.knutsfordDelivery) deliveryInfo.push(`Knutsford: ${product.knutsfordDelivery} days`);
+if (product.taraDelivery) deliveryInfo.push(`Tara: ${product.taraDelivery} days`);
+const deliveryDisplay = deliveryInfo.length > 0 ? deliveryInfo.join(' | ') : 'Not set';
     
     card.innerHTML = `
         <img src="${product.image}" alt="${product.name}" style="width: 80px; height: 80px; object-fit: cover; border-radius: 6px; flex-shrink: 0;">
@@ -2321,9 +2371,10 @@ function createDashboardProductCard(product) {
             <h4 style="color: #333; margin: 0 0 0.5rem 0; font-size: 1.1rem;">${product.name}</h4>
             <p style="color: #666; margin: 0.2rem 0; font-size: 0.9rem;">${product.description}</p>
             <p style="color: #333; margin: 0.2rem 0; font-weight: bold;">$${product.price}</p>
-            <p style="color: #666; margin: 0.2rem 0; font-size: 0.85rem;">Category: ${product.category} | Delivery: ${deliveryInfo}</p>
-        </div>
-        <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+            <p style="color: #666; margin: 0.2rem 0; font-size: 0.85rem;">Category: ${product.category}</p>
+            <p style="color: #666; margin: 0.2rem 0; font-size: 0.85rem;">Delivery: ${deliveryDisplay}</p>
+            </div>
+            <div style="display: flex; flex-direction: column; gap: 0.5rem;">
             <button onclick="editDashboardProduct('${product.id}')" style="padding: 0.4rem 1rem; background: #007185; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 0.85rem;">Edit</button>
             <button onclick="deleteDashboardProduct('${product.id}')" style="padding: 0.4rem 1rem; background: #dc3545; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 0.85rem;">Delete</button>
         </div>
@@ -2340,8 +2391,8 @@ function handleDashboardAddProduct(event) {
         return;
     }
     
-    const deliveryDays = document.getElementById('dashboardDeliveryDays').value;
-    const [minDays, maxDays] = deliveryDays.split('-').map(Number);
+    const knutsfordDelivery = document.getElementById('dashboardKnutsfordDelivery').value;
+    const taraDelivery = document.getElementById('dashboardTaraDelivery').value;
     
     const productData = {
         name: document.getElementById('dashboardProductName').value,
@@ -2349,9 +2400,8 @@ function handleDashboardAddProduct(event) {
         price: parseFloat(document.getElementById('dashboardProductPrice').value),
         category: document.getElementById('dashboardProductCategory').value,
         image: document.getElementById('dashboardProductImage').value,
-        deliveryDays: deliveryDays,
-        deliveryMinDays: minDays,
-        deliveryMaxDays: maxDays,
+        knutsfordDelivery: knutsfordDelivery,
+        taraDelivery: taraDelivery,
         sellerId: currentUser.uid,
         sellerBusinessName: '',
         reviews: [],
