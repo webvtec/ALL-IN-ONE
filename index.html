@@ -842,32 +842,33 @@
     align-items: center !important;
     justify-content: center !important;
     padding: 1rem 1.5rem !important;
-    background: linear-gradient(45deg, #ffd700, #ffed4a) !important;
+    background: transparent !important;
     color: #333 !important;
-    border: none !important;
+    border: 2px solid #333 !important;
     border-radius: 12px !important;
     font-weight: bold !important;
     font-size: 0.9rem !important;
     letter-spacing: 0.5px !important;
     text-align: center !important;
     min-height: 70px !important;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.1) !important;
     transition: all 0.3s ease !important;
+    cursor: pointer !important;
 }
 
 .sell-btn:hover {
-    transform: translateY(-2px) !important;
-    box-shadow: 0 4px 15px rgba(255, 215, 0, 0.3) !important;
+    background: rgba(51, 51, 51, 0.1) !important;
+    transform: translateY(-1px) !important;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1) !important;
 }
 
 .sell-icon {
     margin-bottom: 0.3rem;
-    opacity: 0.8;
+    color: #333;
 }
 
 .sell-icon svg {
-    width: 28px;
-    height: 28px;
+    width: 32px;
+    height: 32px;
 }
 
 
@@ -904,10 +905,9 @@
         <button class="btn" onclick="showLogin()">👤 Sign In</button>
         <button class="btn sell-btn" onclick="handleSellerButton()">
     <div class="sell-icon">
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
-            <path d="M12 2L2 7v10c0 5.55 3.84 10 9 10s9-4.45 9-10V7l-10-5zM10 14H8v-4h2v4zm4 0h-2v-4h2v4z"/>
-            <path d="M4 8h16v2H4z"/>
-            <path d="M12 4c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z"/>
+        <svg width="32" height="32" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M19 7h-3V6a4 4 0 0 0-8 0v1H5a1 1 0 0 0-1 1v11a3 3 0 0 0 3 3h10a3 3 0 0 0 3-3V8a1 1 0 0 0-1-1zM10 6a2 2 0 0 1 4 0v1h-4V6zm8 13a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V9h2v1a1 1 0 0 0 2 0V9h4v1a1 1 0 0 0 2 0V9h2v10z"/>
+            <path d="M12 2C8.13 2 5 5.13 5 9h2c0-2.76 2.24-5 5-5s5 2.24 5 5h2c0-3.87-3.13-7-7-7z"/>
         </svg>
     </div>
     SELL ON WEBVTEC
