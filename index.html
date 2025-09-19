@@ -474,16 +474,20 @@
             color: #ffd700;
         }
 
-        .form-group input {
-            width: 100%;
-            padding: 0.7rem;
-            border: none;
-            border-radius: 8px;
-            background: rgba(255, 255, 255, 0.1);
-            color: white;
-            border: 1px solid rgba(255, 215, 0, 0.3);
-        }
+        .form-group input, .form-group textarea, .form-group select {
+    width: 100%;
+    padding: 0.7rem;
+    border: none;
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.1);
+    color: white;
+    border: 1px solid rgba(255, 215, 0, 0.3);
+}
 
+.form-group select option {
+    background: #333;
+    color: white;
+}
         @keyframes shimmer {
             0% { transform: translateX(-100%) translateY(-100%) rotate(45deg); }
             100% { transform: translateX(100%) translateY(100%) rotate(45deg); }
@@ -783,6 +787,53 @@
     color: #ffd700 !important;
 }
 
+
+
+/* Compact modal styles */
+@media (max-width: 768px) {
+    .modal-content {
+        margin: 5% auto !important;
+        width: 95% !important;
+        max-width: 95% !important;
+        max-height: 90vh;
+        overflow-y: auto;
+    }
+    
+    #sellerModal .modal-content {
+        padding: 1rem !important;
+    }
+    
+    #sellerModal h2 {
+        font-size: 1.1rem !important;
+        margin-bottom: 0.5rem !important;
+    }
+    
+    #sellerModal p {
+        font-size: 0.8rem !important;
+        margin-bottom: 1rem !important;
+    }
+    
+    #sellerModal .form-group {
+        margin-bottom: 0.6rem !important;
+    }
+    
+    #sellerModal label {
+        font-size: 0.8rem !important;
+        margin-bottom: 0.3rem !important;
+    }
+    
+    #sellerModal input,
+    #sellerModal textarea,
+    #sellerModal select {
+        padding: 0.4rem !important;
+        font-size: 0.8rem !important;
+    }
+    
+    #sellerModal button {
+        padding: 0.6rem !important;
+        font-size: 0.9rem !important;
+    }
+        }
     </style>
 </head>
 <body>
@@ -886,72 +937,82 @@
 
     <!-- Seller Signup Modal -->
 <div id="sellerModal" class="modal">
-    <div class="modal-content" style="max-width: 500px;">
+    <div class="modal-content" style="max-width: 450px; padding: 1.5rem;">
         <span class="close" onclick="closeSellerSignup()">&times;</span>
-        <h2 style="color: #ffd700; margin-bottom: 1rem; text-align: center;">Become a WEBVTEC Seller</h2>
-        <p style="color: #ccc; text-align: center; margin-bottom: 2rem;">Join our marketplace and start selling today! Monthly fee: $25</p>
+        <h2 style="color: #ffd700; margin-bottom: 1rem; text-align: center; font-size: 1.3rem;">Become a WEBVTEC Seller</h2>
+        <p style="color: #ccc; text-align: center; margin-bottom: 1.5rem; font-size: 0.9rem;">Join our marketplace and start selling today! Monthly fee: $25</p>
         
         <form id="sellerSignupForm" onsubmit="handleSellerSignup(event)">
-            <div class="form-group">
-                <label>First Name:</label>
-                <input type="text" id="sellerFirstName" required>
-            </div>
-            <div class="form-group">
-                <label>Last Name:</label>
-                <input type="text" id="sellerLastName" required>
-            </div>
-            <div class="form-group">
-    <label>Date of Birth:</label>
-    <div style="display: flex; gap: 0.5rem;">
-        <select id="sellerMonth" required style="flex: 1; padding: 0.7rem; border: none; border-radius: 8px; background: rgba(255, 255, 255, 0.1); color: white; border: 1px solid rgba(255, 215, 0, 0.3);">
-            <option value="">Month</option>
-            <option value="01">January</option>
-            <option value="02">February</option>
-            <option value="03">March</option>
-            <option value="04">April</option>
-            <option value="05">May</option>
-            <option value="06">June</option>
-            <option value="07">July</option>
-            <option value="08">August</option>
-            <option value="09">September</option>
-            <option value="10">October</option>
-            <option value="11">November</option>
-            <option value="12">December</option>
-        </select>
-        <select id="sellerDay" required style="flex: 1; padding: 0.7rem; border: none; border-radius: 8px; background: rgba(255, 255, 255, 0.1); color: white; border: 1px solid rgba(255, 215, 0, 0.3);">
-            <option value="">Day</option>
-            <!-- Days 1-31 will be populated by JavaScript -->
-        </select>
-        <select id="sellerYear" required style="flex: 1; padding: 0.7rem; border: none; border-radius: 8px; background: rgba(255, 255, 255, 0.1); color: white; border: 1px solid rgba(255, 215, 0, 0.3);">
-            <option value="">Year</option>
-            <!-- Years will be populated by JavaScript -->
-        </select>
-    </div>
-            </div>
-            <div class="form-group">
-                <label>Email:</label>
-                <input type="email" id="sellerEmail" required>
-            </div>
-            <div class="form-group">
-                <label>Password:</label>
-                <input type="password" id="sellerPassword" required minlength="6">
-            </div>
-            <div class="form-group">
-                <label>Phone Number:</label>
-                <input type="tel" id="sellerPhone" required>
-            </div>
-            <div class="form-group">
-    <label>Business Name:</label>
-    <input type="text" id="sellerBusiness" required>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                <div class="form-group" style="margin-bottom: 0.8rem;">
+                    <label style="font-size: 0.9rem;">First Name:</label>
+                    <input type="text" id="sellerFirstName" required style="padding: 0.5rem; font-size: 0.9rem;">
+                </div>
+                <div class="form-group" style="margin-bottom: 0.8rem;">
+                    <label style="font-size: 0.9rem;">Last Name:</label>
+                    <input type="text" id="sellerLastName" required style="padding: 0.5rem; font-size: 0.9rem;">
+                </div>
             </div>
             
-            <div style="background: rgba(255, 215, 0, 0.1); padding: 1rem; border-radius: 8px; margin: 1rem 0; border: 1px solid rgba(255, 215, 0, 0.3);">
-                <p style="color: #ffd700; font-size: 0.9rem; margin: 0;">
+            <div class="form-group" style="margin-bottom: 0.8rem;">
+                <label style="font-size: 0.9rem;">Date of Birth:</label>
+                <div style="display: flex; gap: 0.5rem;">
+                    <select id="sellerMonth" required style="flex: 1; padding: 0.5rem; border: none; border-radius: 6px; background: rgba(255, 255, 255, 0.1); color: white; border: 1px solid rgba(255, 215, 0, 0.3); font-size: 0.9rem;">
+                        <option value="">Month</option>
+                        <option value="01">Jan</option>
+                        <option value="02">Feb</option>
+                        <option value="03">Mar</option>
+                        <option value="04">Apr</option>
+                        <option value="05">May</option>
+                        <option value="06">Jun</option>
+                        <option value="07">Jul</option>
+                        <option value="08">Aug</option>
+                        <option value="09">Sep</option>
+                        <option value="10">Oct</option>
+                        <option value="11">Nov</option>
+                        <option value="12">Dec</option>
+                    </select>
+                    <select id="sellerDay" required style="flex: 1; padding: 0.5rem; border: none; border-radius: 6px; background: rgba(255, 255, 255, 0.1); color: white; border: 1px solid rgba(255, 215, 0, 0.3); font-size: 0.9rem;">
+                        <option value="">Day</option>
+                    </select>
+                    <select id="sellerYear" required style="flex: 1; padding: 0.5rem; border: none; border-radius: 6px; background: rgba(255, 255, 255, 0.1); color: white; border: 1px solid rgba(255, 215, 0, 0.3); font-size: 0.9rem;">
+                        <option value="">Year</option>
+                    </select>
+                </div>
+            </div>
+            
+            <div class="form-group" style="margin-bottom: 0.8rem;">
+                <label style="font-size: 0.9rem;">Email:</label>
+                <input type="email" id="sellerEmail" required style="padding: 0.5rem; font-size: 0.9rem;">
+            </div>
+            
+            <div class="form-group" style="margin-bottom: 0.8rem;">
+                <label style="font-size: 0.9rem;">Password:</label>
+                <input type="password" id="sellerPassword" required minlength="6" style="padding: 0.5rem; font-size: 0.9rem;">
+            </div>
+            
+            <div class="form-group" style="margin-bottom: 0.8rem;">
+                <label style="font-size: 0.9rem;">Phone Number:</label>
+                <input type="tel" id="sellerPhone" required style="padding: 0.5rem; font-size: 0.9rem;">
+            </div>
+            
+            <div class="form-group" style="margin-bottom: 0.8rem;">
+                <label style="font-size: 0.9rem;">Business Name:</label>
+                <input type="text" id="sellerBusiness" required style="padding: 0.5rem; font-size: 0.9rem;">
+            </div>
+            
+            <div class="form-group" style="margin-bottom: 1rem;">
+                <label style="font-size: 0.9rem;">Address (Optional):</label>
+                <textarea id="sellerAddress" rows="2" style="padding: 0.5rem; font-size: 0.9rem; resize: vertical;"></textarea>
+            </div>
+            
+            <div style="background: rgba(255, 215, 0, 0.1); padding: 0.8rem; border-radius: 6px; margin: 1rem 0; border: 1px solid rgba(255, 215, 0, 0.3);">
+                <p style="color: #ffd700; font-size: 0.8rem; margin: 0;">
                     By signing up as a seller, you agree to pay a monthly subscription fee of $25. This will be charged to your account monthly.
                 </p>
             </div>
             
-            <button type="submit" class="btn" style="width: 100%; font-size: 1.1rem;">Sign Up as Seller ($25/month)</button>
+            <button type="submit" class="btn" style="width: 100%; font-size: 1rem; padding: 0.8rem;">Sign Up as Seller ($25/month)</button>
         </form>
     </div>
 </div>
