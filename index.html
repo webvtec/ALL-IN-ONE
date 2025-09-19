@@ -768,6 +768,21 @@
     cursor: pointer;
 }
 
+
+.categories-scroll::-webkit-scrollbar {
+    display: none;
+}
+
+.category-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(255, 215, 0, 0.3);
+}
+
+.category-btn.active {
+    background: #333 !important;
+    color: #ffd700 !important;
+}
+
     </style>
 </head>
 <body>
@@ -782,7 +797,7 @@
     <header class="header">
     <div style="display: flex; justify-content: space-around; align-items: center; margin-bottom: 10px;">
         <button class="btn" onclick="showLogin()">👤 Sign In</button>
-        <button class="btn">Request Product</button>
+        <button class="btn" onclick="showSellerSignup()">🏪 SELL ON WEBVTEC</button>
         <button class="btn" onclick="showCart()" style="position: relative;">
             🛒 Cart <span class="cart-count" id="cartCount">0</span>
         </button>
@@ -792,6 +807,25 @@
 <div class="search-container">
     <input type="text" class="search-bar" placeholder="Search for products..." onkeyup="searchProducts()">
     <button class="search-btn" onclick="searchProducts()">🔍</button>
+</div>
+
+
+        <!-- Categories Section -->
+<div class="categories-section" style="padding: 1rem 5px; margin-bottom: 1rem;">
+    <div class="categories-scroll" style="display: flex; gap: 1rem; overflow-x: auto; padding: 0.5rem 0; scrollbar-width: none; -ms-overflow-style: none;">
+        <button class="category-btn active" onclick="filterByCategory('all')" style="background: #333; color: #ffd700; border: none; padding: 0.8rem 2rem; border-radius: 25px; white-space: nowrap; cursor: pointer; font-weight: bold; min-width: 100px;">All</button>
+        <button class="category-btn" onclick="filterByCategory('electronics')" style="background: #ffd700; color: #333; border: none; padding: 0.8rem 2rem; border-radius: 25px; white-space: nowrap; cursor: pointer; font-weight: bold; min-width: 120px;">Electronics</button>
+        <button class="category-btn" onclick="filterByCategory('clothing')" style="background: #ffd700; color: #333; border: none; padding: 0.8rem 2rem; border-radius: 25px; white-space: nowrap; cursor: pointer; font-weight: bold; min-width: 100px;">Clothing</button>
+        <button class="category-btn" onclick="filterByCategory('home')" style="background: #ffd700; color: #333; border: none; padding: 0.8rem 2rem; border-radius: 25px; white-space: nowrap; cursor: pointer; font-weight: bold; min-width: 100px;">Home</button>
+        <button class="category-btn" onclick="filterByCategory('beauty')" style="background: #ffd700; color: #333; border: none; padding: 0.8rem 2rem; border-radius: 25px; white-space: nowrap; cursor: pointer; font-weight: bold; min-width: 100px;">Beauty</button>
+        <button class="category-btn" onclick="filterByCategory('sports')" style="background: #ffd700; color: #333; border: none; padding: 0.8rem 2rem; border-radius: 25px; white-space: nowrap; cursor: pointer; font-weight: bold; min-width: 100px;">Sports</button>
+        <button class="category-btn" onclick="filterByCategory('books')" style="background: #ffd700; color: #333; border: none; padding: 0.8rem 2rem; border-radius: 25px; white-space: nowrap; cursor: pointer; font-weight: bold; min-width: 100px;">Books</button>
+        <button class="category-btn" onclick="filterByCategory('toys')" style="background: #ffd700; color: #333; border: none; padding: 0.8rem 2rem; border-radius: 25px; white-space: nowrap; cursor: pointer; font-weight: bold; min-width: 100px;">Toys</button>
+        <button class="category-btn" onclick="filterByCategory('automotive')" style="background: #ffd700; color: #333; border: none; padding: 0.8rem 2rem; border-radius: 25px; white-space: nowrap; cursor: pointer; font-weight: bold; min-width: 120px;">Automotive</button>
+        <button class="category-btn" onclick="filterByCategory('jewelry')" style="background: #ffd700; color: #333; border: none; padding: 0.8rem 2rem; border-radius: 25px; white-space: nowrap; cursor: pointer; font-weight: bold; min-width: 100px;">Jewelry</button>
+        <button class="category-btn" onclick="filterByCategory('health')" style="background: #ffd700; color: #333; border: none; padding: 0.8rem 2rem; border-radius: 25px; white-space: nowrap; cursor: pointer; font-weight: bold; min-width: 100px;">Health</button>
+        <button class="category-btn" onclick="filterByCategory('music')" style="background: #ffd700; color: #333; border: none; padding: 0.8rem 2rem; border-radius: 25px; white-space: nowrap; cursor: pointer; font-weight: bold; min-width: 100px;">Music</button>
+    </div>
 </div>
     </header>
 
@@ -849,7 +883,58 @@
     </div>
 </div>
 
-    
+
+    <!-- Seller Signup Modal -->
+<div id="sellerModal" class="modal">
+    <div class="modal-content" style="max-width: 500px;">
+        <span class="close" onclick="closeSellerSignup()">&times;</span>
+        <h2 style="color: #ffd700; margin-bottom: 1rem; text-align: center;">Become a WEBVTEC Seller</h2>
+        <p style="color: #ccc; text-align: center; margin-bottom: 2rem;">Join our marketplace and start selling today! Monthly fee: $25</p>
+        
+        <form id="sellerSignupForm" onsubmit="handleSellerSignup(event)">
+            <div class="form-group">
+                <label>First Name:</label>
+                <input type="text" id="sellerFirstName" required>
+            </div>
+            <div class="form-group">
+                <label>Last Name:</label>
+                <input type="text" id="sellerLastName" required>
+            </div>
+            <div class="form-group">
+                <label>Date of Birth:</label>
+                <input type="date" id="sellerDOB" required>
+            </div>
+            <div class="form-group">
+                <label>Email:</label>
+                <input type="email" id="sellerEmail" required>
+            </div>
+            <div class="form-group">
+                <label>Password:</label>
+                <input type="password" id="sellerPassword" required minlength="6">
+            </div>
+            <div class="form-group">
+                <label>Phone Number:</label>
+                <input type="tel" id="sellerPhone" required>
+            </div>
+            <div class="form-group">
+                <label>Business Name (Optional):</label>
+                <input type="text" id="sellerBusiness">
+            </div>
+            <div class="form-group">
+                <label>Address:</label>
+                <textarea id="sellerAddress" rows="3" required></textarea>
+            </div>
+            
+            <div style="background: rgba(255, 215, 0, 0.1); padding: 1rem; border-radius: 8px; margin: 1rem 0; border: 1px solid rgba(255, 215, 0, 0.3);">
+                <p style="color: #ffd700; font-size: 0.9rem; margin: 0;">
+                    By signing up as a seller, you agree to pay a monthly subscription fee of $25. This will be charged to your account monthly.
+                </p>
+            </div>
+            
+            <button type="submit" class="btn" style="width: 100%; font-size: 1.1rem;">Sign Up as Seller ($25/month)</button>
+        </form>
+    </div>
+</div>
 <script>
 // Firebase configuration - MOVE THIS TO THE TOP
 const firebaseConfig = {
@@ -1371,12 +1456,18 @@ function handleProductRequest(event) {
 
 window.onclick = function(event) {
     const modal = document.getElementById('loginModal');
+    const sellerModal = document.getElementById('sellerModal');
+    
     if (event.target === modal) {
         closeLogin();
     }
     
+    if (event.target === sellerModal) {
+        closeSellerSignup();
+    }
+    
     // Handle other modals
-    if (event.target.classList.contains('modal') && event.target !== modal) {
+    if (event.target.classList.contains('modal') && event.target !== modal && event.target !== sellerModal) {
         event.target.style.display = 'none';
     }
 }
@@ -1537,6 +1628,111 @@ function updateDetailPageAuth() {
             detailSignInBtn.innerHTML = '👤 Sign In';
             detailSignInBtn.onclick = showLogin;
         }
+    }
+}
+
+
+
+// Seller and Category Functions
+function showSellerSignup() {
+    document.getElementById('sellerModal').style.display = 'block';
+}
+
+function closeSellerSignup() {
+    document.getElementById('sellerModal').style.display = 'none';
+}
+
+function handleSellerSignup(event) {
+    event.preventDefault();
+    
+    const formData = {
+        firstName: document.getElementById('sellerFirstName').value,
+        lastName: document.getElementById('sellerLastName').value,
+        dateOfBirth: document.getElementById('sellerDOB').value,
+        email: document.getElementById('sellerEmail').value,
+        password: document.getElementById('sellerPassword').value,
+        phone: document.getElementById('sellerPhone').value,
+        businessName: document.getElementById('sellerBusiness').value,
+        address: document.getElementById('sellerAddress').value
+    };
+    
+    // Create user account first
+    auth.createUserWithEmailAndPassword(formData.email, formData.password)
+        .then((result) => {
+            const user = result.user;
+            
+            // Update user profile
+            return user.updateProfile({
+                displayName: `${formData.firstName} ${formData.lastName}`
+            }).then(() => {
+                // Save seller data to Firestore
+                return db.collection('sellers').doc(user.uid).set({
+                    uid: user.uid,
+                    firstName: formData.firstName,
+                    lastName: formData.lastName,
+                    dateOfBirth: formData.dateOfBirth,
+                    email: formData.email,
+                    phone: formData.phone,
+                    businessName: formData.businessName,
+                    address: formData.address,
+                    subscriptionStatus: 'active',
+                    monthlyFee: 25,
+                    joinedDate: new Date().toISOString(),
+                    isSeller: true,
+                    products: []
+                });
+            });
+        })
+        .then(() => {
+            currentUser = auth.currentUser;
+            updateAuthUI();
+            closeSellerSignup();
+            alert('Seller account created successfully! Welcome to WEBVTEC marketplace. You can now start selling products.');
+        })
+        .catch((error) => {
+            console.error('Seller signup error:', error);
+            alert('Error creating seller account: ' + error.message);
+        });
+}
+
+let currentCategory = 'all';
+
+function filterByCategory(category) {
+    currentCategory = category;
+    
+    // Update active button
+    document.querySelectorAll('.category-btn').forEach(btn => {
+        btn.classList.remove('active');
+        btn.style.background = '#ffd700';
+        btn.style.color = '#333';
+    });
+    
+    event.target.classList.add('active');
+    event.target.style.background = '#333';
+    event.target.style.color = '#ffd700';
+    
+    // Filter products
+    displayFilteredProducts(category);
+}
+
+function displayFilteredProducts(category) {
+    const grid = document.getElementById('productsGrid');
+    grid.innerHTML = '';
+
+    let filteredProducts = products;
+    if (category !== 'all') {
+        filteredProducts = products.filter(product => 
+            product.category && product.category.toLowerCase() === category.toLowerCase()
+        );
+    }
+
+    filteredProducts.forEach(product => {
+        const productCard = createProductCard(product);
+        grid.appendChild(productCard);
+    });
+    
+    if (filteredProducts.length === 0) {
+        grid.innerHTML = '<div style="text-align: center; color: #666; padding: 2rem;">No products found in this category.</div>';
     }
 }
 </script>
