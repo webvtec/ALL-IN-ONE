@@ -945,11 +945,14 @@
 
 .dashboard-stats {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-    gap: 1.5rem;
+    grid-template-columns: 1fr 1fr;
+    gap: 2rem;
     margin-bottom: 2rem;
+    max-width: 800px;
+    margin-left: auto;
+    margin-right: auto;
 }
-
+        
 .stat-card {
     background: white;
     padding: 2rem;
@@ -1166,9 +1169,21 @@
     box-shadow: 0 4px 15px rgba(0, 113, 133, 0.3);
 }
 
+/* Dashboard Header Back Button Hover */
+header button:hover {
+    background: rgba(255,255,255,0.3) !important;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+}
+
 @media (max-width: 768px) {
     .dashboard-product-card {
         flex-direction: column;
+    }
+
+    .dashboard-stats {
+        grid-template-columns: 1fr;
+        gap: 1.5rem;
     }
     
     .product-image-dash {
@@ -1389,15 +1404,18 @@
 <!-- Seller Dashboard Page -->
 <div id="sellerDashboardPage" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100vh; background: #f8f9fa; z-index: 2000; overflow-y: auto;">
     <!-- Header -->
-    <header style="background: white; padding: 1rem 2rem; box-shadow: 0 2px 4px rgba(0,0,0,0.1); position: sticky; top: 0; z-index: 100;">
-        <div style="display: flex; justify-content: space-between; align-items: center; max-width: 1200px; margin: 0 auto;">
-            <div style="display: flex; align-items: center; gap: 1rem;">
-                <button onclick="closeSellerDashboardPage()" style="background: #6c757d; color: white; border: none; padding: 0.5rem 1rem; border-radius: 6px; cursor: pointer;">← Back to Store</button>
-                <h1 style="color: #333; margin: 0; font-size: 1.8rem;">Seller Dashboard</h1>
+<header style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 2rem 0; position: sticky; top: 0; z-index: 100;">
+    <div style="max-width: 1200px; margin: 0 auto; padding: 0 2rem;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+            <button onclick="closeSellerDashboardPage()" style="background: rgba(255,255,255,0.2); color: white; border: 1px solid rgba(255,255,255,0.3); padding: 0.8rem 1.5rem; border-radius: 25px; cursor: pointer; font-size: 0.9rem; transition: all 0.3s ease; backdrop-filter: blur(10px);">← Back to Store</button>
+            <div style="text-align: center;">
+                <h1 style="color: white; margin: 0; font-size: 2.5rem; font-weight: 300; letter-spacing: 1px;">Seller Dashboard</h1>
+                <p style="color: rgba(255,255,255,0.9); margin: 0.5rem 0 0 0; font-size: 1.1rem;" id="sellerWelcome">Welcome back!</p>
             </div>
-            <div style="color: #666; font-size: 0.9rem;" id="sellerWelcome">Welcome, Seller!</div>
+            <div style="width: 60px; height: 60px; background: rgba(255,255,255,0.2); border: 2px solid rgba(255,255,255,0.3); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: 600; font-size: 1.5rem; backdrop-filter: blur(10px);" id="sellerAvatar">S</div>
         </div>
-    </header>
+    </div>
+</header>
 
     <!-- Main Content -->
     <div style="max-width: 1200px; margin: 0 auto; padding: 2rem;">
@@ -1423,18 +1441,12 @@
         <div class="stat-card">
             <div class="stat-icon">💰</div>
             <div>
-                <h3 style="color: #333; margin: 0 0 0.5rem 0; font-size: 0.9rem; font-weight: 500;">Monthly Fee</h3>
-                <div style="font-size: 2.2rem; font-weight: 700; color: #28a745;">$25</div>
-            </div>
-        </div>
-        <div class="stat-card">
-            <div class="stat-icon">✅</div>
-            <div>
-                <h3 style="color: #333; margin: 0 0 0.5rem 0; font-size: 0.9rem; font-weight: 500;">Account Status</h3>
-                <div style="font-size: 1.4rem; font-weight: 600; color: #28a745;">Active</div>
+                <h3 style="color: #333; margin: 0 0 0.5rem 0; font-size: 0.9rem; font-weight: 500;">Monthly Revenue</h3>
+                <div style="font-size: 2.2rem; font-weight: 700; color: #28a745;">$0</div>
             </div>
         </div>
     </div>
+</div>
     
     <div style="background: white; padding: 2rem; border-radius: 16px; box-shadow: 0 4px 20px rgba(0,0,0,0.1);">
         <h3 style="color: #333; margin-bottom: 1rem;">Quick Stats</h3>
@@ -1574,85 +1586,90 @@
 
 <!-- Edit Product Modal -->
 <div id="editProductModal" class="modal">
-    <div class="modal-content" style="max-width: 600px; padding: 2rem;">
-        <span class="close" onclick="closeEditProduct()">&times;</span>
-        <h2 style="color: #333; margin-bottom: 1rem; text-align: center;">Edit Product</h2>
+    <div class="modal-content" style="max-width: 700px; padding: 0; border-radius: 16px; overflow: hidden;">
+        <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 2rem; text-align: center; position: relative;">
+            <span class="close" onclick="closeEditProduct()" style="position: absolute; top: 1rem; right: 1.5rem; color: white; font-size: 2rem;">&times;</span>
+            <h2 style="color: white; margin: 0; font-size: 1.8rem; font-weight: 300;">Edit Product</h2>
+            <p style="color: rgba(255,255,255,0.9); margin: 0.5rem 0 0 0;">Update your product details below</p>
+        </div>
         
-        <form id="editProductForm" onsubmit="handleEditProduct(event)" class="product-form">
-            <input type="hidden" id="editProductId">
-            
-            <div class="form-row">
-                <div class="form-field">
-                    <label>Product Name</label>
-                    <input type="text" id="editProductName" required>
+        <div style="padding: 2rem;">
+            <form id="editProductForm" onsubmit="handleEditProduct(event)" class="product-form">
+                <input type="hidden" id="editProductId">
+                
+                <div class="form-row">
+                    <div class="form-field">
+                        <label>Product Name</label>
+                        <input type="text" id="editProductName" required>
+                    </div>
+                    <div class="form-field">
+                        <label>Price ($)</label>
+                        <input type="number" id="editProductPrice" step="0.01" min="0" required>
+                    </div>
                 </div>
+                
                 <div class="form-field">
-                    <label>Price ($)</label>
-                    <input type="number" id="editProductPrice" step="0.01" min="0" required>
+                    <label>Description</label>
+                    <textarea id="editProductDescription" rows="3" required></textarea>
                 </div>
-            </div>
-            
-            <div class="form-field">
-                <label>Description</label>
-                <textarea id="editProductDescription" rows="3" required></textarea>
-            </div>
-            
-            <div class="form-row">
-                <div class="form-field">
-                    <label>Category</label>
-                    <select id="editProductCategory" required>
-                        <option value="">Select Category</option>
-                        <option value="electronics">Electronics</option>
-                        <option value="clothing">Clothing</option>
-                        <option value="home">Home</option>
-                        <option value="beauty">Beauty</option>
-                        <option value="sports">Sports</option>
-                        <option value="books">Books</option>
-                        <option value="toys">Toys</option>
-                        <option value="automotive">Automotive</option>
-                        <option value="jewelry">Jewelry</option>
-                        <option value="health">Health</option>
-                        <option value="music">Music</option>
-                    </select>
+                
+                <div class="form-row">
+                    <div class="form-field">
+                        <label>Category</label>
+                        <select id="editProductCategory" required>
+                            <option value="">Select Category</option>
+                            <option value="electronics">Electronics</option>
+                            <option value="clothing">Clothing</option>
+                            <option value="home">Home</option>
+                            <option value="beauty">Beauty</option>
+                            <option value="sports">Sports</option>
+                            <option value="books">Books</option>
+                            <option value="toys">Toys</option>
+                            <option value="automotive">Automotive</option>
+                            <option value="jewelry">Jewelry</option>
+                            <option value="health">Health</option>
+                            <option value="music">Music</option>
+                        </select>
+                    </div>
+                    <div class="form-field">
+                        <label>Image URL</label>
+                        <input type="url" id="editProductImage" required>
+                    </div>
                 </div>
-                <div class="form-field">
-                    <label>Image URL</label>
-                    <input type="url" id="editProductImage" required>
+                
+                <div class="form-row">
+                    <div class="form-field">
+                        <label>Knutsford Delivery Time</label>
+                        <select id="editKnutsfordDelivery" required>
+                            <option value="">Select Delivery Time</option>
+                            <option value="1-2">1-2 days</option>
+                            <option value="3-5">3-5 days</option>
+                            <option value="5-7">5-7 days</option>
+                            <option value="7-10">7-10 days</option>
+                            <option value="10-14">10-14 days</option>
+                            <option value="14-21">14-21 days</option>
+                        </select>
+                    </div>
+                    <div class="form-field">
+                        <label>Tara Delivery Time</label>
+                        <select id="editTaraDelivery" required>
+                            <option value="">Select Delivery Time</option>
+                            <option value="1-2">1-2 days</option>
+                            <option value="3-5">3-5 days</option>
+                            <option value="5-7">5-7 days</option>
+                            <option value="7-10">7-10 days</option>
+                            <option value="10-14">10-14 days</option>
+                            <option value="14-21">14-21 days</option>
+                        </select>
+                    </div>
                 </div>
-            </div>
-            
-            <div class="form-row">
-                <div class="form-field">
-                    <label>Knutsford Delivery Time</label>
-                    <select id="editKnutsfordDelivery" required>
-                        <option value="">Select Delivery Time</option>
-                        <option value="1-2">1-2 days</option>
-                        <option value="3-5">3-5 days</option>
-                        <option value="5-7">5-7 days</option>
-                        <option value="7-10">7-10 days</option>
-                        <option value="10-14">10-14 days</option>
-                        <option value="14-21">14-21 days</option>
-                    </select>
+                
+                <div style="display: flex; gap: 1rem; margin-top: 2rem; justify-content: center;">
+                    <button type="submit" class="btn-primary">Update Product</button>
+                    <button type="button" onclick="closeEditProduct()" style="background: #6c757d; color: white; border: none; padding: 1rem 2rem; border-radius: 8px; cursor: pointer; font-weight: 600;">Cancel</button>
                 </div>
-                <div class="form-field">
-                    <label>Tara Delivery Time</label>
-                    <select id="editTaraDelivery" required>
-                        <option value="">Select Delivery Time</option>
-                        <option value="1-2">1-2 days</option>
-                        <option value="3-5">3-5 days</option>
-                        <option value="5-7">5-7 days</option>
-                        <option value="7-10">7-10 days</option>
-                        <option value="10-14">10-14 days</option>
-                        <option value="14-21">14-21 days</option>
-                    </select>
-                </div>
-            </div>
-            
-            <div style="display: flex; gap: 1rem; margin-top: 2rem;">
-                <button type="submit" class="btn-primary" style="flex: 1;">Update Product</button>
-                <button type="button" onclick="closeEditProduct()" style="flex: 1; background: #6c757d; color: white; border: none; padding: 1rem; border-radius: 8px; cursor: pointer;">Cancel</button>
-            </div>
-        </form>
+            </form>
+        </div>
     </div>
 </div>
 <script>
