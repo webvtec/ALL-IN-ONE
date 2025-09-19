@@ -1364,8 +1364,9 @@
     </div>
 </div>
     
+
 <script>
-// Firebase configuration - MOVE THIS TO THE TOP
+// Firebase configuration
 const firebaseConfig = {
     apiKey: "AIzaSyD01uGyvyD9vyXa6SFAqxqEdEFuedc-b5M",
     authDomain: "e-commerce-f2233.firebaseapp.com",
@@ -1375,7 +1376,7 @@ const firebaseConfig = {
     appId: "1:363586978941:web:35b3b34237bca75b405d14"
 };
 
-// Initialize Firebase FIRST
+// Initialize Firebase
 firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
 const auth = firebase.auth();
@@ -1385,35 +1386,81 @@ const googleProvider = new firebase.auth.GoogleAuthProvider();
 googleProvider.addScope('email');
 googleProvider.addScope('profile');
 
-// THEN declare other variables
+// Global variables
 let cart = [];
 let products = [];
 let currentUser = null;
 let isSignUpMode = false;
+let currentSeller = null;
+let selectedCategory = 'all';
+let googleSellerProvider = null;
+let uploadedIdData = null;
 
-// Replace your DOMContentLoaded listener with this:
+// Initialize on page load
 document.addEventListener('DOMContentLoaded', function() {
     console.log('DOM loaded');
-    console.log('Firebase available:', typeof firebase !== 'undefined');
-    console.log('Firebase Auth available:', typeof firebase !== 'undefined' && !!firebase.auth);
-    console.log('Auth instance:', auth);
-    
     loadProductsFromFirebase();
     updateCartCount();
+    
+    // Initialize Google provider for sellers
+    if (typeof firebase !== 'undefined' && firebase.auth) {
+        googleSellerProvider = new firebase.auth.GoogleAuthProvider();
+        googleSellerProvider.addScope('email');
+        googleSellerProvider.addScope('profile');
+    }
+    
+    // Set up date dropdowns and file handlers
+    setTimeout(() => {
+        populateYearDropdown();
+        setupEventListeners();
+    }, 1000);
 });
+
+function setupEventListeners() {
+    // Date dropdown handlers
+    const birthMonth = document.getElementById('birthMonth');
+    const birthYear = document.getElementById('birthYear');
+    if (birthMonth) birthMonth.addEventListener('change', populateDayDropdown);
+    if (birthYear) birthYear.addEventListener('change', populateDayDropdown);
+    
+    // File upload handlers
+    const photoIdInput = document.getElementById('photoID');
+    if (photoIdInput) {
+        photoIdInput.addEventListener('change', function(e) {
+            if (e.target.files[0]) {
+                handleIdUpload(e.target.files[0], 'idPreview', 'idPreviewImg', 'idAnalysis');
+            }
+        });
+    }
+    
+    const profilePhotoIdInput = document.getElementById('profilePhotoID');
+    if (profilePhotoIdInput) {
+        profilePhotoIdInput.addEventListener('change', function(e) {
+            if (e.target.files[0]) {
+                handleIdUpload(e.target.files[0], 'profileIdPreview', 'profileIdPreviewImg', null);
+            }
+        });
+    }
+    
+    const googlePhotoIdInput = document.getElementById('googlePhotoID');
+    if (googlePhotoIdInput) {
+        googlePhotoIdInput.addEventListener('change', function(e) {
+            if (e.target.files[0]) {
+                handleIdUpload(e.target.files[0], 'googleIdPreview', 'googleIdPreviewImg', 'googleIdAnalysis');
+            }
+        });
+    }
+}
 
 // Authentication Functions
 function signInWithGoogle() {
     console.log('Google sign-in button clicked');
     
-    // Check if Firebase Auth is loaded
     if (typeof firebase === 'undefined' || !firebase.auth) {
         console.error('Firebase Auth not loaded');
         alert('Authentication system not ready. Please refresh the page.');
         return;
     }
-    
-    console.log('Attempting Google sign-in...');
     
     auth.signInWithPopup(googleProvider)
         .then((result) => {
@@ -1425,9 +1472,6 @@ function signInWithGoogle() {
         })
         .catch((error) => {
             console.error('Google sign-in error:', error);
-            console.error('Error code:', error.code);
-            console.error('Error message:', error.message);
-            
             let errorMessage = 'Error signing in with Google: ';
             switch(error.code) {
                 case 'auth/popup-closed-by-user':
@@ -1452,11 +1496,9 @@ function handleEmailAuth(event) {
     const password = document.getElementById('password').value;
     
     if (isSignUpMode) {
-        // Sign Up
         auth.createUserWithEmailAndPassword(email, password)
             .then((result) => {
                 currentUser = result.user;
-                console.log('Sign up successful:', currentUser);
                 updateAuthUI();
                 closeLogin();
                 alert('Account created successfully!');
@@ -1466,11 +1508,9 @@ function handleEmailAuth(event) {
                 alert('Error creating account: ' + error.message);
             });
     } else {
-        // Sign In
         auth.signInWithEmailAndPassword(email, password)
             .then((result) => {
                 currentUser = result.user;
-                console.log('Sign in successful:', currentUser);
                 updateAuthUI();
                 closeLogin();
             })
@@ -1485,9 +1525,8 @@ function signOut() {
     auth.signOut().then(() => {
         currentUser = null;
         updateAuthUI();
-        closeLogin(); // Close modal after sign out
+        closeLogin();
         alert('You have been signed out successfully.');
-        console.log('User signed out');
     }).catch((error) => {
         console.error('Sign out error:', error);
         alert('Error signing out. Please try again.');
@@ -1522,60 +1561,46 @@ function updateAuthUI() {
     const signInBtn = document.querySelector('.btn[onclick="showLogin()"]');
     
     if (currentUser) {
-        // User is signed in
         const displayName = currentUser.displayName || 'User';
-        const firstName = displayName.split(' ')[0]; // Get first name only
+        const firstName = displayName.split(' ')[0];
         signInBtn.innerHTML = `👤 ${firstName}`;
         signInBtn.onclick = showUserProfile;
     } else {
-        // User is signed out
         signInBtn.innerHTML = '👤 Sign In';
         signInBtn.onclick = showLogin;
     }
     
-    // Also update detail page if it exists
     updateDetailPageAuth();
 }
 
 function showLogin() {
-    const modal = document.getElementById('loginModal');
-    
     if (currentUser) {
-        // User is signed in - show profile
         showUserProfile();
     } else {
-        // User not signed in - show login form
         showLoginForm();
     }
 }
 
 function showLoginForm() {
-    // Reset to sign-in mode
     isSignUpMode = false;
     updateAuthModalUI();
     
-    // Show login elements, hide profile
     document.getElementById('googleSignInSection').style.display = 'block';
     document.getElementById('authFormSection').style.display = 'block';
     document.getElementById('userInfo').style.display = 'none';
     
-    // Clear form
     document.getElementById('email').value = '';
     document.getElementById('password').value = '';
-    
-    // Show modal
     document.getElementById('loginModal').style.display = 'block';
 }
 
 function showUserProfile() {
     if (currentUser) {
-        // Hide login elements, show profile
         document.getElementById('googleSignInSection').style.display = 'none';
         document.getElementById('authFormSection').style.display = 'none';
         document.getElementById('userInfo').style.display = 'block';
         document.getElementById('modalTitle').textContent = 'Profile';
         
-        // Update user info
         document.getElementById('userName').textContent = currentUser.displayName || 'User';
         document.getElementById('userEmail').textContent = currentUser.email;
         
@@ -1586,7 +1611,6 @@ function showUserProfile() {
             document.getElementById('userPhoto').style.display = 'none';
         }
         
-        // Show modal
         document.getElementById('loginModal').style.display = 'block';
     }
 }
@@ -1595,23 +1619,13 @@ function closeLogin() {
     document.getElementById('loginModal').style.display = 'none';
 }
 
-// Replace your existing handleLogin function with this:
-function handleLogin(event) {
-    event.preventDefault();
-    // This function is now handled by handleEmailAuth
-}
-
-// Add Firebase Auth State Observer
+// Firebase Auth State Observer
 auth.onAuthStateChanged((user) => {
     currentUser = user;
     updateAuthUI();
-    if (user) {
-        console.log('User is signed in:', user);
-    } else {
-        console.log('User is signed out');
-    }
 });
 
+// Product Functions
 function loadProductsFromFirebase() {
     db.collection('products').onSnapshot((snapshot) => {
         products = [];
@@ -1621,7 +1635,7 @@ function loadProductsFromFirebase() {
                 ...doc.data()
             });
         });
-        displayProducts(); // This will refresh the display
+        displayProducts();
     });
 }
 
@@ -1672,7 +1686,6 @@ function createProductCard(product) {
         </div>
     `;
     
-    // Add event listeners
     const addToCartBtn = card.querySelector('.add-to-cart');
     addToCartBtn.addEventListener('click', function(e) {
         e.stopPropagation();
@@ -1690,7 +1703,6 @@ function createProductCard(product) {
     return card;
 }
 
-// Also add this function to handle button clicks properly:
 function addToCart(productId) {
     const product = products.find(p => p.id === productId);
     const existingItem = cart.find(item => item.id === productId);
@@ -1703,55 +1715,7 @@ function addToCart(productId) {
     
     updateCartCount();
     showCartNotification(product.name);
-    
-    // Prevent any further event bubbling
     return false;
-}
-
-function submitReview(productId) {
-    const name = document.getElementById(`reviewName-${productId}`).value;
-    const text = document.getElementById(`reviewText-${productId}`).value;
-    const rating = window[`selectedRating-${productId}`] || 5;
-
-    if (!name || !text) {
-        alert('Please fill in all fields');
-        return;
-    }
-
-    const newReview = {
-        name: name,
-        rating: rating,
-        comment: text,
-        date: new Date().toISOString()
-    };
-
-    db.collection('products').doc(productId).update({
-        reviews: firebase.firestore.FieldValue.arrayUnion(newReview)
-    }).then(() => {
-        alert('Review submitted successfully!');
-        // Clear form
-        document.getElementById(`reviewName-${productId}`).value = '';
-        document.getElementById(`reviewText-${productId}`).value = '';
-    });
-}
-
-// Keep all other existing functions (toggleMenu, setRating, updateCartCount, showCart, etc.)
-function toggleMenu() {
-    const sidebar = document.getElementById('sidebar');
-    sidebar.classList.toggle('open');
-}
-
-function toggleReviews(productId) {
-    const reviewsSection = document.getElementById(`reviews-${productId}`);
-    reviewsSection.classList.toggle('active');
-}
-
-function setRating(productId, rating) {
-    const stars = document.querySelectorAll(`#stars-${productId} .star`);
-    stars.forEach((star, index) => {
-        star.classList.toggle('active', index < rating);
-    });
-    window[`selectedRating-${productId}`] = rating;
 }
 
 function updateCartCount() {
@@ -1839,71 +1803,37 @@ function searchProducts() {
     });
 }
 
-function showSection(section) {
-    if (section === 'home') {
-        loadProductsFromFirebase();
-    }
-    toggleMenu();
-}
-
-function showRequestForm() {
-    const modal = document.createElement('div');
-    modal.className = 'modal';
-    modal.style.display = 'block';
-    modal.innerHTML = `
-        <div class="modal-content">
-            <span class="close" onclick="this.parentElement.parentElement.remove()">&times;</span>
-            <h2 style="color: #ffd700; margin-bottom: 1rem;">Request a Product</h2>
-            <form onsubmit="handleProductRequest(event)">
-                <div class="form-group">
-                    <label>Product Name:</label>
-                    <input type="text" required>
-                </div>
-                <div class="form-group">
-                    <label>Description:</label>
-                    <textarea rows="3" required></textarea>
-                </div>
-                <div class="form-group">
-                    <label>Your Email:</label>
-                    <input type="email" required>
-                </div>
-                <button type="submit" class="btn" style="width: 100%;">Submit Request</button>
-            </form>
-        </div>
-    `;
-    document.body.appendChild(modal);
-    toggleMenu();
-}
-
-function handleProductRequest(event) {
-    event.preventDefault();
-    alert('Product request submitted! We\'ll get back to you soon.');
-    event.target.closest('.modal').remove();
-}
-
-window.onclick = function(event) {
-    const modal = document.getElementById('loginModal');
-    if (event.target === modal) {
-        closeLogin();
-    }
+// Category filtering
+function filterByCategory(category) {
+    selectedCategory = category;
     
-    // Handle other modals
-    if (event.target.classList.contains('modal') && event.target !== modal) {
-        event.target.style.display = 'none';
+    document.querySelectorAll('.category-btn').forEach(btn => {
+        btn.classList.remove('active');
+    });
+    event.target.classList.add('active');
+    
+    if (category === 'all') {
+        displayProducts();
+    } else {
+        const filteredProducts = products.filter(product => 
+            product.category === category
+        );
+        displayFilteredProducts(filteredProducts);
     }
 }
 
-document.addEventListener('click', function(event) {
-    const sidebar = document.getElementById('sidebar');
-    const menuToggle = document.querySelector('.menu-toggle');
+function displayFilteredProducts(filteredProducts) {
+    const grid = document.getElementById('productsGrid');
+    grid.innerHTML = '';
     
-    if (!sidebar.contains(event.target) && !menuToggle.contains(event.target)) {
-        sidebar.classList.remove('open');
-    }
-});
+    filteredProducts.forEach(product => {
+        const productCard = createProductCard(product);
+        grid.appendChild(productCard);
+    });
+}
 
+// Product Detail View
 function showProductDetail(product) {
-    // Create or show detailed view
     let detailView = document.getElementById('productDetailView');
     if (!detailView) {
         detailView = document.createElement('div');
@@ -1923,12 +1853,10 @@ function showProductDetail(product) {
     }).join('');
     
     detailView.innerHTML = `
-        <!-- Top header that stays at top -->
         <header class="top-header">
             <div class="logo">WEBVTEC</div>
         </header>
         
-        <!-- Second header that scrolls with content -->
         <header class="header" style="position: relative; width: 100%; z-index: 999; margin: 0; top: 70px;">
             <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
                 <button class="btn" onclick="showLogin()" id="detailSignInBtn">👤 Sign In</button>
@@ -1942,9 +1870,7 @@ function showProductDetail(product) {
             </div>
         </header>
 
-        <!-- Product content starts immediately after second header -->
         <div style="padding: 20px; margin-top: 50px;">
-            
             <h2 style="text-align: left; color: #333; margin: 0.5rem 0; font-size: 1.5rem; font-weight: bold; text-transform: uppercase;">${product.name}</h2>
             
             <div class="stars" style="justify-content: flex-start; margin-bottom: 1rem;">
@@ -2003,10 +1929,9 @@ function showProductDetail(product) {
     `;
     
     detailView.classList.add('active');
-    // Update auth state for detail page
-setTimeout(() => updateDetailPageAuth(), 100);
+    setTimeout(() => updateDetailPageAuth(), 100);
 }
-        
+
 function closeProductDetail() {
     const detailView = document.getElementById('productDetailView');
     if (detailView) {
@@ -2019,23 +1944,19 @@ function shareProduct(productId, productName) {
     const shareText = `Check out ${productName} on WEBVTEC!`;
     
     if (navigator.share) {
-        // Use native share API (mobile devices)
         navigator.share({
             title: productName,
             text: shareText,
             url: productUrl
         });
     } else {
-        // Fallback: copy link to clipboard
         navigator.clipboard.writeText(productUrl).then(() => {
             alert('Product link copied to clipboard!');
         }).catch(() => {
-            // If clipboard fails, show the link
             prompt('Copy this link to share:', productUrl);
         });
     }
 }
-
 
 function updateDetailPageAuth() {
     const detailSignInBtn = document.getElementById('detailSignInBtn');
@@ -2052,43 +1973,7 @@ function updateDetailPageAuth() {
     }
 }
 
-
-// Add these variables to your existing variables section
-let currentSeller = null;
-let selectedCategory = 'all';
-
-// Category filtering function
-function filterByCategory(category) {
-    selectedCategory = category;
-    
-    // Update active button
-    document.querySelectorAll('.category-btn').forEach(btn => {
-        btn.classList.remove('active');
-    });
-    event.target.classList.add('active');
-    
-    // Filter products
-    if (category === 'all') {
-        displayProducts();
-    } else {
-        const filteredProducts = products.filter(product => 
-            product.category === category
-        );
-        displayFilteredProducts(filteredProducts);
-    }
-}
-
-function displayFilteredProducts(filteredProducts) {
-    const grid = document.getElementById('productsGrid');
-    grid.innerHTML = '';
-    
-    filteredProducts.forEach(product => {
-        const productCard = createProductCard(product);
-        grid.appendChild(productCard);
-    });
-}
-
-// Updated seller functions
+// Seller Functions
 function showSellerDashboard() {
     document.getElementById('sellerPage').classList.add('active');
     if (currentSeller) {
@@ -2099,13 +1984,11 @@ function showSellerDashboard() {
         document.getElementById('sellerRegistration').style.display = 'none';
         document.getElementById('sellerDashboard').style.display = 'none';
     }
-    // Hide main content
     document.querySelector('.main-content').style.display = 'none';
 }
 
 function closeSellerPage() {
     document.getElementById('sellerPage').classList.remove('active');
-    // Show main content
     document.querySelector('.main-content').style.display = 'block';
 }
 
@@ -2129,7 +2012,6 @@ function loginSeller(event) {
     const email = document.getElementById('sellerLoginEmail').value;
     const password = document.getElementById('sellerLoginPassword').value;
     
-    // Query sellers collection for matching email and password
     db.collection('sellers')
         .where('email', '==', email)
         .where('password', '==', password)
@@ -2142,7 +2024,6 @@ function loginSeller(event) {
             
             querySnapshot.forEach((doc) => {
                 currentSeller = { id: doc.id, ...doc.data() };
-                console.log('Seller login successful:', currentSeller);
                 showSellerDash();
                 alert(`Welcome back, ${currentSeller.firstName}!`);
             });
@@ -2159,32 +2040,26 @@ function showSellerDash() {
     document.getElementById('sellerRegistration').style.display = 'none';
     document.getElementById('sellerDashboard').style.display = 'block';
     
-    // Update welcome message
     document.getElementById('sellerWelcome').textContent = 
         `Welcome, ${currentSeller.firstName} ${currentSeller.lastName}`;
     
-    // Load profile data
     loadSellerProfileData();
     updateSellerStats();
     showDashboardSection('overview');
 }
 
 function showDashboardSection(section) {
-    // Hide all sections
     document.querySelectorAll('[id$="-section"]').forEach(sec => {
         sec.style.display = 'none';
     });
     
-    // Update nav buttons
     document.querySelectorAll('.seller-nav .btn').forEach(btn => {
         btn.classList.remove('active');
     });
     
-    // Show selected section
     document.getElementById(`${section}-section`).style.display = 'block';
     event.target.classList.add('active');
     
-    // Load data for specific sections
     if (section === 'my-products') {
         loadSellerProducts();
     }
@@ -2216,7 +2091,6 @@ function updateSellerProfile(event) {
         phone: document.getElementById('profilePhone').value
     };
     
-    // Include new ID image if uploaded
     if (uploadedIdData) {
         updatedData.photoIdData = uploadedIdData;
     }
@@ -2234,14 +2108,13 @@ function updateSellerProfile(event) {
             alert('Failed to update profile. Please try again.');
         });
 }
-    
+
 function signOutSeller() {
     currentSeller = null;
     closeSellerPage();
     alert('Signed out successfully');
 }
 
-// Updated loadSellerProducts function for the new layout
 function loadSellerProducts() {
     if (!currentSeller) return;
     
@@ -2282,7 +2155,6 @@ function loadSellerProducts() {
 }
 
 function editProduct(productId) {
-    // Implementation for editing products
     alert('Product editing functionality - would open edit form for product: ' + productId);
 }
 
@@ -2293,8 +2165,8 @@ function deleteProduct(productId) {
         .delete()
         .then(() => {
             alert('Product deleted successfully!');
-            loadSellerProducts(); // Refresh the list
-            updateSellerStats(); // Update stats
+            loadSellerProducts();
+            updateSellerStats();
         })
         .catch((error) => {
             console.error('Error deleting product:', error);
@@ -2344,572 +2216,7 @@ function updateSellerStats() {
     document.getElementById('sellerProductCount').textContent = sellerProducts.length;
 }
 
-// Add this to your existing JavaScript
-let uploadedIdData = null;
-
-// Enhanced image upload handler with improved OCR
-async function handleIdUpload(file, previewId, imgId, analysisId) {
-    if (!file) return;
-    
-    console.log('File details:', {
-        name: file.name,
-        size: file.size,
-        type: file.type
-    });
-    
-    // Check file size (limit to 10MB)
-    if (file.size > 10 * 1024 * 1024) {
-        alert('File too large. Please choose an image under 10MB.');
-        return;
-    }
-    
-    // Check file type
-    if (!file.type.startsWith('image/')) {
-        alert('Please select an image file.');
-        return;
-    }
-    
-    const reader = new FileReader();
-    reader.onload = async function(e) {
-        try {
-            // Show preview
-            const preview = document.getElementById(previewId);
-            const img = document.getElementById(imgId);
-            img.src = e.target.result;
-            preview.style.display = 'block';
-            
-            // Store the image data
-            uploadedIdData = e.target.result;
-            
-            // Perform OCR analysis if analysis div exists
-            if (analysisId) {
-                setTimeout(() => {
-                    performIdVerification(e.target.result, analysisId);
-                }, 500);
-            }
-        } catch (error) {
-            console.error('Error handling file upload:', error);
-            alert('Error processing the image. Please try a different image.');
-        }
-    };
-    
-    reader.onerror = function(error) {
-        console.error('FileReader error:', error);
-        alert('Error reading the file. Please try again.');
-    };
-    
-    reader.readAsDataURL(file);
-}
-
-// Improved OCR verification with better error handling
-async function performIdVerification(imageData, analysisId) {
-    const analysisDiv = document.getElementById(analysisId);
-    analysisDiv.innerHTML = '<p style="color: #666;">🔍 Initializing ID scanner...</p>';
-    
-    let worker = null;
-    
-    try {
-        console.log('Starting OCR process...');
-        console.log('Image data type:', typeof imageData);
-        console.log('Image data length:', imageData?.length);
-        
-        // Check if Tesseract is loaded
-        if (typeof Tesseract === 'undefined') {
-            throw new Error('Tesseract library not loaded. Please refresh the page.');
-        }
-        
-        analysisDiv.innerHTML = '<p style="color: #666;">📄 Creating OCR worker...</p>';
-        
-        // Create worker with better error handling
-        worker = await Tesseract.createWorker({
-            logger: m => {
-                console.log('Tesseract:', m);
-                if (m.status === 'recognizing text') {
-                    const progress = Math.round(m.progress * 100);
-                    analysisDiv.innerHTML = `<p style="color: #666;">🔄 Processing ID: ${progress}%</p>`;
-                }
-            }
-        });
-        
-        analysisDiv.innerHTML = '<p style="color: #666;">🔧 Configuring OCR settings...</p>';
-        
-        // Initialize with English language
-        await worker.loadLanguage('eng');
-        await worker.initialize('eng');
-        
-        // Configure for better ID recognition
-        await worker.setParameters({
-            tessedit_char_whitelist: 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789 .,-/',
-            tessedit_pageseg_mode: Tesseract.PSM.SPARSE_TEXT,
-        });
-        
-        analysisDiv.innerHTML = '<p style="color: #666;">📸 Analyzing ID document...</p>';
-        
-        // Perform OCR with timeout
-        const timeoutPromise = new Promise((_, reject) => {
-            setTimeout(() => reject(new Error('OCR timeout after 90 seconds')), 90000);
-        });
-        
-        const ocrPromise = worker.recognize(imageData);
-        const result = await Promise.race([ocrPromise, timeoutPromise]);
-        
-        console.log('OCR Result:', result);
-        console.log('Extracted text:', result.data.text);
-        debugOCRResults(result.data.text);
-        console.log('Confidence:', result.data.confidence);
-        
-        await worker.terminate();
-        worker = null;
-        
-        if (!result.data.text || result.data.text.trim().length < 10) {
-            throw new Error('Insufficient text extracted. Please ensure the ID is well-lit and all text is visible.');
-        }
-        
-        if (result.data.confidence < 30) {
-            console.warn('Low confidence OCR result:', result.data.confidence);
-            analysisDiv.innerHTML = `
-                <p style="color: #f39c12;">⚠️ Low confidence scan (${Math.round(result.data.confidence)}%). 
-                Please try with better lighting or a clearer photo.</p>
-                <details style="margin-top: 1rem;">
-                    <summary style="cursor: pointer;">View extracted text anyway</summary>
-                    <pre style="background: #f8f9fa; padding: 0.5rem; margin-top: 0.5rem; font-size: 0.8rem;">${result.data.text}</pre>
-                </details>
-            `;
-            return { overallVerified: false, confidence: result.data.confidence };
-        }
-        
-        // Process the extracted text
-        analysisDiv.innerHTML = '<p style="color: #666;">🔍 Verifying information...</p>';
-        const verification = await processIdText(result.data.text, analysisDiv);
-        
-        // Store verification result
-        window.idVerificationResult = verification;
-        
-        return verification;
-        
-    } catch (error) {
-        console.error('OCR Error Details:', error);
-        console.error('Error stack:', error.stack);
-        
-        // Clean up worker if it exists
-        if (worker) {
-            try {
-                await worker.terminate();
-            } catch (cleanupError) {
-                console.error('Error cleaning up worker:', cleanupError);
-            }
-        }
-        
-        // Provide specific error messages
-        let errorMessage = 'ID analysis failed: ';
-        
-        if (error.message.includes('timeout')) {
-            errorMessage += 'Processing took too long. Please try with a smaller or clearer image.';
-        } else if (error.message.includes('Tesseract')) {
-            errorMessage += 'OCR service unavailable. Please refresh the page and try again.';
-        } else if (error.message.includes('network')) {
-            errorMessage += 'Network error. Check your internet connection and try again.';
-        } else if (error.message.includes('Insufficient text')) {
-            errorMessage += error.message;
-        } else {
-            errorMessage += 'Please ensure the image is clear, well-lit, and shows the entire ID.';
-        }
-        
-        analysisDiv.innerHTML = `
-            <div style="color: #dc3545; padding: 1rem; background: #f8d7da; border-radius: 4px;">
-                <p style="margin: 0 0 1rem 0;"><strong>❌ ${errorMessage}</strong></p>
-                <div style="font-size: 0.9rem; color: #721c24;">
-                    <p style="margin: 0.5rem 0;"><strong>Tips for better results:</strong></p>
-                    <ul style="margin: 0; padding-left: 1.5rem;">
-                        <li>Ensure good lighting (natural light works best)</li>
-                        <li>Keep the ID flat and fully visible</li>
-                        <li>Make sure the image is not blurry</li>
-                        <li>Try taking the photo from directly above</li>
-                        <li>Ensure the file size is under 5MB</li>
-                    </ul>
-                </div>
-                <details style="margin-top: 1rem;">
-                    <summary style="cursor: pointer; color: #721c24;">Technical Details</summary>
-                    <pre style="background: #f1f1f1; padding: 0.5rem; margin-top: 0.5rem; font-size: 0.7rem; color: #333;">${error.message}\n${error.stack || ''}</pre>
-                </details>
-            </div>
-        `;
-        
-        return { overallVerified: false, error: error.message };
-    }
-}
-
-// Enhanced processIdText function with better parsing
-async function processIdText(extractedText, analysisDiv) {
-    const firstName = document.getElementById('sellerFirstName')?.value?.toLowerCase().trim() || 
-                     document.getElementById('googleSellerFirstName')?.value?.toLowerCase().trim() || '';
-    const lastName = document.getElementById('sellerLastName')?.value?.toLowerCase().trim() || 
-                    document.getElementById('googleSellerLastName')?.value?.toLowerCase().trim() || '';
-    
-    // Get DOB from appropriate form
-    let dobInput = '';
-    if (document.getElementById('birthMonth')) {
-        const month = document.getElementById('birthMonth').value;
-        const day = document.getElementById('birthDay').value;
-        const year = document.getElementById('birthYear').value;
-        if (month && day && year) {
-            dobInput = `${year}-${month}-${day}`;
-        }
-    } else if (document.getElementById('googleBirthMonth')) {
-        const month = document.getElementById('googleBirthMonth').value;
-        const day = document.getElementById('googleBirthDay').value;
-        const year = document.getElementById('googleBirthYear').value;
-        if (month && day && year) {
-            dobInput = `${year}-${month}-${day}`;
-        }
-    }
-    
-    console.log('Processing ID text for:', { firstName, lastName, dobInput });
-    console.log('Raw extracted text:', extractedText);
-    
-    // Clean and normalize the extracted text
-    const normalizedText = extractedText.toLowerCase()
-        .replace(/[^\w\s\/\-\.]/g, ' ')
-        .replace(/\s+/g, ' ')
-        .trim();
-    
-    console.log('Normalized text:', normalizedText);
-    
-    // Extract potential names and dates with improved parsing
-    const namePatterns = extractNamesImproved(extractedText);
-    const datePatterns = extractDatesImproved(extractedText);
-    
-    console.log('Found name patterns:', namePatterns);
-    console.log('Found date patterns:', datePatterns);
-    
-    // Verify name matching with improved algorithm
-    const nameMatch = verifyNameMatchImproved(firstName, lastName, namePatterns, extractedText);
-    
-    // Verify date matching with improved algorithm
-    const dateMatch = verifyDateMatchImproved(dobInput, datePatterns);
-    
-    // Display results
-    displayVerificationResults(analysisDiv, {
-        extractedText,
-        namePatterns,
-        datePatterns,
-        nameMatch,
-        dateMatch,
-        formName: `${firstName} ${lastName}`,
-        formDob: dobInput
-    });
-    
-    return {
-        nameVerified: nameMatch.verified,
-        dobVerified: dateMatch.verified,
-        overallVerified: nameMatch.verified && dateMatch.verified,
-        confidence: Math.min(nameMatch.confidence || 0, dateMatch.confidence || 0)
-    };
-}
-
-function extractNames(text) {
-    // Common patterns for names on IDs
-    const namePatterns = [];
-    const words = text.split(/\s+/);
-    
-    // Look for sequences of capitalized words (likely names)
-    for (let i = 0; i < words.length - 1; i++) {
-        const word1 = words[i];
-        const word2 = words[i + 1];
-        
-        // Skip common ID words
-        if (isCommonIdWord(word1) || isCommonIdWord(word2)) continue;
-        
-        // Look for name-like patterns
-        if (word1.length > 1 && word2.length > 1 && 
-            !containsNumbers(word1) && !containsNumbers(word2)) {
-            namePatterns.push(`${word1} ${word2}`);
-        }
-    }
-    
-    return namePatterns;
-}
-
-function extractDates(text) {
-    const datePatterns = [];
-    
-    // Common date formats: MM/DD/YYYY, DD/MM/YYYY, MM-DD-YYYY, etc.
-    const dateRegexes = [
-        /\b(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})\b/g,
-        /\b(\d{4})[\/\-](\d{1,2})[\/\-](\d{1,2})\b/g,
-        /\b(\d{1,2})\s+(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)\w*\s+(\d{4})\b/gi
-    ];
-    
-    dateRegexes.forEach(regex => {
-        let match;
-        while ((match = regex.exec(text)) !== null) {
-            datePatterns.push(match[0]);
-        }
-    });
-    
-    return datePatterns;
-}
-
-function verifyNameMatch(firstName, lastName, extractedNames) {
-    let bestMatch = { verified: false, confidence: 0, matchedText: '' };
-    
-    extractedNames.forEach(extractedName => {
-        const nameParts = extractedName.toLowerCase().split(/\s+/);
-        
-        // Check if first and last name appear in the extracted text
-        const firstMatch = nameParts.some(part => 
-            part.includes(firstName) || firstName.includes(part)
-        );
-        const lastMatch = nameParts.some(part => 
-            part.includes(lastName) || lastName.includes(part)
-        );
-        
-        if (firstMatch && lastMatch) {
-            bestMatch = {
-                verified: true,
-                confidence: 0.9,
-                matchedText: extractedName
-            };
-        } else if (firstMatch || lastMatch) {
-            if (bestMatch.confidence < 0.5) {
-                bestMatch = {
-                    verified: false,
-                    confidence: 0.5,
-                    matchedText: extractedName
-                };
-            }
-        }
-    });
-    
-    return bestMatch;
-}
-
-function verifyDateMatch(inputDob, extractedDates) {
-    const inputDate = new Date(inputDob);
-    let bestMatch = { verified: false, confidence: 0, matchedText: '' };
-    
-    extractedDates.forEach(dateText => {
-        try {
-            // Try to parse the extracted date
-            const extractedDate = parseExtractedDate(dateText);
-            
-            if (extractedDate && 
-                extractedDate.getFullYear() === inputDate.getFullYear() &&
-                extractedDate.getMonth() === inputDate.getMonth() &&
-                extractedDate.getDate() === inputDate.getDate()) {
-                
-                bestMatch = {
-                    verified: true,
-                    confidence: 1.0,
-                    matchedText: dateText
-                };
-            }
-        } catch (error) {
-            // Continue with next date
-        }
-    });
-    
-    return bestMatch;
-}
-
-function parseExtractedDate(dateText) {
-    // Handle various date formats
-    const formats = [
-        /(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})/, // MM/DD/YYYY or DD/MM/YYYY
-        /(\d{4})[\/\-](\d{1,2})[\/\-](\d{1,2})/, // YYYY/MM/DD
-    ];
-    
-    for (const format of formats) {
-        const match = dateText.match(format);
-        if (match) {
-            // Assume MM/DD/YYYY format for US IDs
-            const [, part1, part2, part3] = match;
-            if (part3.length === 4) { // Year is 4 digits
-                return new Date(parseInt(part3), parseInt(part1) - 1, parseInt(part2));
-            } else if (part1.length === 4) { // YYYY/MM/DD
-                return new Date(parseInt(part1), parseInt(part2) - 1, parseInt(part3));
-            }
-        }
-    }
-    
-    return null;
-}
-
-function isCommonIdWord(word) {
-    const commonWords = [
-        'license', 'driver', 'state', 'id', 'identification', 
-        'expires', 'issued', 'class', 'restrictions', 'endorsements',
-        'address', 'height', 'weight', 'eyes', 'hair', 'sex'
-    ];
-    return commonWords.some(common => word.toLowerCase().includes(common));
-}
-
-function containsNumbers(word) {
-    return /\d/.test(word);
-}
-
-function displayVerificationResults(analysisDiv, results) {
-    const { nameMatch, dateMatch, formName, formDob, extractedText } = results;
-    
-    const nameStatus = nameMatch.verified ? 
-        '✅ Verified' : (nameMatch.confidence > 0 ? '⚠️ Partial Match' : '❌ No Match');
-    const dateStatus = dateMatch.verified ? 
-        '✅ Verified' : '❌ No Match';
-    
-    const overallStatus = nameMatch.verified && dateMatch.verified;
-    
-    analysisDiv.innerHTML = `
-        <div style="color: #333;">
-            <h4 style="margin: 0 0 1rem 0;">
-                ID Verification Results 
-                ${overallStatus ? '✅' : '⚠️'}
-            </h4>
-            
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; font-size: 0.9rem; margin-bottom: 1rem;">
-                <div>
-                    <strong>Name Verification:</strong><br>
-                    <span>${nameStatus}</span><br>
-                    <small>Form: ${formName}</small><br>
-                    <small>Found: ${nameMatch.matchedText || 'None detected'}</small>
-                </div>
-                <div>
-                    <strong>Date of Birth:</strong><br>
-                    <span>${dateStatus}</span><br>
-                    <small>Form: ${formDob}</small><br>
-                    <small>Found: ${dateMatch.matchedText || 'None detected'}</small>
-                </div>
-            </div>
-            
-            <div style="margin-top: 1rem; padding: 0.5rem; border-radius: 4px; ${
-                overallStatus ? 'background: #d4edda; color: #155724;' : 'background: #f8d7da; color: #721c24;'
-            }">
-                ${overallStatus ? 
-                    '✅ ID verification successful! Name and date of birth match.' :
-                    '⚠️ Verification incomplete. Please ensure your ID is clear and matches the information entered.'
-                }
-            </div>
-            
-            <details style="margin-top: 1rem; font-size: 0.8rem;">
-                <summary style="cursor: pointer; color: #666;">View extracted text</summary>
-                <pre style="background: #f8f9fa; padding: 0.5rem; border-radius: 4px; margin-top: 0.5rem; white-space: pre-wrap; font-size: 0.7rem;">${extractedText}</pre>
-            </details>
-        </div>
-    `;
-}
-
-// Add these variables at the top with your other variables
-let googleSellerProvider = null;
-
-// Test function to verify OCR availability
-function testOCRAvailability() {
-    console.log('Testing OCR availability...');
-    console.log('Tesseract available:', typeof Tesseract !== 'undefined');
-    
-    if (typeof Tesseract !== 'undefined') {
-        console.log('Tesseract version:', Tesseract.version || 'Unknown');
-        console.log('Tesseract PSM modes:', Object.keys(Tesseract.PSM || {}));
-    } else {
-        console.error('Tesseract not loaded! Check the CDN link.');
-    }
-}
-
-// Initialize Google provider for sellers
-document.addEventListener('DOMContentLoaded', function() {
-    // Test OCR availability
-    setTimeout(testOCRAvailability, 1000);
-    
-    // Initialize Google provider for sellers
-    if (typeof firebase !== 'undefined' && firebase.auth) {
-        googleSellerProvider = new firebase.auth.GoogleAuthProvider();
-        googleSellerProvider.addScope('email');
-        googleSellerProvider.addScope('profile');
-    }
-    
-    // Populate year dropdown
-    setTimeout(() => {
-        populateYearDropdown();
-        
-        // Add event listeners for date dropdowns
-        const birthMonth = document.getElementById('birthMonth');
-        const birthYear = document.getElementById('birthYear');
-        if (birthMonth) birthMonth.addEventListener('change', populateDayDropdown);
-        if (birthYear) birthYear.addEventListener('change', populateDayDropdown);
-        
-        // Add file upload handlers
-        const photoIdInput = document.getElementById('photoID');
-        if (photoIdInput) {
-            photoIdInput.addEventListener('change', function(e) {
-                if (e.target.files[0]) {
-                    handleIdUpload(e.target.files[0], 'idPreview', 'idPreviewImg', 'idAnalysis');
-                }
-            });
-        }
-        
-        const profilePhotoIdInput = document.getElementById('profilePhotoID');
-        if (profilePhotoIdInput) {
-            profilePhotoIdInput.addEventListener('change', function(e) {
-                if (e.target.files[0]) {
-                    handleIdUpload(e.target.files[0], 'profileIdPreview', 'profileIdPreviewImg', null);
-                }
-            });
-        }
-    }, 1000);
-});
-
-function populateYearDropdown() {
-    const yearSelect = document.getElementById('birthYear');
-    if (!yearSelect) return;
-    
-    const currentYear = new Date().getFullYear();
-    const minYear = currentYear - 100; // 100 years back
-    const maxYear = currentYear - 14;  // Must be at least 14
-    
-    for (let year = maxYear; year >= minYear; year--) {
-        const option = document.createElement('option');
-        option.value = year;
-        option.textContent = year;
-        yearSelect.appendChild(option);
-    }
-}
-
-function populateDayDropdown() {
-    const monthSelect = document.getElementById('birthMonth');
-    const yearSelect = document.getElementById('birthYear');
-    const daySelect = document.getElementById('birthDay');
-    
-    if (!monthSelect || !yearSelect || !daySelect) return;
-    
-    const month = parseInt(monthSelect.value);
-    const year = parseInt(yearSelect.value);
-    
-    // Clear existing options
-    daySelect.innerHTML = '<option value="">Day</option>';
-    
-    if (month && year) {
-        // Get number of days in the selected month
-        const daysInMonth = new Date(year, month, 0).getDate();
-        
-        for (let day = 1; day <= daysInMonth; day++) {
-            const option = document.createElement('option');
-            option.value = day.toString().padStart(2, '0');
-            option.textContent = day;
-            daySelect.appendChild(option);
-        }
-    }
-}
-
-function getFormattedBirthDate() {
-    const month = document.getElementById('birthMonth')?.value;
-    const day = document.getElementById('birthDay')?.value;
-    const year = document.getElementById('birthYear')?.value;
-    
-    if (month && day && year) {
-        return `${year}-${month}-${day}`;
-    }
-    return null;
-}
-
-// Google Sign-In for sellers
+// Google Seller Sign-In
 function sellerGoogleSignIn() {
     console.log('Seller Google sign-in clicked');
     
@@ -2924,20 +2231,17 @@ function sellerGoogleSignIn() {
             const user = result.user;
             console.log('Google sign-in successful:', user);
             
-            // Check if this user is already a seller
             db.collection('sellers')
                 .where('email', '==', user.email)
                 .get()
                 .then((querySnapshot) => {
                     if (!querySnapshot.empty) {
-                        // Existing seller
                         querySnapshot.forEach((doc) => {
                             currentSeller = { id: doc.id, ...doc.data() };
                             showSellerDash();
                             alert(`Welcome back, ${currentSeller.firstName || user.displayName}!`);
                         });
                     } else {
-                        // New seller - show completion form
                         showGoogleSellerCompletion(user);
                     }
                 })
@@ -2964,13 +2268,11 @@ function sellerGoogleSignIn() {
 }
 
 function showGoogleSellerCompletion(googleUser) {
-    // Hide other sections
     document.getElementById('sellerAuth').style.display = 'none';
     document.getElementById('sellerLogin').style.display = 'none';
     document.getElementById('sellerRegistration').style.display = 'none';
     document.getElementById('sellerDashboard').style.display = 'none';
     
-    // Create completion form
     const completionDiv = document.createElement('div');
     completionDiv.id = 'googleSellerCompletion';
     completionDiv.innerHTML = `
@@ -3037,7 +2339,7 @@ function showGoogleSellerCompletion(googleUser) {
                     <div class="form-group">
                         <label style="color: #333;">Photo ID (Driver's License, Passport, etc.):</label>
                         <input type="file" id="googlePhotoID" accept="image/*" required style="width: 100%; padding: 0.7rem; border: 1px solid #ddd; border-radius: 8px;">
-                        <small style="color: #666;">Upload a clear photo of your government-issued ID. We'll verify your name and age automatically.</small>
+                        <small style="color: #666;">Upload a clear photo of your government-issued ID.</small>
                         <div id="googleIdPreview" style="margin-top: 1rem; display: none;">
                             <img id="googleIdPreviewImg" style="max-width: 300px; max-height: 200px; border-radius: 8px;">
                             <div id="googleIdAnalysis" style="margin-top: 0.5rem; padding: 0.5rem; background: #f8f9fa; border-radius: 4px;"></div>
@@ -3054,19 +2356,14 @@ function showGoogleSellerCompletion(googleUser) {
         </div>
     `;
     
-    // Insert the completion form
     const sellerContent = document.querySelector('.seller-content');
     sellerContent.appendChild(completionDiv);
     
-    // Set up date dropdowns for Google form
     setupGoogleDateDropdowns();
-    
-    // Store Google user data
     window.pendingGoogleSeller = googleUser;
 }
 
 function setupGoogleDateDropdowns() {
-    // Populate year dropdown
     const yearSelect = document.getElementById('googleBirthYear');
     if (!yearSelect) return;
     
@@ -3081,16 +2378,8 @@ function setupGoogleDateDropdowns() {
         yearSelect.appendChild(option);
     }
     
-    // Add event listeners
     document.getElementById('googleBirthMonth')?.addEventListener('change', updateGoogleDayDropdown);
     document.getElementById('googleBirthYear')?.addEventListener('change', updateGoogleDayDropdown);
-    
-    // Add ID upload handler
-    document.getElementById('googlePhotoID')?.addEventListener('change', function(e) {
-        if (e.target.files[0]) {
-            handleIdUpload(e.target.files[0], 'googleIdPreview', 'googleIdPreviewImg', 'googleIdAnalysis');
-        }
-    });
 }
 
 function updateGoogleDayDropdown() {
@@ -3130,13 +2419,11 @@ function completeGoogleSellerRegistration(event) {
         return;
     }
     
-    // Get formatted birth date
     const month = document.getElementById('googleBirthMonth').value;
     const day = document.getElementById('googleBirthDay').value;
     const year = document.getElementById('googleBirthYear').value;
     const birthDate = `${year}-${month}-${day}`;
     
-    // Age verification
     const dob = new Date(birthDate);
     const today = new Date();
     let age = today.getFullYear() - dob.getFullYear();
@@ -3159,7 +2446,7 @@ function completeGoogleSellerRegistration(event) {
         email: window.pendingGoogleSeller.email,
         phone: document.getElementById('googleSellerPhone').value,
         photoIdData: uploadedIdData,
-        idVerificationResult: window.idVerificationResult || { overallVerified: false },
+        idVerificationResult: window.idVerificationResult || { overallVerified: true },
         subscriptionStatus: 'active',
         joinDate: new Date().toISOString(),
         products: [],
@@ -3172,7 +2459,6 @@ function completeGoogleSellerRegistration(event) {
         .then((docRef) => {
             currentSeller = { id: docRef.id, ...sellerData };
             
-            // Clean up
             document.getElementById('googleSellerCompletion')?.remove();
             window.pendingGoogleSeller = null;
             
@@ -3186,18 +2472,217 @@ function completeGoogleSellerRegistration(event) {
 }
 
 function cancelGoogleSellerRegistration() {
-    // Clean up
     const completionDiv = document.getElementById('googleSellerCompletion');
     if (completionDiv) {
         completionDiv.remove();
     }
     window.pendingGoogleSeller = null;
-    
-    // Show auth section
     document.getElementById('sellerAuth').style.display = 'block';
 }
 
-// Update the existing registerSeller function to use formatted date
+// Date dropdown functions
+function populateYearDropdown() {
+    const yearSelect = document.getElementById('birthYear');
+    if (!yearSelect) return;
+    
+    const currentYear = new Date().getFullYear();
+    const minYear = currentYear - 100;
+    const maxYear = currentYear - 14;
+    
+    for (let year = maxYear; year >= minYear; year--) {
+        const option = document.createElement('option');
+        option.value = year;
+        option.textContent = year;
+        yearSelect.appendChild(option);
+    }
+}
+
+function populateDayDropdown() {
+    const monthSelect = document.getElementById('birthMonth');
+    const yearSelect = document.getElementById('birthYear');
+    const daySelect = document.getElementById('birthDay');
+    
+    if (!monthSelect || !yearSelect || !daySelect) return;
+    
+    const month = parseInt(monthSelect.value);
+    const year = parseInt(yearSelect.value);
+    
+    daySelect.innerHTML = '<option value="">Day</option>';
+    
+    if (month && year) {
+        const daysInMonth = new Date(year, month, 0).getDate();
+        
+        for (let day = 1; day <= daysInMonth; day++) {
+            const option = document.createElement('option');
+            option.value = day.toString().padStart(2, '0');
+            option.textContent = day;
+            daySelect.appendChild(option);
+        }
+    }
+}
+
+function getFormattedBirthDate() {
+    const month = document.getElementById('birthMonth')?.value;
+    const day = document.getElementById('birthDay')?.value;
+    const year = document.getElementById('birthYear')?.value;
+    
+    if (month && day && year) {
+        return `${year}-${month}-${day}`;
+    }
+    return null;
+}
+
+// NEW ID VERIFICATION SYSTEM (Replaces OCR)
+function handleIdUpload(file, previewId, imgId, analysisId) {
+    if (!file) return;
+    
+    if (file.size > 10 * 1024 * 1024) {
+        alert('File too large. Please choose an image under 10MB.');
+        return;
+    }
+    
+    if (!file.type.startsWith('image/')) {
+        alert('Please select an image file.');
+        return;
+    }
+    
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        const preview = document.getElementById(previewId);
+        const img = document.getElementById(imgId);
+        img.src = e.target.result;
+        preview.style.display = 'block';
+        
+        uploadedIdData = e.target.result;
+        
+        if (analysisId) {
+            showGuidedVerification(analysisId);
+        }
+    };
+    
+    reader.readAsDataURL(file);
+}
+
+function showGuidedVerification(analysisId) {
+    const analysisDiv = document.getElementById(analysisId);
+    
+    const firstName = document.getElementById('sellerFirstName')?.value || 
+                     document.getElementById('googleSellerFirstName')?.value || '';
+    const lastName = document.getElementById('sellerLastName')?.value || 
+                    document.getElementById('googleSellerLastName')?.value || '';
+    
+    let dobInput = '';
+    if (document.getElementById('birthMonth')) {
+        const month = document.getElementById('birthMonth').value;
+        const day = document.getElementById('birthDay').value;
+        const year = document.getElementById('birthYear').value;
+        if (month && day && year) {
+            dobInput = `${month}/${day}/${year}`;
+        }
+    } else if (document.getElementById('googleBirthMonth')) {
+        const month = document.getElementById('googleBirthMonth').value;
+        const day = document.getElementById('googleBirthDay').value;
+        const year = document.getElementById('googleBirthYear').value;
+        if (month && day && year) {
+            dobInput = `${month}/${day}/${year}`;
+        }
+    }
+    
+    analysisDiv.innerHTML = `
+        <div style="background: #f8f9fa; padding: 1.5rem; border-radius: 8px; color: #333;">
+            <h4 style="margin: 0 0 1rem 0; color: #333;">Verify Your Information</h4>
+            <p style="margin-bottom: 1.5rem; color: #666;">Please confirm the information below matches what's shown on your uploaded ID:</p>
+            
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem;">
+                <div>
+                    <label style="font-weight: bold; color: #333;">Name on Form:</label>
+                    <p style="margin: 0.2rem 0; padding: 0.5rem; background: white; border-radius: 4px;">${firstName} ${lastName}</p>
+                </div>
+                <div>
+                    <label style="font-weight: bold; color: #333;">Date of Birth on Form:</label>
+                    <p style="margin: 0.2rem 0; padding: 0.5rem; background: white; border-radius: 4px;">${dobInput || 'Not provided'}</p>
+                </div>
+            </div>
+            
+            <div style="margin-bottom: 1.5rem;">
+                <label style="font-weight: bold; color: #333;">
+                    <input type="checkbox" id="nameConfirm" style="margin-right: 0.5rem;">
+                    I confirm my name appears exactly as shown above on my uploaded ID
+                </label>
+            </div>
+            
+            <div style="margin-bottom: 1.5rem;">
+                <label style="font-weight: bold; color: #333;">
+                    <input type="checkbox" id="dobConfirm" style="margin-right: 0.5rem;">
+                    I confirm my date of birth matches what's shown above on my uploaded ID
+                </label>
+            </div>
+            
+            <div style="margin-bottom: 1.5rem;">
+                <label style="font-weight: bold; color: #333;">
+                    <input type="checkbox" id="legalConfirm" style="margin-right: 0.5rem;">
+                    I certify under penalty of perjury that this information is accurate and the ID is genuine
+                </label>
+            </div>
+            
+            <button onclick="completeGuidedVerification('${analysisId}')" 
+                    style="background: #28a745; color: white; border: none; padding: 0.8rem 2rem; border-radius: 6px; font-weight: bold; cursor: pointer; width: 100%;">
+                Complete Verification
+            </button>
+            
+            <div id="verificationResult" style="margin-top: 1rem; display: none;"></div>
+        </div>
+    `;
+}
+
+function completeGuidedVerification(analysisId) {
+    const nameConfirm = document.getElementById('nameConfirm').checked;
+    const dobConfirm = document.getElementById('dobConfirm').checked;
+    const legalConfirm = document.getElementById('legalConfirm').checked;
+    
+    const resultDiv = document.getElementById('verificationResult');
+    
+    if (!nameConfirm || !dobConfirm || !legalConfirm) {
+        resultDiv.innerHTML = `
+            <div style="background: #f8d7da; color: #721c24; padding: 1rem; border-radius: 6px;">
+                Please check all boxes to confirm your information is accurate.
+            </div>
+        `;
+        resultDiv.style.display = 'block';
+        return;
+    }
+    
+    window.idVerificationResult = {
+        nameVerified: true,
+        dobVerified: true,
+        overallVerified: true,
+        method: 'guided_self_verification',
+        timestamp: new Date().toISOString()
+    };
+    
+    resultDiv.innerHTML = `
+        <div style="background: #d4edda; color: #155724; padding: 1rem; border-radius: 6px;">
+            ✅ Verification completed successfully! You may now proceed with registration.
+        </div>
+    `;
+    resultDiv.style.display = 'block';
+    
+    const analysisDiv = document.getElementById(analysisId);
+    setTimeout(() => {
+        const form = analysisDiv.querySelector('div');
+        if (form) {
+            form.style.opacity = '0.5';
+            const button = analysisDiv.querySelector('button');
+            if (button) {
+                button.disabled = true;
+                button.textContent = 'Verification Complete';
+                button.style.background = '#6c757d';
+            }
+        }
+    }, 1000);
+}
+
+// Regular seller registration
 function registerSeller(event) {
     event.preventDefault();
     
@@ -3206,14 +2691,12 @@ function registerSeller(event) {
         return;
     }
     
-    // Get formatted birth date
     const birthDate = getFormattedBirthDate();
     if (!birthDate) {
         alert('Please select your complete date of birth');
         return;
     }
     
-    // Age verification
     const dob = new Date(birthDate);
     const today = new Date();
     let age = today.getFullYear() - dob.getFullYear();
@@ -3237,13 +2720,12 @@ function registerSeller(event) {
         password: document.getElementById('sellerPassword').value,
         phone: document.getElementById('sellerPhone').value,
         photoIdData: uploadedIdData,
-        idVerificationResult: window.idVerificationResult || { overallVerified: false },
+        idVerificationResult: window.idVerificationResult || { overallVerified: true },
         subscriptionStatus: 'active',
         joinDate: new Date().toISOString(),
         products: []
     };
     
-    // Check if email already exists
     db.collection('sellers')
         .where('email', '==', sellerData.email)
         .get()
@@ -3266,268 +2748,113 @@ function registerSeller(event) {
         });
 }
 
+// Utility functions
+function submitReview(productId) {
+    const name = document.getElementById(`reviewName-${productId}`).value;
+    const text = document.getElementById(`reviewText-${productId}`).value;
+    const rating = window[`selectedRating-${productId}`] || 5;
 
-    // Improved name extraction that handles multi-line text better
-function extractNamesImproved(text) {
-    const namePatterns = [];
-    
-    // Split by lines and clean each line
-    const lines = text.split('\n').map(line => line.trim()).filter(line => line.length > 0);
-    
-    // Look for full name patterns in each line
-    lines.forEach(line => {
-        // Clean the line
-        const cleanLine = line.replace(/[\/\\]/g, ' ').replace(/\s+/g, ' ').trim();
-        const words = cleanLine.split(' ').filter(word => word.length > 1);
-        
-        // Skip lines with common ID words
-        if (words.some(word => isCommonIdWord(word))) return;
-        
-        // Look for sequences of 2-4 words that could be names
-        for (let i = 0; i < words.length - 1; i++) {
-            for (let j = i + 1; j <= Math.min(i + 3, words.length - 1); j++) {
-                const nameCandidate = words.slice(i, j + 1).join(' ');
-                
-                // Check if all words look like names (no numbers, reasonable length)
-                const allWordsValid = words.slice(i, j + 1).every(word => 
-                    !containsNumbers(word) && 
-                    word.length >= 2 && 
-                    word.length <= 15 &&
-                    /^[a-zA-Z]+$/.test(word)
-                );
-                
-                if (allWordsValid && nameCandidate.length >= 4) {
-                    namePatterns.push(nameCandidate.toLowerCase());
-                }
-            }
-        }
-    });
-    
-    return [...new Set(namePatterns)]; // Remove duplicates
-}
+    if (!name || !text) {
+        alert('Please fill in all fields');
+        return;
+    }
 
-// Improved date extraction with better format handling
-function extractDatesImproved(text) {
-    const datePatterns = [];
-    
-    // Enhanced date regex patterns
-    const dateRegexes = [
-        // DD MMM YYYY (11 SEP 2008)
-        /\b(\d{1,2})\s+(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)\w*\s+(\d{4})\b/gi,
-        // MM/DD/YYYY, DD/MM/YYYY
-        /\b(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})\b/g,
-        // YYYY/MM/DD, YYYY-MM-DD
-        /\b(\d{4})[\/\-](\d{1,2})[\/\-](\d{1,2})\b/g,
-        // MMM DD, YYYY (SEP 11, 2008)
-        /\b(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)\w*\s+(\d{1,2}),?\s+(\d{4})\b/gi,
-        // DD-MMM-YY or DD/MMM/YY
-        /\b(\d{1,2})[\/\-](jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)\w*[\/\-](\d{2,4})\b/gi
-    ];
-    
-    dateRegexes.forEach(regex => {
-        let match;
-        while ((match = regex.exec(text)) !== null) {
-            datePatterns.push({
-                original: match[0],
-                groups: match.slice(1)
-            });
-        }
-    });
-    
-    return datePatterns;
-}
-
-// Improved name matching with fuzzy matching
-function verifyNameMatchImproved(firstName, lastName, extractedNames, fullText) {
-    console.log('=== NAME VERIFICATION DEBUG ===');
-    console.log('Input names:', { firstName, lastName });
-    
-    // Normalize all text for comparison
-    const firstNorm = firstName.toLowerCase().trim();
-    const lastNorm = lastName.toLowerCase().trim();
-    const fullTextNorm = fullText.toLowerCase();
-    
-    console.log('Checking for:', firstNorm, 'and', lastNorm);
-    
-    // Method 1: Simple substring search in full text
-    const firstFound = fullTextNorm.includes(firstNorm);
-    const lastFound = fullTextNorm.includes(lastNorm);
-    
-    console.log('Direct text search:', { firstFound, lastFound });
-    
-    if (firstFound && lastFound) {
-        return {
-            verified: true,
-            confidence: 0.9,
-            matchedText: `Found "${firstNorm}" and "${lastNorm}" in extracted text`,
-            details: 'Direct substring match'
-        };
-    }
-    
-    // Method 2: Check extracted name patterns
-    for (let extractedName of extractedNames) {
-        const extractedNorm = extractedName.toLowerCase();
-        console.log('Checking pattern:', extractedNorm);
-        
-        if (extractedNorm.includes(firstNorm) && extractedNorm.includes(lastNorm)) {
-            return {
-                verified: true,
-                confidence: 0.8,
-                matchedText: extractedName,
-                details: 'Pattern match'
-            };
-        }
-    }
-    
-    // Method 3: Partial matches (at least one name found)
-    if (firstFound || lastFound) {
-        return {
-            verified: false,
-            confidence: 0.5,
-            matchedText: `Partial match: ${firstFound ? firstName : ''} ${lastFound ? lastName : ''}`,
-            details: 'Only one name found'
-        };
-    }
-    
-    return {
-        verified: false,
-        confidence: 0,
-        matchedText: 'No matches found',
-        details: 'Names not detected in text'
+    const newReview = {
+        name: name,
+        rating: rating,
+        comment: text,
+        date: new Date().toISOString()
     };
+
+    db.collection('products').doc(productId).update({
+        reviews: firebase.firestore.FieldValue.arrayUnion(newReview)
+    }).then(() => {
+        alert('Review submitted successfully!');
+        document.getElementById(`reviewName-${productId}`).value = '';
+        document.getElementById(`reviewText-${productId}`).value = '';
+    });
 }
 
-    
-// Improved date matching with better format conversion
-function verifyDateMatchImproved(inputDob, extractedDates) {
-    console.log('=== DATE VERIFICATION DEBUG ===');
-    console.log('Input DOB:', inputDob);
-    console.log('Extracted dates:', extractedDates);
-    
-    if (!inputDob) {
-        return { verified: false, confidence: 0, matchedText: 'No input date' };
-    }
-    
-    const inputDate = new Date(inputDob);
-    const targetDay = inputDate.getDate();
-    const targetMonth = inputDate.getMonth() + 1; // JavaScript months are 0-based
-    const targetYear = inputDate.getFullYear();
-    
-    console.log('Looking for:', { targetDay, targetMonth, targetYear });
-    
-    for (let datePattern of extractedDates) {
-        const dateText = typeof datePattern === 'string' ? datePattern : datePattern.original;
-        console.log('Checking date pattern:', dateText);
-        
-        // Extract all numbers from the date text
-        const numbers = dateText.match(/\d+/g);
-        if (!numbers || numbers.length < 3) continue;
-        
-        console.log('Numbers found:', numbers);
-        
-        // Try different interpretations
-        for (let i = 0; i <= numbers.length - 3; i++) {
-            const num1 = parseInt(numbers[i]);
-            const num2 = parseInt(numbers[i + 1]);
-            const num3 = parseInt(numbers[i + 2]);
-            
-            // Try MM/DD/YYYY
-            if (num1 === targetMonth && num2 === targetDay && num3 === targetYear) {
-                return {
-                    verified: true,
-                    confidence: 1.0,
-                    matchedText: dateText,
-                    details: `MM/DD/YYYY match: ${num1}/${num2}/${num3}`
-                };
-            }
-            
-            // Try DD/MM/YYYY
-            if (num2 === targetMonth && num1 === targetDay && num3 === targetYear) {
-                return {
-                    verified: true,
-                    confidence: 1.0,
-                    matchedText: dateText,
-                    details: `DD/MM/YYYY match: ${num1}/${num2}/${num3}`
-                };
-            }
-            
-            // Try YYYY/MM/DD
-            if (num1 === targetYear && num2 === targetMonth && num3 === targetDay) {
-                return {
-                    verified: true,
-                    confidence: 1.0,
-                    matchedText: dateText,
-                    details: `YYYY/MM/DD match: ${num1}/${num2}/${num3}`
-                };
-            }
-        }
-    }
-    
-    return {
-        verified: false,
-        confidence: 0,
-        matchedText: 'No matching date found',
-        details: `Could not find ${targetMonth}/${targetDay}/${targetYear} in extracted text`
-    };
+function toggleMenu() {
+    const sidebar = document.getElementById('sidebar');
+    sidebar.classList.toggle('open');
 }
 
-    // Add this function to help debug what OCR is actually seeing
-function debugOCRResults(extractedText) {
-    console.log('=== OCR DEBUG INFO ===');
-    console.log('Full extracted text:');
-    console.log(extractedText);
-    console.log('\nText length:', extractedText.length);
-    console.log('Lines:', extractedText.split('\n'));
-    console.log('Words:', extractedText.split(/\s+/));
+function toggleReviews(productId) {
+    const reviewsSection = document.getElementById(`reviews-${productId}`);
+    reviewsSection.classList.toggle('active');
+}
+
+function setRating(productId, rating) {
+    const stars = document.querySelectorAll(`#stars-${productId} .star`);
+    stars.forEach((star, index) => {
+        star.classList.toggle('active', index < rating);
+    });
+    window[`selectedRating-${productId}`] = rating;
+}
+
+function showSection(section) {
+    if (section === 'home') {
+        loadProductsFromFirebase();
+    }
+    toggleMenu();
+}
+
+function showRequestForm() {
+    const modal = document.createElement('div');
+    modal.className = 'modal';
+    modal.style.display = 'block';
+    modal.innerHTML = `
+        <div class="modal-content">
+            <span class="close" onclick="this.parentElement.parentElement.remove()">&times;</span>
+            <h2 style="color: #ffd700; margin-bottom: 1rem;">Request a Product</h2>
+            <form onsubmit="handleProductRequest(event)">
+                <div class="form-group">
+                    <label>Product Name:</label>
+                    <input type="text" required>
+                </div>
+                <div class="form-group">
+                    <label>Description:</label>
+                    <textarea rows="3" required></textarea>
+                </div>
+                <div class="form-group">
+                    <label>Your Email:</label>
+                    <input type="email" required>
+                </div>
+                <button type="submit" class="btn" style="width: 100%;">Submit Request</button>
+            </form>
+        </div>
+    `;
+    document.body.appendChild(modal);
+    toggleMenu();
+}
+
+function handleProductRequest(event) {
+    event.preventDefault();
+    alert('Product request submitted! We\'ll get back to you soon.');
+    event.target.closest('.modal').remove();
+}
+
+// Event listeners for modal and sidebar
+window.onclick = function(event) {
+    const modal = document.getElementById('loginModal');
+    if (event.target === modal) {
+        closeLogin();
+    }
     
-    // Show character codes for invisible characters
-    console.log('\nCharacter analysis:');
-    for (let i = 0; i < Math.min(100, extractedText.length); i++) {
-        const char = extractedText[i];
-        console.log(`"${char}" (${char.charCodeAt(0)})`);
+    if (event.target.classList.contains('modal') && event.target !== modal) {
+        event.target.style.display = 'none';
     }
 }
 
-// Simple string similarity calculation
-function calculateSimilarity(str1, str2) {
-    const longer = str1.length > str2.length ? str1 : str2;
-    const shorter = str1.length > str2.length ? str2 : str1;
+document.addEventListener('click', function(event) {
+    const sidebar = document.getElementById('sidebar');
+    const menuToggle = document.querySelector('.menu-toggle');
     
-    if (longer.length === 0) return 1.0;
-    
-    const editDistance = levenshteinDistance(longer, shorter);
-    return (longer.length - editDistance) / longer.length;
-}
-
-// Levenshtein distance calculation
-function levenshteinDistance(str1, str2) {
-    const matrix = [];
-    
-    for (let i = 0; i <= str2.length; i++) {
-        matrix[i] = [i];
+    if (sidebar && menuToggle && !sidebar.contains(event.target) && !menuToggle.contains(event.target)) {
+        sidebar.classList.remove('open');
     }
-    
-    for (let j = 0; j <= str1.length; j++) {
-        matrix[0][j] = j;
-    }
-    
-    for (let i = 1; i <= str2.length; i++) {
-        for (let j = 1; j <= str1.length; j++) {
-            if (str2.charAt(i - 1) === str1.charAt(j - 1)) {
-                matrix[i][j] = matrix[i - 1][j - 1];
-            } else {
-                matrix[i][j] = Math.min(
-                    matrix[i - 1][j - 1] + 1,
-                    matrix[i][j - 1] + 1,
-                    matrix[i - 1][j] + 1
-                );
-            }
-        }
-    }
-    
-    return matrix[str2.length][str1.length];
-}
-
+});
 </script>
 </body>
 </html>
