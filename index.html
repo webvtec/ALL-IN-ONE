@@ -1132,10 +1132,10 @@
         <!-- Navigation Tabs -->
         <div style="background: white; border-radius: 12px; padding: 0; margin-bottom: 2rem; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
             <div style="display: flex; border-bottom: 1px solid #e9ecef;">
-                <button class="dashboard-tab active" onclick="showDashboardTab('overview')" style="flex: 1; padding: 1rem; background: none; border: none; cursor: pointer; font-weight: 500; color: #333; border-bottom: 3px solid #007185;">Overview</button>
-                <button class="dashboard-tab" onclick="showDashboardTab('add-product')" style="flex: 1; padding: 1rem; background: none; border: none; cursor: pointer; font-weight: 500; color: #666; border-bottom: 3px solid transparent;">Add Product</button>
-                <button class="dashboard-tab" onclick="showDashboardTab('my-products')" style="flex: 1; padding: 1rem; background: none; border: none; cursor: pointer; font-weight: 500; color: #666; border-bottom: 3px solid transparent;">My Products</button>
-                <button class="dashboard-tab" onclick="showDashboardTab('settings')" style="flex: 1; padding: 1rem; background: none; border: none; cursor: pointer; font-weight: 500; color: #666; border-bottom: 3px solid transparent;">Settings</button>
+            <button class="dashboard-tab active" onclick="showDashboardTab('overview', event)" style="flex: 1; padding: 1rem; background: none; border: none; cursor: pointer; font-weight: 500; color: #333; border-bottom: 3px solid #007185;">Overview</button>
+<button class="dashboard-tab" onclick="showDashboardTab('add-product', event)" style="flex: 1; padding: 1rem; background: none; border: none; cursor: pointer; font-weight: 500; color: #666; border-bottom: 3px solid transparent;">Add Product</button>
+<button class="dashboard-tab" onclick="showDashboardTab('my-products', event)" style="flex: 1; padding: 1rem; background: none; border: none; cursor: pointer; font-weight: 500; color: #666; border-bottom: 3px solid transparent;">My Products</button>
+<button class="dashboard-tab" onclick="showDashboardTab('settings', event)" style="flex: 1; padding: 1rem; background: none; border: none; cursor: pointer; font-weight: 500; color: #666; border-bottom: 3px solid transparent;">Settings</button>
             </div>
         </div>
 
@@ -2234,7 +2234,7 @@ function closeSellerDashboardPage() {
     document.body.style.overflow = 'auto'; // Restore scroll
 }
 
-function showDashboardTab(tabName) {
+function showDashboardTab(tabName, event) {
     // Hide all tabs
     document.querySelectorAll('.dashboard-content').forEach(tab => {
         tab.style.display = 'none';
@@ -2250,17 +2250,19 @@ function showDashboardTab(tabName) {
     // Show selected tab
     document.getElementById(tabName + '-tab').style.display = 'block';
     
-    // Activate button
-    event.target.classList.add('active');
-    event.target.style.color = '#007185';
-    event.target.style.borderBottomColor = '#007185';
+    // Activate clicked button
+    if (event && event.target) {
+        event.target.classList.add('active');
+        event.target.style.color = '#007185';
+        event.target.style.borderBottomColor = '#007185';
+    }
     
     // Load tab-specific content
     if (tabName === 'my-products') {
         loadDashboardProducts();
     }
 }
-
+    
 function loadDashboardOverview() {
     if (!currentUser) return;
     
