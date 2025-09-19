@@ -101,14 +101,14 @@
         }
 
         .user-actions {
-          display: flex;
-          gap: 1rem;
-          align-items: center;
-          position: absolute;
-          width: 100%;
-          justify-content: space-between;
-          padding: 0 30px;
-          top: 60px;
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+    position: absolute;
+    width: 100%;
+    justify-content: space-between;
+    padding: 0 30px;
+    top: 50px; /* Reduced from 60px */
         }
 
         .btn {
@@ -834,6 +834,60 @@
         font-size: 0.9rem !important;
     }
         }
+
+
+    .sell-btn {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+    padding: 1rem 1.5rem !important;
+    background: linear-gradient(45deg, #ffd700, #ffed4a) !important;
+    color: #333 !important;
+    border: none !important;
+    border-radius: 12px !important;
+    font-weight: bold !important;
+    font-size: 0.9rem !important;
+    letter-spacing: 0.5px !important;
+    text-align: center !important;
+    min-height: 70px !important;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1) !important;
+    transition: all 0.3s ease !important;
+}
+
+.sell-btn:hover {
+    transform: translateY(-2px) !important;
+    box-shadow: 0 4px 15px rgba(255, 215, 0, 0.3) !important;
+}
+
+.sell-icon {
+    margin-bottom: 0.3rem;
+    opacity: 0.8;
+}
+
+.sell-icon svg {
+    width: 28px;
+    height: 28px;
+}
+
+
+.category-btn {
+    transition: all 0.2s ease !important;
+    text-align: center !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+}
+
+.category-btn:hover {
+    transform: translateY(-1px) !important;
+    box-shadow: 0 2px 8px rgba(255, 215, 0, 0.2) !important;
+}
+
+.categories-scroll {
+    justify-content: flex-start !important;
+    align-items: center !important;
+}
     </style>
 </head>
 <body>
@@ -848,7 +902,16 @@
     <header class="header">
     <div style="display: flex; justify-content: space-around; align-items: center; margin-bottom: 10px;">
         <button class="btn" onclick="showLogin()">👤 Sign In</button>
-        <button class="btn" onclick="handleSellerButton()">🏪 SELL ON WEBVTEC</button>
+        <button class="btn sell-btn" onclick="handleSellerButton()">
+    <div class="sell-icon">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M12 2L2 7v10c0 5.55 3.84 10 9 10s9-4.45 9-10V7l-10-5zM10 14H8v-4h2v4zm4 0h-2v-4h2v4z"/>
+            <path d="M4 8h16v2H4z"/>
+            <path d="M12 4c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z"/>
+        </svg>
+    </div>
+    SELL ON WEBVTEC
+        </button>
         <button class="btn" onclick="showCart()" style="position: relative;">
             🛒 Cart <span class="cart-count" id="cartCount">0</span>
         </button>
@@ -862,20 +925,21 @@
 
 
         <!-- Categories Section -->
-<div class="categories-section" style="padding: 1rem 5px; margin-bottom: 1rem;">
-    <div class="categories-scroll" style="display: flex; gap: 1rem; overflow-x: auto; padding: 0.5rem 0; scrollbar-width: none; -ms-overflow-style: none;">
-        <button class="category-btn active" onclick="filterByCategory('all')" style="background: #333; color: #ffd700; border: none; padding: 0.8rem 2rem; border-radius: 25px; white-space: nowrap; cursor: pointer; font-weight: bold; min-width: 100px;">All</button>
-        <button class="category-btn" onclick="filterByCategory('electronics')" style="background: #ffd700; color: #333; border: none; padding: 0.8rem 2rem; border-radius: 25px; white-space: nowrap; cursor: pointer; font-weight: bold; min-width: 120px;">Electronics</button>
-        <button class="category-btn" onclick="filterByCategory('clothing')" style="background: #ffd700; color: #333; border: none; padding: 0.8rem 2rem; border-radius: 25px; white-space: nowrap; cursor: pointer; font-weight: bold; min-width: 100px;">Clothing</button>
-        <button class="category-btn" onclick="filterByCategory('home')" style="background: #ffd700; color: #333; border: none; padding: 0.8rem 2rem; border-radius: 25px; white-space: nowrap; cursor: pointer; font-weight: bold; min-width: 100px;">Home</button>
-        <button class="category-btn" onclick="filterByCategory('beauty')" style="background: #ffd700; color: #333; border: none; padding: 0.8rem 2rem; border-radius: 25px; white-space: nowrap; cursor: pointer; font-weight: bold; min-width: 100px;">Beauty</button>
-        <button class="category-btn" onclick="filterByCategory('sports')" style="background: #ffd700; color: #333; border: none; padding: 0.8rem 2rem; border-radius: 25px; white-space: nowrap; cursor: pointer; font-weight: bold; min-width: 100px;">Sports</button>
-        <button class="category-btn" onclick="filterByCategory('books')" style="background: #ffd700; color: #333; border: none; padding: 0.8rem 2rem; border-radius: 25px; white-space: nowrap; cursor: pointer; font-weight: bold; min-width: 100px;">Books</button>
-        <button class="category-btn" onclick="filterByCategory('toys')" style="background: #ffd700; color: #333; border: none; padding: 0.8rem 2rem; border-radius: 25px; white-space: nowrap; cursor: pointer; font-weight: bold; min-width: 100px;">Toys</button>
-        <button class="category-btn" onclick="filterByCategory('automotive')" style="background: #ffd700; color: #333; border: none; padding: 0.8rem 2rem; border-radius: 25px; white-space: nowrap; cursor: pointer; font-weight: bold; min-width: 120px;">Automotive</button>
-        <button class="category-btn" onclick="filterByCategory('jewelry')" style="background: #ffd700; color: #333; border: none; padding: 0.8rem 2rem; border-radius: 25px; white-space: nowrap; cursor: pointer; font-weight: bold; min-width: 100px;">Jewelry</button>
-        <button class="category-btn" onclick="filterByCategory('health')" style="background: #ffd700; color: #333; border: none; padding: 0.8rem 2rem; border-radius: 25px; white-space: nowrap; cursor: pointer; font-weight: bold; min-width: 100px;">Health</button>
-        <button class="category-btn" onclick="filterByCategory('music')" style="background: #ffd700; color: #333; border: none; padding: 0.8rem 2rem; border-radius: 25px; white-space: nowrap; cursor: pointer; font-weight: bold; min-width: 100px;">Music</button>
+<!-- Categories Section -->
+<div class="categories-section" style="padding: 0.5rem 5px; margin-bottom: 0.5rem;">
+    <div class="categories-scroll" style="display: flex; gap: 0.8rem; overflow-x: auto; padding: 0.3rem 0; scrollbar-width: none; -ms-overflow-style: none;">
+        <button class="category-btn active" onclick="filterByCategory('all')" style="background: #333; color: #ffd700; border: none; padding: 0.6rem 1.2rem; border-radius: 20px; white-space: nowrap; cursor: pointer; font-weight: bold; min-width: 70px; font-size: 0.85rem; text-align: center; display: flex; align-items: center; justify-content: center;">All</button>
+        <button class="category-btn" onclick="filterByCategory('electronics')" style="background: #ffd700; color: #333; border: none; padding: 0.6rem 1.2rem; border-radius: 20px; white-space: nowrap; cursor: pointer; font-weight: bold; min-width: 90px; font-size: 0.85rem; text-align: center; display: flex; align-items: center; justify-content: center;">Electronics</button>
+        <button class="category-btn" onclick="filterByCategory('clothing')" style="background: #ffd700; color: #333; border: none; padding: 0.6rem 1.2rem; border-radius: 20px; white-space: nowrap; cursor: pointer; font-weight: bold; min-width: 80px; font-size: 0.85rem; text-align: center; display: flex; align-items: center; justify-content: center;">Clothing</button>
+        <button class="category-btn" onclick="filterByCategory('home')" style="background: #ffd700; color: #333; border: none; padding: 0.6rem 1.2rem; border-radius: 20px; white-space: nowrap; cursor: pointer; font-weight: bold; min-width: 70px; font-size: 0.85rem; text-align: center; display: flex; align-items: center; justify-content: center;">Home</button>
+        <button class="category-btn" onclick="filterByCategory('beauty')" style="background: #ffd700; color: #333; border: none; padding: 0.6rem 1.2rem; border-radius: 20px; white-space: nowrap; cursor: pointer; font-weight: bold; min-width: 70px; font-size: 0.85rem; text-align: center; display: flex; align-items: center; justify-content: center;">Beauty</button>
+        <button class="category-btn" onclick="filterByCategory('sports')" style="background: #ffd700; color: #333; border: none; padding: 0.6rem 1.2rem; border-radius: 20px; white-space: nowrap; cursor: pointer; font-weight: bold; min-width: 70px; font-size: 0.85rem; text-align: center; display: flex; align-items: center; justify-content: center;">Sports</button>
+        <button class="category-btn" onclick="filterByCategory('books')" style="background: #ffd700; color: #333; border: none; padding: 0.6rem 1.2rem; border-radius: 20px; white-space: nowrap; cursor: pointer; font-weight: bold; min-width: 70px; font-size: 0.85rem; text-align: center; display: flex; align-items: center; justify-content: center;">Books</button>
+        <button class="category-btn" onclick="filterByCategory('toys')" style="background: #ffd700; color: #333; border: none; padding: 0.6rem 1.2rem; border-radius: 20px; white-space: nowrap; cursor: pointer; font-weight: bold; min-width: 70px; font-size: 0.85rem; text-align: center; display: flex; align-items: center; justify-content: center;">Toys</button>
+        <button class="category-btn" onclick="filterByCategory('automotive')" style="background: #ffd700; color: #333; border: none; padding: 0.6rem 1.2rem; border-radius: 20px; white-space: nowrap; cursor: pointer; font-weight: bold; min-width: 95px; font-size: 0.85rem; text-align: center; display: flex; align-items: center; justify-content: center;">Automotive</button>
+        <button class="category-btn" onclick="filterByCategory('jewelry')" style="background: #ffd700; color: #333; border: none; padding: 0.6rem 1.2rem; border-radius: 20px; white-space: nowrap; cursor: pointer; font-weight: bold; min-width: 80px; font-size: 0.85rem; text-align: center; display: flex; align-items: center; justify-content: center;">Jewelry</button>
+        <button class="category-btn" onclick="filterByCategory('health')" style="background: #ffd700; color: #333; border: none; padding: 0.6rem 1.2rem; border-radius: 20px; white-space: nowrap; cursor: pointer; font-weight: bold; min-width: 70px; font-size: 0.85rem; text-align: center; display: flex; align-items: center; justify-content: center;">Health</button>
+        <button class="category-btn" onclick="filterByCategory('music')" style="background: #ffd700; color: #333; border: none; padding: 0.6rem 1.2rem; border-radius: 20px; white-space: nowrap; cursor: pointer; font-weight: bold; min-width: 70px; font-size: 0.85rem; text-align: center; display: flex; align-items: center; justify-content: center;">Music</button>
     </div>
 </div>
     </header>
@@ -999,11 +1063,6 @@
             <div class="form-group" style="margin-bottom: 0.8rem;">
                 <label style="font-size: 0.9rem;">Business Name:</label>
                 <input type="text" id="sellerBusiness" required style="padding: 0.5rem; font-size: 0.9rem;">
-            </div>
-            
-            <div class="form-group" style="margin-bottom: 1rem;">
-                <label style="font-size: 0.9rem;">Address (Optional):</label>
-                <textarea id="sellerAddress" rows="2" style="padding: 0.5rem; font-size: 0.9rem; resize: vertical;"></textarea>
             </div>
             
             <div style="background: rgba(255, 215, 0, 0.1); padding: 0.8rem; border-radius: 6px; margin: 1rem 0; border: 1px solid rgba(255, 215, 0, 0.3);">
@@ -1826,7 +1885,6 @@ function handleSellerSignup(event) {
         password: document.getElementById('sellerPassword').value,
         phone: document.getElementById('sellerPhone').value,
         businessName: document.getElementById('sellerBusiness').value,
-        address: document.getElementById('sellerAddress').value
     };
     
     // Create user account first
