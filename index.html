@@ -1609,8 +1609,14 @@ function createProductCard(product) {
         }
     }).join('');
     
+    // Truncate description to first 50 characters
+    const fullDescription = product.description || 'DESCRIPTION';
+    const truncatedDescription = fullDescription.length > 50 
+        ? fullDescription.substring(0, 50) + '...' 
+        : fullDescription;
+    
     // Get seller info and calculate delivery
-    const sellerInfo = product.sellerBusinessName ? `SOLD BY: ${product.sellerBusinessName.toUpperCase()}` : '';
+    const sellerInfo = product.sellerBusinessName ? `Sold by ${product.sellerBusinessName}` : '';
     let deliveryInfo = '';
     
     if (product.deliveryDays) {
@@ -1625,13 +1631,13 @@ function createProductCard(product) {
         <div class="product-details">
             <div class="product-header">
                 <h3 class="product-title">${product.name}</h3>
-                <p class="product-description">${product.description || 'DESCRIPTION'}</p>
-                ${sellerInfo ? `<p style="color: #666; font-size: 0.9rem; font-weight: bold; margin: 0.5rem 0;">${sellerInfo}</p>` : ''}
-                ${deliveryInfo ? `<p style="color: #007185; font-size: 0.9rem; margin: 0.3rem 0;">${deliveryInfo}</p>` : ''}
+                <p class="product-description">${truncatedDescription}</p>
             </div>
             <div class="rating-section">
                 <div class="stars">${starsHTML} <span class="review-count">(${reviewCount})</span></div>
             </div>
+            ${deliveryInfo ? `<p style="color: #007185; font-size: 0.9rem; margin: 0.5rem 0;">${deliveryInfo}</p>` : ''}
+            ${sellerInfo ? `<p style="color: #666; font-size: 0.9rem; font-weight: bold; margin: 0.3rem 0;">${sellerInfo}</p>` : ''}
             <div class="product-price">$${product.price}</div>
             <button class="add-to-cart" data-product-id="${product.id}">Add to cart</button>
         </div>
@@ -1652,8 +1658,8 @@ function createProductCard(product) {
     });
     
     return card;
-}
-
+    }
+    
 // Also add this function to handle button clicks properly:
 function addToCart(productId) {
     const product = products.find(p => p.id === productId);
