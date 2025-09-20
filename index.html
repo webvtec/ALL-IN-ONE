@@ -1417,7 +1417,7 @@ header button:hover {
 
 
 
-/* Enhanced photo gallery with touch support */
+/* Enhanced photo gallery with better touch support */
 .photo-gallery {
     position: relative;
     width: 100%;
@@ -1427,6 +1427,7 @@ header button:hover {
     border-radius: 12px;
     touch-action: pan-y pinch-zoom;
     user-select: none;
+    -webkit-user-select: none;
 }
 
 .photo-container {
@@ -1434,6 +1435,12 @@ header button:hover {
     transition: transform 0.3s ease;
     width: 500%;
     cursor: grab;
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    -khtml-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
 }
 
 .photo-container:active {
@@ -1456,12 +1463,21 @@ header button:hover {
     object-fit: contain;
     background: white;
     pointer-events: none;
+    -webkit-user-drag: none;
+    -khtml-user-drag: none;
+    -moz-user-drag: none;
+    -o-user-drag: none;
+    user-drag: none;
 }
 
-/* Hide arrows on touch devices */
-@media (hover: none) and (pointer: coarse) {
-    .photo-arrows {
-        display: none;
+/* Mobile optimizations */
+@media (max-width: 768px) {
+    .photo-slide img {
+        height: 300px;
+    }
+    
+    .photo-gallery {
+        touch-action: manipulation;
     }
 }
     </style>
@@ -3424,24 +3440,41 @@ function initializePhotoGallery(productId) {
     currentPhotoIndex = 0;
     
     const container = document.getElementById(`photoContainer-${productId}`);
-    if (!container) return;
+    if (!container) {
+        console.log('Photo container not found for product:', productId);
+        return;
+    }
     
-    // Mouse events
+    console.log('Initializing photo gallery for:', productId);
+    
+    // Remove existing listeners to avoid duplicates
+    container.removeEventListener('mousedown', handlePointerStart);
+    container.removeEventListener('mousemove', handlePointerMove);
+    container.removeEventListener('mouseup', handlePointerEnd);
+    container.removeEventListener('mouseleave', handlePointerEnd);
+    container.removeEventListener('touchstart', handlePointerStart);
+    container.removeEventListener('touchmove', handlePointerMove);
+    container.removeEventListener('touchend', handlePointerEnd);
+    
+    // Add event listeners
     container.addEventListener('mousedown', handlePointerStart);
     container.addEventListener('mousemove', handlePointerMove);
     container.addEventListener('mouseup', handlePointerEnd);
     container.addEventListener('mouseleave', handlePointerEnd);
     
-    // Touch events
+    // Touch events with proper options
     container.addEventListener('touchstart', handlePointerStart, { passive: true });
     container.addEventListener('touchmove', handlePointerMove, { passive: false });
-    container.addEventListener('touchend', handlePointerEnd);
+    container.addEventListener('touchend', handlePointerEnd, { passive: true });
     
     // Prevent default drag behavior
     container.addEventListener('dragstart', e => e.preventDefault());
+    
+    console.log('Photo gallery initialized successfully');
 }
 
 function handlePointerStart(e) {
+    console.log('Pointer start detected:', e.type);
     isPointerDown = true;
     startTime = Date.now();
     const container = e.currentTarget;
@@ -3460,12 +3493,12 @@ function handlePointerStart(e) {
 function handlePointerMove(e) {
     if (!isPointerDown) return;
     
-    e.preventDefault();
     const container = e.currentTarget;
     
     if (e.type === 'mousemove') {
         currentX = e.clientX;
     } else if (e.type === 'touchmove') {
+        e.preventDefault(); // Prevent scrolling
         currentX = e.touches[0].clientX;
     }
     
@@ -3479,6 +3512,7 @@ function handlePointerMove(e) {
 function handlePointerEnd(e) {
     if (!isPointerDown) return;
     
+    console.log('Pointer end detected');
     isPointerDown = false;
     const container = e.currentTarget;
     const deltaX = currentX - startX;
@@ -3489,17 +3523,21 @@ function handlePointerEnd(e) {
     container.classList.remove('dragging');
     
     // Determine if swipe was significant enough
-    const threshold = container.offsetWidth * 0.25; // 25% of container width
-    const shouldSwipe = Math.abs(deltaX) > threshold || velocity > 0.5;
+    const threshold = 50; // Minimum pixels to trigger swipe
+    const shouldSwipe = Math.abs(deltaX) > threshold || velocity > 0.3;
+    
+    console.log('Swipe analysis:', { deltaX, threshold, velocity, shouldSwipe });
     
     if (shouldSwipe) {
         if (deltaX > 0) {
+            console.log('Swiping to previous image');
             changePhoto(currentProductId, -1);
         } else {
+            console.log('Swiping to next image');
             changePhoto(currentProductId, 1);
         }
     } else {
-        // Snap back to current position
+        console.log('Snapping back to current position');
         updatePhotoDisplay(currentProductId);
     }
 }
@@ -3508,14 +3546,18 @@ function changePhoto(productId, direction) {
     const product = products.find(p => p.id === productId);
     const images = (product.images || [product.image]).filter(img => img);
     
+    console.log('Changing photo:', { currentIndex: currentPhotoIndex, direction, totalImages: images.length });
+    
     currentPhotoIndex += direction;
     if (currentPhotoIndex >= images.length) currentPhotoIndex = 0;
     if (currentPhotoIndex < 0) currentPhotoIndex = images.length - 1;
     
+    console.log('New photo index:', currentPhotoIndex);
     updatePhotoDisplay(productId);
 }
 
 function goToPhoto(productId, index) {
+    console.log('Going to photo index:', index);
     currentPhotoIndex = index;
     updatePhotoDisplay(productId);
 }
@@ -3525,7 +3567,15 @@ function updatePhotoDisplay(productId) {
     const dots = document.querySelectorAll('.photo-dot');
     
     if (container) {
-        container.style.transform = `translateX(-${currentPhotoIndex * 20}%)`;
+        const newTransform = `translateX(-${currentPhotoIndex * 20}%)`;
+        console.log('Updating photo display:', newTransform);
+        container.style.transform = newTransform;
+        
+        // Re-enable transition
+        container.style.transition = 'transform 0.3s ease';
+        setTimeout(() => {
+            container.style.transition = '';
+        }, 300);
     }
     
     dots.forEach((dot, i) => {
@@ -3533,7 +3583,14 @@ function updatePhotoDisplay(productId) {
     });
 }
 
-        setTimeout(() => initializePhotoGallery('${product.id}'), 100);
+        detailView.classList.add('active');
+    
+    // Initialize photo gallery for touch/swipe after DOM is ready
+    setTimeout(() => {
+        initializePhotoGallery(product.id);
+        updateDetailPageAuth();
+    }, 200);
+    }
     
 </script>
 </body>
