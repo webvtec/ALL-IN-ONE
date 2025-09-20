@@ -1595,7 +1595,7 @@ header button:hover {
             <div class="form-row">
                 <div class="form-field">
                     <label>Product Name</label>
-                    <input type="text" id="dashboardProductName" required placeholder="Enter product name">
+                    <input type="text" id="dashboardProductName" required placeholder="Enter product name" maxlength="30">
                 </div>
                 <div class="form-field">
                     <label>Price ($)</label>
@@ -1720,7 +1720,7 @@ header button:hover {
                 <div class="form-row">
                     <div class="form-field">
                         <label>Product Name</label>
-                        <input type="text" id="editProductName" required>
+                        <input type="text" id="editProductName" required maxlength="30">
                     </div>
                     <div class="form-field">
                         <label>Price ($)</label>
@@ -2499,7 +2499,7 @@ function showProductDetail(product) {
                 ${starsHTML} <span style="color: #666; margin-left: 10px;">(${reviews.length})</span>
             </div>
             
-            <h3 style="color: #333; font-size: 1.2rem; margin-bottom: 1rem; text-transform: uppercase; font-style: italic; font-weight: normal;">${product.description || 'PRODUCT DESCRIPTION'}</h3>
+            <<h3 style="color: #333; font-size: 1.2rem; margin-bottom: 1rem; text-transform: uppercase; font-style: italic; font-weight: normal;">${(product.description || 'PRODUCT DESCRIPTION').length > 100 ? (product.description || 'PRODUCT DESCRIPTION').substring(0, 100) + '...' : (product.description || 'PRODUCT DESCRIPTION')}</h3>
             
             <div class="product-gallery">
                 <img src="${product.image}" alt="${product.name}">
