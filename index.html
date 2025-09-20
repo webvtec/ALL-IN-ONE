@@ -3093,15 +3093,14 @@ function initializePhotoGallery(productId) {
     let touchStartY = 0;
     let touchStartTime = 0;
     let isDragging = false;
-    let hasMoved = false;
+    let initialDirection = null;
     
-    // Touch events with improved vertical scroll handling
     container.addEventListener('touchstart', (e) => {
         touchStartX = e.touches[0].clientX;
         touchStartY = e.touches[0].clientY;
         touchStartTime = Date.now();
         isDragging = false;
-        hasMoved = false;
+        initialDirection = null;
         
         container.style.transition = 'none';
     }, { passive: true });
@@ -3114,52 +3113,45 @@ function initializePhotoGallery(productId) {
         const deltaX = touchStartX - touchX;
         const deltaY = touchStartY - touchY;
         
-        // Only start horizontal dragging if horizontal movement is clearly dominant
-        if (!hasMoved) {
-            const horizontalRatio = Math.abs(deltaX) / (Math.abs(deltaY) + 1);
-            const minHorizontalMovement = 15;
-            
-            // Only engage horizontal scrolling if:
-            // 1. Horizontal movement is significantly more than vertical
-            // 2. We've moved at least 15px horizontally
-            if (horizontalRatio > 2 && Math.abs(deltaX) > minHorizontalMovement) {
+        // Determine initial direction on first significant movement
+        if (!initialDirection && (Math.abs(deltaX) > 8 || Math.abs(deltaY) > 8)) {
+            if (Math.abs(deltaX) > Math.abs(deltaY)) {
+                initialDirection = 'horizontal';
                 isDragging = true;
-                e.preventDefault(); // Only prevent when we're sure it's horizontal
+            } else {
+                initialDirection = 'vertical';
+                isDragging = false;
             }
-            hasMoved = true;
         }
         
-        // Continue horizontal dragging if already started
-        if (isDragging) {
+        // If horizontal scrolling, prevent default and show drag
+        if (isDragging && initialDirection === 'horizontal') {
             e.preventDefault();
             const dragPercent = (-deltaX / container.offsetWidth) * 20;
             const baseTransform = -currentPhotoIndex * 20;
             container.style.transform = `translateX(${baseTransform + dragPercent}%)`;
         }
-        // Otherwise, allow natural vertical scrolling
+        // Otherwise allow natural vertical scrolling
     }, { passive: false });
     
     container.addEventListener('touchend', (e) => {
-        if (!isDragging) {
+        if (!isDragging || initialDirection !== 'horizontal') {
             container.style.transition = 'transform 0.3s ease';
             return;
         }
         
         const touchEndX = e.changedTouches[0].clientX;
-        const touchEndY = e.changedTouches[0].clientY;
         const deltaX = touchEndX - touchStartX;
-        const deltaY = touchEndY - touchStartY;
         const deltaTime = Date.now() - touchStartTime;
         
-        // Only change photo if horizontal movement was significant
-        const minSwipeDistance = 50;
-        const maxSwipeTime = 800;
-        const minVelocity = 0.3;
+        // More lenient thresholds
+        const minSwipeDistance = 30; // Reduced from 50
+        const maxSwipeTime = 1000; // Increased from 800
+        const minVelocity = 0.2; // Reduced from 0.3
         
         const velocity = Math.abs(deltaX) / deltaTime;
         const shouldSwipe = (Math.abs(deltaX) > minSwipeDistance || velocity > minVelocity) && 
-                           deltaTime < maxSwipeTime &&
-                           Math.abs(deltaX) > Math.abs(deltaY);
+                           deltaTime < maxSwipeTime;
         
         if (shouldSwipe) {
             if (deltaX > 0) {
@@ -3173,18 +3165,52 @@ function initializePhotoGallery(productId) {
         
         // Reset state
         isDragging = false;
-        hasMoved = false;
+        initialDirection = null;
         touchStartX = 0;
         touchStartY = 0;
     }, { passive: true });
     
     // Keep mouse events for desktop
-    container.addEventListener('mousedown', handlePointerStart);
-    container.addEventListener('mousemove', handlePointerMove);
-    container.addEventListener('mouseup', handlePointerEnd);
-    container.addEventListener('mouseleave', handlePointerEnd);
+    container.addEventListener('mousedown', (e) => {
+        e.preventDefault();
+        let startX = e.clientX;
+        let hasMoved = false;
+        
+        const handleMouseMove = (e) => {
+            hasMoved = true;
+            const deltaX = e.clientX - startX;
+            const dragPercent = (deltaX / container.offsetWidth) * 20;
+            const baseTransform = -currentPhotoIndex * 20;
+            container.style.transition = 'none';
+            container.style.transform = `translateX(${baseTransform + dragPercent}%)`;
+        };
+        
+        const handleMouseUp = (e) => {
+            document.removeEventListener('mousemove', handleMouseMove);
+            document.removeEventListener('mouseup', handleMouseUp);
+            
+            if (hasMoved) {
+                const deltaX = e.clientX - startX;
+                if (Math.abs(deltaX) > 30) {
+                    if (deltaX > 0) {
+                        changePhoto(currentProductId, -1);
+                    } else {
+                        changePhoto(currentProductId, 1);
+                    }
+                } else {
+                    updatePhotoDisplay(currentProductId);
+                }
+            }
+        };
+        
+        document.addEventListener('mousemove', handleMouseMove);
+        document.addEventListener('mouseup', handleMouseUp);
+    });
+    
     container.addEventListener('dragstart', e => e.preventDefault());
 }
+        
+        
 
 
 
