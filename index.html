@@ -2802,7 +2802,7 @@ function updateDetailPageAuth() {
         if (currentUser) {
             const displayName = currentUser.displayName || 'User';
             const firstName = displayName.split(' ')[0];
-            detailSignInBtn.innerHTML = `👤 ${firstName}`;
+            detailSignInBtn.innerHTML = `${firstName}`;
             
             // Update avatar
             if (currentUser.photoURL) {
@@ -2812,7 +2812,7 @@ function updateDetailPageAuth() {
                 detailProfileAvatar.innerHTML = initial;
             }
         } else {
-            detailSignInBtn.innerHTML = '👤 Sign In';
+            detailSignInBtn.innerHTML = 'Sign In';
             detailProfileAvatar.innerHTML = 'W';
         }
     }
