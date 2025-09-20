@@ -2323,10 +2323,11 @@ function createProductCard(product) {
     });
     
     card.addEventListener('click', function(e) {
-        if (!e.target.classList.contains('add-to-cart')) {
-            showProductDetail(product);
-        }
-    });
+    // Check if click is on add-to-cart button or its children
+    if (!e.target.closest('.add-to-cart')) {
+        showProductDetail(product);
+    }
+});
     
     return card;
 }
