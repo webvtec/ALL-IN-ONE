@@ -1702,10 +1702,39 @@ header button:hover {
                     </select>
                 </div>
                 <div class="form-field">
-                    <label>Image URL</label>
-                    <input type="url" id="dashboardProductImage" required placeholder="https://example.com/image.jpg">
+    <label>Product Images (up to 5 URLs)</label>
+    <input type="url" id="dashboardProductImage1" required placeholder="Main image URL" style="margin-bottom: 0.5rem;">
+    <input type="url" id="dashboardProductImage2" placeholder="Additional image URL (optional)" style="margin-bottom: 0.5rem;">
+    <input type="url" id="dashboardProductImage3" placeholder="Additional image URL (optional)" style="margin-bottom: 0.5rem;">
+    <input type="url" id="dashboardProductImage4" placeholder="Additional image URL (optional)" style="margin-bottom: 0.5rem;">
+    <input type="url" id="dashboardProductImage5" placeholder="Additional image URL (optional)">
                 </div>
-            </div>
+
+                <div class="form-row" id="clothingSizeRow" style="display: none;">
+    <div class="form-field">
+        <label>Available Sizes</label>
+        <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+            <label style="display: flex; align-items: center; gap: 5px;">
+                <input type="checkbox" value="XS"> XS
+            </label>
+            <label style="display: flex; align-items: center; gap: 5px;">
+                <input type="checkbox" value="S"> S
+            </label>
+            <label style="display: flex; align-items: center; gap: 5px;">
+                <input type="checkbox" value="M"> M
+            </label>
+            <label style="display: flex; align-items: center; gap: 5px;">
+                <input type="checkbox" value="L"> L
+            </label>
+            <label style="display: flex; align-items: center; gap: 5px;">
+                <input type="checkbox" value="XL"> XL
+            </label>
+            <label style="display: flex; align-items: center; gap: 5px;">
+                <input type="checkbox" value="XXL"> XXL
+            </label>
+        </div>
+    </div>
+                </div>
             
             <div class="form-row">
                 <div class="form-field">
@@ -1823,12 +1852,8 @@ header button:hover {
                         </select>
                     </div>
                     <div class="form-field">
-    <label>Product Images (up to 5 URLs)</label>
-    <input type="url" id="dashboardProductImage1" required placeholder="Main image URL">
-    <input type="url" id="dashboardProductImage2" placeholder="Additional image URL (optional)">
-    <input type="url" id="dashboardProductImage3" placeholder="Additional image URL (optional)">
-    <input type="url" id="dashboardProductImage4" placeholder="Additional image URL (optional)">
-    <input type="url" id="dashboardProductImage5" placeholder="Additional image URL (optional)">
+                   <label>Image URL</label>
+                   <input type="url" id="editProductImage" required>
                     </div>
                 </div>
                 
@@ -1867,31 +1892,6 @@ header button:hover {
 </div>
 
 
-    <div class="form-row" id="clothingSizeRow" style="display: none;">
-    <div class="form-field">
-        <label>Available Sizes</label>
-        <div style="display: flex; gap: 10px; flex-wrap: wrap;">
-            <label style="display: flex; align-items: center; gap: 5px;">
-                <input type="checkbox" value="XS"> XS
-            </label>
-            <label style="display: flex; align-items: center; gap: 5px;">
-                <input type="checkbox" value="S"> S
-            </label>
-            <label style="display: flex; align-items: center; gap: 5px;">
-                <input type="checkbox" value="M"> M
-            </label>
-            <label style="display: flex; align-items: center; gap: 5px;">
-                <input type="checkbox" value="L"> L
-            </label>
-            <label style="display: flex; align-items: center; gap: 5px;">
-                <input type="checkbox" value="XL"> XL
-            </label>
-            <label style="display: flex; align-items: center; gap: 5px;">
-                <input type="checkbox" value="XXL"> XXL
-            </label>
-        </div>
-    </div>
-    </div>
 <script>
 // Firebase configuration - MOVE THIS TO THE TOP
 const firebaseConfig = {
@@ -1928,6 +1928,23 @@ document.addEventListener('DOMContentLoaded', function() {
     
     loadProductsFromFirebase();
     updateCartCount();
+    
+    // Add category change listener
+    setTimeout(() => {
+        const categorySelect = document.getElementById('dashboardProductCategory');
+        if (categorySelect) {
+            categorySelect.addEventListener('change', function() {
+                const sizeRow = document.getElementById('clothingSizeRow');
+                if (sizeRow) {
+                    if (this.value === 'clothing') {
+                        sizeRow.style.display = 'block';
+                    } else {
+                        sizeRow.style.display = 'none';
+                    }
+                }
+            });
+        }
+    }, 1000);
 });
 
 // Authentication Functions
@@ -2287,6 +2304,8 @@ function createProductCard(product) {
                 <div class="stars">${starsHTML} <span class="review-count">(${reviewCount})</span></div>
             </div>
             ${deliveryHTML ? `<div class="delivery-info">${deliveryHTML}</div>` : ''}
+            ${product.category === 'clothing' && product.sizes && product.sizes.length > 0 ? 
+            `<p style="color: #666; font-size: 0.8rem; margin: 0.2rem 0;">Sizes: ${product.sizes.join(', ')}</p>` : ''}
             ${sellerInfo ? `<p class="seller-info">${sellerInfo}</p>` : ''}
             <div class="product-price">$${product.price || '0.00'}</div>
             <button class="add-to-cart" data-product-id="${product.id}">Add to cart</button>
@@ -3009,6 +3028,27 @@ function handleDashboardAddProduct(event) {
         return;
     }
     
+    // Collect all image URLs
+    const images = [];
+    for (let i = 1; i <= 5; i++) {
+        const imageUrl = document.getElementById(`dashboardProductImage${i}`)?.value;
+        if (imageUrl && imageUrl.trim()) {
+            images.push(imageUrl.trim());
+        }
+    }
+    
+    if (images.length === 0) {
+        alert('Please provide at least one product image');
+        return;
+    }
+    
+    // Collect sizes for clothing
+    let sizes = [];
+    if (document.getElementById('dashboardProductCategory').value === 'clothing') {
+        const sizeCheckboxes = document.querySelectorAll('#clothingSizeRow input[type="checkbox"]:checked');
+        sizes = Array.from(sizeCheckboxes).map(cb => cb.value);
+    }
+    
     const knutsfordDelivery = document.getElementById('dashboardKnutsfordDelivery').value;
     const taraDelivery = document.getElementById('dashboardTaraDelivery').value;
     
@@ -3017,7 +3057,9 @@ function handleDashboardAddProduct(event) {
         description: document.getElementById('dashboardProductDescription').value,
         price: parseFloat(document.getElementById('dashboardProductPrice').value),
         category: document.getElementById('dashboardProductCategory').value,
-        image: document.getElementById('dashboardProductImage').value,
+        image: images[0], // First image as main image
+        images: images, // All images for gallery
+        sizes: sizes, // Available sizes for clothing
         knutsfordDelivery: knutsfordDelivery,
         taraDelivery: taraDelivery,
         sellerId: currentUser.uid,
@@ -3041,6 +3083,10 @@ function handleDashboardAddProduct(event) {
         .then(() => {
             alert('Product added successfully!');
             document.getElementById('dashboardAddProductForm').reset();
+            // Reset size checkboxes
+            document.querySelectorAll('#clothingSizeRow input[type="checkbox"]').forEach(cb => cb.checked = false);
+            // Hide size row
+            document.getElementById('clothingSizeRow').style.display = 'none';
             showDashboardTab('my-products');
         })
         .catch((error) => {
@@ -3049,6 +3095,7 @@ function handleDashboardAddProduct(event) {
         });
 }
 
+    
 function editDashboardProduct(productId) {
     alert('Edit functionality coming soon!');
 }
@@ -3316,15 +3363,7 @@ function updatePhotoDisplay(productId) {
     });
 }
 
-// Add this to your existing JavaScript
-document.getElementById('dashboardProductCategory').addEventListener('change', function() {
-    const sizeRow = document.getElementById('clothingSizeRow');
-    if (this.value === 'clothing') {
-        sizeRow.style.display = 'block';
-    } else {
-        sizeRow.style.display = 'none';
-    }
-});
+
 </script>
 </body>
 </html>
