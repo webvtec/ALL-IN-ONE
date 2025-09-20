@@ -2143,8 +2143,8 @@ function createProductCard(product) {
     
     // Truncate description - shorter for mobile
     const fullDescription = product.description || 'DESCRIPTION';
-    const truncatedDescription = fullDescription.length > 50 
-        ? fullDescription.substring(0, 50) + '...' 
+    const truncatedDescription = fullDescription.length > 60 
+        ? fullDescription.substring(0, 60) + '...' 
         : fullDescription;
     
     // Don't truncate seller name - show full name
