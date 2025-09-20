@@ -36,26 +36,27 @@ body {
     border-bottom: 2px solid #ffd700;
     display: flex;
     align-items: center;
-    justify-content: space-between;
-    flex-wrap: wrap;
     gap: 1rem;
     position: relative;
     z-index: 1001;
+    width: 100%;
+    box-sizing: border-box;
 }
 
 .search-container {
     position: relative;
     flex: 1;
-    max-width: 500px;
-    min-width: 200px;
+    max-width: 400px;
+    min-width: 150px;
 }
 
 .header-right {
     display: flex;
-    gap: 1rem;
+    gap: 0.5rem;
     align-items: center;
+    flex-shrink: 0;
 }
-
+    
 /* ==========================================================================
    FLOATING CART
    ========================================================================== */
@@ -1018,16 +1019,18 @@ body {
    ========================================================================== */
 @media (max-width: 768px) {
     /* Header Layout */
-    .header {
+    header {
         flex-direction: column;
         padding: 0.8rem;
         gap: 0.8rem;
+        align-items: stretch;
     }
     
     .search-container {
         order: 1;
         width: 100%;
         max-width: none;
+        min-width: auto;
     }
     
     .search-bar {
@@ -1045,11 +1048,13 @@ body {
         width: 100%;
         justify-content: space-between;
         gap: 0.5rem;
+        flex-shrink: 0;
     }
     
     /* Profile Section */
     .profile-section {
         padding: 0.2rem;
+        flex-shrink: 0;
     }
     
     .profile-avatar {
@@ -1067,7 +1072,8 @@ body {
     }
     
     .sell-btn {
-        padding: 0.4rem 0.6rem;
+        flex-shrink: 0;
+        min-width: auto;
     }
     
     .sell-icon svg {
