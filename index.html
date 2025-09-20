@@ -1175,6 +1175,107 @@ header button:hover {
         font-size: 1.5rem !important;
     }
 }
+
+
+/* Fix for consistent mobile product cards */
+@media (max-width: 768px) {
+    .product-card {
+        flex-direction: row;
+        padding: 12px;
+        gap: 12px;
+        min-height: 200px;
+        max-height: none;
+        user-select: none;
+        -webkit-user-select: none;
+        -moz-user-select: none;
+        -ms-user-select: none;
+        display: flex;
+        align-items: stretch;
+    }
+    
+    .product-image {
+        width: 130px;
+        min-height: 180px;
+        max-height: 180px;
+        background: white;
+        flex-shrink: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    
+    .product-image img {
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+        max-width: 130px;
+        max-height: 180px;
+    }
+    
+    .product-details {
+        padding: 8px 12px 12px 0;
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        min-height: 180px;
+    }
+
+    .product-header {
+        margin-bottom: 0.5rem;
+        flex-shrink: 0;
+    }
+
+    .product-title {
+        font-size: 1.3rem;
+        margin-bottom: 0.3rem;
+        line-height: 1.2;
+    }
+
+    .product-description {
+        font-size: 0.9rem;
+        margin-bottom: 0.5rem;
+        line-height: 1.3;
+    }
+
+    .rating-section {
+        margin-bottom: 0.5rem;
+        flex-shrink: 0;
+    }
+
+    .rating-section h4 {
+        display: none;
+    }
+
+    .stars {
+        gap: 2px;
+        margin-bottom: 0.3rem;
+    }
+
+    .star {
+        font-size: 1.2rem;
+    }
+
+    .product-price {
+        font-size: 1.8rem;
+        margin-bottom: 1rem;
+        margin-top: auto;
+        flex-shrink: 0;
+    }
+
+    .add-to-cart {
+        padding: 0.6rem 1.5rem;
+        font-size: 1rem;
+        margin-top: auto;
+        flex-shrink: 0;
+        user-select: none !important;
+        -webkit-user-select: none !important;
+        -moz-user-select: none !important;
+        -ms-user-select: none !important;
+        outline: none !important;
+        -webkit-tap-highlight-color: transparent !important;
+    }
+}
     </style>
 </head>
 <body>
@@ -1984,41 +2085,45 @@ function createProductCard(product) {
         ? fullDescription.substring(0, 50) + '...' 
         : fullDescription;
     
-    // Get seller info and calculate delivery
+    // Get seller info and calculate delivery - with null checks
     const sellerInfo = product.sellerBusinessName ? `Sold by ${product.sellerBusinessName}` : '';
     let deliveryInfo = '';
 
-if (product.knutsfordDelivery || product.taraDelivery) {
-    let deliveryParts = [];
-    
-    if (product.knutsfordDelivery) {
-        const knutsfordDates = calculateDeliveryDates(product.knutsfordDelivery);
-        deliveryParts.push(`Knutsford: ${knutsfordDates.start} - ${knutsfordDates.end}`);
+    if (product.knutsfordDelivery || product.taraDelivery) {
+        let deliveryParts = [];
+        
+        if (product.knutsfordDelivery) {
+            const knutsfordDates = calculateDeliveryDates(product.knutsfordDelivery);
+            if (knutsfordDates) {
+                deliveryParts.push(`Knutsford: ${knutsfordDates.start} - ${knutsfordDates.end}`);
+            }
+        }
+        
+        if (product.taraDelivery) {
+            const taraDates = calculateDeliveryDates(product.taraDelivery);
+            if (taraDates) {
+                deliveryParts.push(`Tara: ${taraDates.start} - ${taraDates.end}`);
+            }
+        }
+        
+        deliveryInfo = deliveryParts.join(' | ');
     }
-    
-    if (product.taraDelivery) {
-        const taraDates = calculateDeliveryDates(product.taraDelivery);
-        deliveryParts.push(`Tara: ${taraDates.start} - ${taraDates.end}`);
-    }
-    
-    deliveryInfo = deliveryParts.join(' | ');
-}
     
     card.innerHTML = `
         <div class="product-image">
-            <img src="${product.image}" alt="${product.name}">
+            <img src="${product.image || 'https://via.placeholder.com/200x250?text=No+Image'}" alt="${product.name || 'Product'}" onerror="this.src='https://via.placeholder.com/200x250?text=No+Image'">
         </div>
         <div class="product-details">
             <div class="product-header">
-                <h3 class="product-title">${product.name}</h3>
+                <h3 class="product-title">${product.name || 'Untitled Product'}</h3>
                 <p class="product-description">${truncatedDescription}</p>
             </div>
             <div class="rating-section">
                 <div class="stars">${starsHTML} <span class="review-count">(${reviewCount})</span></div>
             </div>
-            ${deliveryInfo ? `<p style="color: #007185; font-size: 0.9rem; margin: 0.5rem 0;">${deliveryInfo}</p>` : ''}
+            ${deliveryInfo ? `<p style="color: #007185; font-size: 0.9rem; margin: 0.5rem 0; font-weight: 500;">${deliveryInfo}</p>` : ''}
             ${sellerInfo ? `<p style="color: #666; font-size: 0.9rem; font-weight: bold; margin: 0.3rem 0;">${sellerInfo}</p>` : ''}
-            <div class="product-price">$${product.price}</div>
+            <div class="product-price">$${product.price || '0.00'}</div>
             <button class="add-to-cart" data-product-id="${product.id}">Add to cart</button>
         </div>
     `;
@@ -2038,7 +2143,7 @@ if (product.knutsfordDelivery || product.taraDelivery) {
     });
     
     return card;
-    }
+}
     
 // Also add this function to handle button clicks properly:
 function addToCart(productId) {
@@ -2783,19 +2888,39 @@ function deleteDashboardProduct(productId) {
 
 // Helper function to calculate delivery dates
 function calculateDeliveryDates(deliveryDays) {
-    const [minDays, maxDays] = deliveryDays.split('-').map(Number);
-    const today = new Date();
-    
-    const startDate = new Date(today);
-    startDate.setDate(today.getDate() + minDays);
-    
-    const endDate = new Date(today);
-    endDate.setDate(today.getDate() + maxDays);
-    
-    return {
-        start: startDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
-        end: endDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
-    };
+    try {
+        if (!deliveryDays || typeof deliveryDays !== 'string') {
+            return null;
+        }
+        
+        const parts = deliveryDays.split('-');
+        if (parts.length !== 2) {
+            return null;
+        }
+        
+        const minDays = parseInt(parts[0]);
+        const maxDays = parseInt(parts[1]);
+        
+        if (isNaN(minDays) || isNaN(maxDays)) {
+            return null;
+        }
+        
+        const today = new Date();
+        
+        const startDate = new Date(today);
+        startDate.setDate(today.getDate() + minDays);
+        
+        const endDate = new Date(today);
+        endDate.setDate(today.getDate() + maxDays);
+        
+        return {
+            start: startDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+            end: endDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+        };
+    } catch (error) {
+        console.error('Error calculating delivery dates:', error);
+        return null;
+    }
 }
 
 
