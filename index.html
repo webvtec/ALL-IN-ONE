@@ -1483,6 +1483,52 @@ header button:hover {
         touch-action: manipulation;
     }
 }
+
+
+@media (max-width: 768px) {
+    .header > div:first-child {
+        gap: 0.5rem;
+    }
+    
+    .btn {
+        padding: 0.4rem 0.8rem;
+        font-size: 0.85rem;
+        min-width: auto;
+    }
+    
+    .sell-btn {
+        padding: 0.4rem 0.6rem;
+    }
+    
+    #sellerBtnText {
+        font-size: 0.75rem;
+    }
+}
+
+
+        .sell-btn {
+    min-width: fit-content;
+    white-space: nowrap;
+}
+
+#sellerBtnText {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+
+        .header > div:first-child {
+    white-space: nowrap;
+    overflow: hidden;
+}
+
+.btn {
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    overflow: hidden;
+    flex-shrink: 0;
+}
     </style>
 </head>
 <body>
