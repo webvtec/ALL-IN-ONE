@@ -2309,6 +2309,8 @@ function createProductCard(product) {
             ${product.category === 'clothing' && product.sizes && product.sizes.length > 0 ? 
             `<p style="color: #666; font-size: 0.8rem; margin: 0.2rem 0;">Sizes: ${product.sizes.join(', ')}</p>` : ''}
             <div class="product-price">$${product.price || '0.00'}</div>
+        </div>
+        <div style="text-align: center; margin-top: 0.5rem;">
             <button class="add-to-cart" data-product-id="${product.id}">Add to cart</button>
         </div>
     </div>
