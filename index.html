@@ -2236,7 +2236,7 @@ function displayProducts() {
     });
 }
 
-function createProductCard(product) {
+    function createProductCard(product) {
     const card = document.createElement('div');
     card.className = 'product-card';
     
@@ -2310,6 +2310,15 @@ function createProductCard(product) {
         </div>
     `;
     
+    // Add click event to the entire card first
+    card.addEventListener('click', function(e) {
+        // Check if click is NOT on add-to-cart button or its children
+        if (!e.target.closest('.add-to-cart')) {
+            showProductDetail(product);
+        }
+    });
+    
+    // Then add click event to the button with event stopping
     const addToCartBtn = card.querySelector('.add-to-cart');
     addToCartBtn.addEventListener('click', function(e) {
         e.stopPropagation();
@@ -2318,16 +2327,9 @@ function createProductCard(product) {
         return false;
     });
     
-    card.addEventListener('click', function(e) {
-    // Check if click is on add-to-cart button or its children
-    if (!e.target.closest('.add-to-cart')) {
-        showProductDetail(product);
-    }
-});
-    
     return card;
-}
-    
+    }
+
 // Also add this function to handle button clicks properly:
 function addToCart(productId) {
     const product = products.find(p => p.id === productId);
@@ -2596,13 +2598,10 @@ document.addEventListener('click', function(event) {
     }).join('');
     
     detailView.innerHTML = `
-        
         <header class="header" style="position: relative; width: 100%; z-index: 999; margin: 0; top: 0px;">
             <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
                 <button class="btn" onclick="showLogin()" id="detailSignInBtn">PROFILE</button>
-                <button class="btn" onclick="showCart()" style="position: relative;">
-                    🛒 Cart <span class="cart-count">${document.getElementById('cartCount').textContent}</span>
-                </button>
+                <button class="btn" onclick="closeProductDetail()" style="background: #f0f0f0; color: #333;">✕ Close</button>
             </div>
             <div class="search-container">
                 <input type="text" class="search-bar" placeholder="Search for products..." onkeyup="searchProducts()">
@@ -2674,6 +2673,7 @@ document.addEventListener('click', function(event) {
         }
     }, 200);
     }
+    
     
 function closeProductDetail() {
     const detailView = document.getElementById('productDetailView');
