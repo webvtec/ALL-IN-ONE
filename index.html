@@ -1533,8 +1533,10 @@ header button:hover {
         <button class="category-btn" onclick="filterByCategory('music')" style="background: #ffd700; color: #333; border: none; padding: 0.6rem 1.2rem; border-radius: 20px; white-space: nowrap; cursor: pointer; font-weight: bold; min-width: 70px; font-size: 0.85rem; text-align: center; display: flex; align-items: center; justify-content: center;">Music</button>
     </div>
 </div>
+        
     </header>
 
+    <main class="main-content">
         <div class="products-grid" id="productsGrid">
             <!-- Products will be loaded here -->
         </div>
@@ -2644,8 +2646,8 @@ document.addEventListener('click', function(event) {
     }
 });
 
-function showProductDetail(product) {
-    // Create or show detailed view
+
+    function showProductDetail(product) {
     let detailView = document.getElementById('productDetailView');
     if (!detailView) {
         detailView = document.createElement('div');
@@ -2665,12 +2667,10 @@ function showProductDetail(product) {
     }).join('');
     
     detailView.innerHTML = `
-        <!-- Top header that stays at top -->
         <header class="top-header">
             <div class="logo">WEBVTEC</div>
         </header>
         
-        <!-- Second header that scrolls with content -->
         <header class="header" style="position: relative; width: 100%; z-index: 999; margin: 0; top: 70px;">
             <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
                 <button class="btn" onclick="showLogin()" id="detailSignInBtn">👤 Sign In</button>
@@ -2684,8 +2684,8 @@ function showProductDetail(product) {
             </div>
         </header>
 
-        <!-- Product content starts immediately after second header -->
         <div style="padding: 20px; margin-top: 50px;">
+            <button onclick="closeProductDetail()" style="background: #007185; color: white; border: none; padding: 10px 20px; border-radius: 5px; margin-bottom: 20px; cursor: pointer;">← Back to Products</button>
             
             <h2 style="text-align: left; color: #333; margin: 0.5rem 0; font-size: 1.5rem; font-weight: bold; text-transform: uppercase;">${product.name}</h2>
             
@@ -2693,40 +2693,28 @@ function showProductDetail(product) {
                 ${starsHTML} <span style="color: #666; margin-left: 10px;">(${reviews.length})</span>
             </div>
             
-            
-        
-<div class="product-gallery">
-    <div class="photo-gallery">
-        <div class="photo-container" id="photoContainer-${product.id}">
-            ${(product.images || [product.image]).filter(img => img).map(img => 
-                `<div class="photo-slide"><img src="${img}" alt="${product.name}"></div>`
-            ).join('')}
-        </div>
-        ${(product.images || []).length > 1 ? `
-            <button class="photo-arrows photo-prev" onclick="changePhoto('${product.id}', -1)">❮</button>
-            <button class="photo-arrows photo-next" onclick="changePhoto('${product.id}', 1)">❯</button>
-            <div class="photo-nav">
-                ${(product.images || [product.image]).filter(img => img).map((_, i) => 
-                    `<div class="photo-dot ${i === 0 ? 'active' : ''}" onclick="goToPhoto('${product.id}', ${i})"></div>`
-                ).join('')}
+            <div class="product-gallery">
+                <div class="photo-gallery">
+                    <div class="photo-container" id="photoContainer-${product.id}">
+                        ${(product.images || [product.image]).filter(img => img).map(img => 
+                            `<div class="photo-slide"><img src="${img}" alt="${product.name}"></div>`
+                        ).join('')}
+                    </div>
+                    ${(product.images || []).length > 1 ? `
+                        <button class="photo-arrows photo-prev" onclick="changePhoto('${product.id}', -1)">‹</button>
+                        <button class="photo-arrows photo-next" onclick="changePhoto('${product.id}', 1)">›</button>
+                        <div class="photo-nav">
+                            ${(product.images || [product.image]).filter(img => img).map((_, i) => 
+                                `<div class="photo-dot ${i === 0 ? 'active' : ''}" onclick="goToPhoto('${product.id}', ${i})"></div>`
+                            ).join('')}
+                        </div>
+                    ` : ''}
+                </div>
             </div>
-        ` : ''}
-    </div>
-</div>
             
             <div style="display: flex; justify-content: space-between; align-items: center; margin: 1rem 0;">
                 <div class="detail-price" style="margin: 0;">$${product.price}</div>
-                <button class="detail-share" onclick="shareProduct('${product.id}', '${product.name}')" style="background: transparent; border: none; cursor: pointer; color: #333; padding: 8px;">
-                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <circle cx="18" cy="5" r="3"></circle>
-                        <circle cx="6" cy="12" r="3"></circle>
-                        <circle cx="18" cy="19" r="3"></circle>
-                        <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line>
-                        <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line>
-                    </svg>
-                </button>
             </div>
-            
             
             <div class="detail-actions">
                 <button class="detail-add-to-cart" onclick="addToCart('${product.id}'); closeProductDetail();">Add to Cart</button>
@@ -2755,10 +2743,16 @@ function showProductDetail(product) {
     `;
     
     detailView.classList.add('active');
-    // Update auth state for detail page
-setTimeout(() => updateDetailPageAuth(), 100);
-}
-        
+    setTimeout(() => {
+        if (typeof initializePhotoGallery === 'function') {
+            initializePhotoGallery(product.id);
+        }
+        if (typeof updateDetailPageAuth === 'function') {
+            updateDetailPageAuth();
+        }
+    }, 200);
+    }
+    
 function closeProductDetail() {
     const detailView = document.getElementById('productDetailView');
     if (detailView) {
@@ -3583,15 +3577,7 @@ function updatePhotoDisplay(productId) {
     });
 }
 
-        detailView.classList.add('active');
-    
-    // Initialize photo gallery for touch/swipe after DOM is ready
-    setTimeout(() => {
-        initializePhotoGallery(product.id);
-        updateDetailPageAuth();
-    }, 200);
-    }
-    
+        
 </script>
 </body>
 </html>
