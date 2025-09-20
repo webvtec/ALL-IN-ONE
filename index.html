@@ -1343,6 +1343,76 @@ header button:hover {
         -webkit-tap-highlight-color: transparent !important;
     }
 }
+
+
+/* Photo gallery styles */
+.photo-gallery {
+    position: relative;
+    width: 100%;
+    max-width: 500px;
+    margin: 0 auto;
+    overflow: hidden;
+    border-radius: 12px;
+}
+
+.photo-container {
+    display: flex;
+    transition: transform 0.3s ease;
+    width: 500%; /* 5 photos = 500% */
+}
+
+.photo-slide {
+    width: 20%; /* Each photo takes 20% of container */
+    flex-shrink: 0;
+}
+
+.photo-slide img {
+    width: 100%;
+    height: 400px;
+    object-fit: contain;
+    background: white;
+}
+
+.photo-nav {
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+    margin-top: 15px;
+}
+
+.photo-dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: #ddd;
+    cursor: pointer;
+    transition: background 0.3s ease;
+}
+
+.photo-dot.active {
+    background: #007185;
+}
+
+.photo-arrows {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    background: rgba(0,0,0,0.5);
+    color: white;
+    border: none;
+    padding: 10px 15px;
+    cursor: pointer;
+    font-size: 18px;
+    border-radius: 50%;
+}
+
+.photo-prev {
+    left: 10px;
+}
+
+.photo-next {
+    right: 10px;
+}
     </style>
 </head>
 <body>
@@ -1357,14 +1427,14 @@ header button:hover {
     <header class="header">
     <div style="display: flex; justify-content: space-around; align-items: center; margin-bottom: 10px;">
         <button class="btn" onclick="showLogin()">👤 Sign In</button>
-        <button class="btn sell-btn" onclick="handleSellerButton()">
+        <button class="btn sell-btn" id="dynamicSellerBtn" onclick="handleSellerButton()">
     <div class="sell-icon">
         <svg width="32" height="32" viewBox="0 0 24 24" fill="currentColor">
             <path d="M12 3L2 12h3v8h6v-6h2v6h6v-8h3L12 3zm0 2.8l6 6V20h-2v-6H8v6H6v-8.2l6-6z"/>
             <path d="M4 6h2v2H4zm14 0h2v2h-2z"/>
         </svg>
     </div>
-    SELL ON WEB VTEC
+    <span id="sellerBtnText">SELL ON WEB VTEC</span>
         </button>
         <button class="btn" onclick="showCart()" style="position: relative;">
             🛒 Cart <span class="cart-count" id="cartCount">0</span>
@@ -1680,7 +1750,6 @@ header button:hover {
     </div>
 </div>
 
-        
     </div>
 </div>
 
@@ -1754,8 +1823,12 @@ header button:hover {
                         </select>
                     </div>
                     <div class="form-field">
-                        <label>Image URL</label>
-                        <input type="url" id="editProductImage" required>
+    <label>Product Images (up to 5 URLs)</label>
+    <input type="url" id="dashboardProductImage1" required placeholder="Main image URL">
+    <input type="url" id="dashboardProductImage2" placeholder="Additional image URL (optional)">
+    <input type="url" id="dashboardProductImage3" placeholder="Additional image URL (optional)">
+    <input type="url" id="dashboardProductImage4" placeholder="Additional image URL (optional)">
+    <input type="url" id="dashboardProductImage5" placeholder="Additional image URL (optional)">
                     </div>
                 </div>
                 
@@ -1792,6 +1865,33 @@ header button:hover {
         </div>
     </div>
 </div>
+
+
+    <div class="form-row" id="clothingSizeRow" style="display: none;">
+    <div class="form-field">
+        <label>Available Sizes</label>
+        <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+            <label style="display: flex; align-items: center; gap: 5px;">
+                <input type="checkbox" value="XS"> XS
+            </label>
+            <label style="display: flex; align-items: center; gap: 5px;">
+                <input type="checkbox" value="S"> S
+            </label>
+            <label style="display: flex; align-items: center; gap: 5px;">
+                <input type="checkbox" value="M"> M
+            </label>
+            <label style="display: flex; align-items: center; gap: 5px;">
+                <input type="checkbox" value="L"> L
+            </label>
+            <label style="display: flex; align-items: center; gap: 5px;">
+                <input type="checkbox" value="XL"> XL
+            </label>
+            <label style="display: flex; align-items: center; gap: 5px;">
+                <input type="checkbox" value="XXL"> XXL
+            </label>
+        </div>
+    </div>
+    </div>
 <script>
 // Firebase configuration - MOVE THIS TO THE TOP
 const firebaseConfig = {
@@ -1950,18 +2050,16 @@ function updateAuthUI() {
     const signInBtn = document.querySelector('.btn[onclick="showLogin()"]');
     
     if (currentUser) {
-        // User is signed in
         const displayName = currentUser.displayName || 'User';
-        const firstName = displayName.split(' ')[0]; // Get first name only
+        const firstName = displayName.split(' ')[0];
         signInBtn.innerHTML = `👤 ${firstName}`;
         signInBtn.onclick = showUserProfile;
     } else {
-        // User is signed out
         signInBtn.innerHTML = '👤 Sign In';
         signInBtn.onclick = showLogin;
     }
     
-    // Also update detail page if it exists
+    updateSellerButton(); // Add this line
     updateDetailPageAuth();
 }
 
@@ -2505,9 +2603,25 @@ function showProductDetail(product) {
             </div>
             
             
-            <div class="product-gallery">
-                <img src="${product.image}" alt="${product.name}">
+        
+<div class="product-gallery">
+    <div class="photo-gallery">
+        <div class="photo-container" id="photoContainer-${product.id}">
+            ${(product.images || [product.image]).filter(img => img).map(img => 
+                `<div class="photo-slide"><img src="${img}" alt="${product.name}"></div>`
+            ).join('')}
+        </div>
+        ${(product.images || []).length > 1 ? `
+            <button class="photo-arrows photo-prev" onclick="changePhoto('${product.id}', -1)">❮</button>
+            <button class="photo-arrows photo-next" onclick="changePhoto('${product.id}', 1)">❯</button>
+            <div class="photo-nav">
+                ${(product.images || [product.image]).filter(img => img).map((_, i) => 
+                    `<div class="photo-dot ${i === 0 ? 'active' : ''}" onclick="goToPhoto('${product.id}', ${i})"></div>`
+                ).join('')}
             </div>
+        ` : ''}
+    </div>
+</div>
             
             <div style="display: flex; justify-content: space-between; align-items: center; margin: 1rem 0;">
                 <div class="detail-price" style="margin: 0;">$${product.price}</div>
@@ -3149,6 +3263,68 @@ function handleEditProduct(event) {
             alert('Error updating product: ' + error.message);
         });
 }
+
+
+function updateSellerButton() {
+    const sellerBtn = document.getElementById('dynamicSellerBtn');
+    const btnText = document.getElementById('sellerBtnText');
+    
+    if (currentUser) {
+        db.collection('sellers').doc(currentUser.uid).get()
+            .then((doc) => {
+                if (doc.exists) {
+                    btnText.textContent = 'SELLER DASHBOARD';
+                } else {
+                    btnText.textContent = 'SELL ON WEB VTEC';
+                }
+            })
+            .catch(() => {
+                btnText.textContent = 'SELL ON WEB VTEC';
+            });
+    } else {
+        btnText.textContent = 'SELL ON WEB VTEC';
+    }
+}
+
+
+let currentPhotoIndex = 0;
+
+function changePhoto(productId, direction) {
+    const product = products.find(p => p.id === productId);
+    const images = (product.images || [product.image]).filter(img => img);
+    
+    currentPhotoIndex += direction;
+    if (currentPhotoIndex >= images.length) currentPhotoIndex = 0;
+    if (currentPhotoIndex < 0) currentPhotoIndex = images.length - 1;
+    
+    updatePhotoDisplay(productId);
+}
+
+function goToPhoto(productId, index) {
+    currentPhotoIndex = index;
+    updatePhotoDisplay(productId);
+}
+
+function updatePhotoDisplay(productId) {
+    const container = document.getElementById(`photoContainer-${productId}`);
+    const dots = document.querySelectorAll('.photo-dot');
+    
+    container.style.transform = `translateX(-${currentPhotoIndex * 20}%)`;
+    
+    dots.forEach((dot, i) => {
+        dot.classList.toggle('active', i === currentPhotoIndex);
+    });
+}
+
+// Add this to your existing JavaScript
+document.getElementById('dashboardProductCategory').addEventListener('change', function() {
+    const sizeRow = document.getElementById('clothingSizeRow');
+    if (this.value === 'clothing') {
+        sizeRow.style.display = 'block';
+    } else {
+        sizeRow.style.display = 'none';
+    }
+});
 </script>
 </body>
 </html>
