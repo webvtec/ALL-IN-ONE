@@ -34,26 +34,58 @@ body {
     padding: 1rem;
     backdrop-filter: blur(10px);
     border-bottom: 2px solid #ffd700;
-    display: flex;
-    align-items: center;
-    gap: 1rem;
     position: relative;
     z-index: 1001;
     width: 100%;
     box-sizing: border-box;
 }
 
+.header-main {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
 .search-container {
     position: relative;
     flex: 1;
-    max-width: 400px;
-    min-width: 150px;
+    max-width: 350px;
+    margin-left: 1rem;
 }
 
-.header-right {
+.categories-section {
+    padding: 0.5rem 0;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.categories-scroll {
     display: flex;
-    gap: 0.5rem;
+    gap: 0.8rem;
+    overflow-x: auto;
+    padding: 0.3rem 0;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+    width: 100%;
+}
+
+.category-btn {
+    background: #ffd700;
+    color: #333;
+    border: none;
+    padding: 0.6rem 1.2rem;
+    border-radius: 20px;
+    white-space: nowrap;
+    cursor: pointer;
+    font-weight: bold;
+    font-size: 0.85rem;
+    text-align: center;
+    display: flex;
     align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+    min-width: auto;
     flex-shrink: 0;
 }
     
@@ -1026,12 +1058,18 @@ body {
         gap: 0.8rem;
         align-items: stretch;
     }
+
+    .header-main {
+        flex-direction: column;
+        gap: 0.8rem;
+        margin-bottom: 0.8rem;
+    }
     
     .search-container {
         order: 1;
         width: 100%;
         max-width: none;
-        min-width: auto;
+        margin-left: 0;
     }
     
     .search-bar {
@@ -1054,8 +1092,8 @@ body {
     
     /* Profile Section */
     .profile-section {
-        padding: 0.2rem;
-        flex-shrink: 0;
+        order: 0;
+        align-self: flex-start;
     }
     
     .profile-avatar {
@@ -1073,8 +1111,8 @@ body {
     }
     
     .sell-btn {
-        flex-shrink: 0;
-        min-width: auto;
+        order: 2;
+        align-self: flex-end;
     }
     
     .sell-icon svg {
@@ -1089,7 +1127,6 @@ body {
     /* Categories */
     .categories-section {
         padding: 0.3rem 0;
-        margin-bottom: 0.5rem;
     }
     
     .categories-scroll {
@@ -1100,7 +1137,6 @@ body {
     .category-btn {
         padding: 0.5rem 1rem;
         font-size: 0.8rem;
-        min-width: 60px;
     }
     
     /* Floating Cart */
@@ -1461,15 +1497,15 @@ body {
 
 <!-- Header -->
 <header class="header">
-    <div class="search-container">
-        <input type="text" class="search-bar" placeholder="Search for products..." onkeyup="searchProducts()">
-        <button class="search-btn" onclick="searchProducts()">🔍</button>
-    </div>
-
-    <div class="header-right">
+    <div class="header-main">
         <div class="profile-section" onclick="showLogin()">
             <div class="profile-avatar" id="profileAvatar">W</div>
             <button class="btn" id="signInBtn" style="font-size: 0.8rem; padding: 0.3rem 0.6rem;">PROFILE</button>
+        </div>
+        
+        <div class="search-container">
+            <input type="text" class="search-bar" placeholder="Search for products..." onkeyup="searchProducts()">
+            <button class="search-btn" onclick="searchProducts()">🔍</button>
         </div>
         
         <button class="btn sell-btn" id="dynamicSellerBtn" onclick="handleSellerButton()">
