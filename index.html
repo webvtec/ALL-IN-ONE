@@ -1413,6 +1413,57 @@ header button:hover {
 .photo-next {
     right: 10px;
 }
+
+
+
+
+/* Enhanced photo gallery with touch support */
+.photo-gallery {
+    position: relative;
+    width: 100%;
+    max-width: 500px;
+    margin: 0 auto;
+    overflow: hidden;
+    border-radius: 12px;
+    touch-action: pan-y pinch-zoom;
+    user-select: none;
+}
+
+.photo-container {
+    display: flex;
+    transition: transform 0.3s ease;
+    width: 500%;
+    cursor: grab;
+}
+
+.photo-container:active {
+    cursor: grabbing;
+}
+
+.photo-container.dragging {
+    transition: none;
+}
+
+.photo-slide {
+    width: 20%;
+    flex-shrink: 0;
+    position: relative;
+}
+
+.photo-slide img {
+    width: 100%;
+    height: 400px;
+    object-fit: contain;
+    background: white;
+    pointer-events: none;
+}
+
+/* Hide arrows on touch devices */
+@media (hover: none) and (pointer: coarse) {
+    .photo-arrows {
+        display: none;
+    }
+}
     </style>
 </head>
 <body>
@@ -1853,8 +1904,12 @@ header button:hover {
                         </select>
                     </div>
                     <div class="form-field">
-                   <label>Image URL</label>
-                   <input type="url" id="editProductImage" required>
+    <label>Product Images (up to 5 URLs)</label>
+    <input type="url" id="editProductImage1" required placeholder="Main image URL" style="margin-bottom: 0.5rem;">
+    <input type="url" id="editProductImage2" placeholder="Additional image URL (optional)" style="margin-bottom: 0.5rem;">
+    <input type="url" id="editProductImage3" placeholder="Additional image URL (optional)" style="margin-bottom: 0.5rem;">
+    <input type="url" id="editProductImage4" placeholder="Additional image URL (optional)" style="margin-bottom: 0.5rem;">
+    <input type="url" id="editProductImage5" placeholder="Additional image URL (optional)">
                     </div>
                 </div>
                 
@@ -3097,9 +3152,6 @@ function handleDashboardAddProduct(event) {
 }
 
     
-function editDashboardProduct(productId) {
-    alert('Edit functionality coming soon!');
-}
 
 function deleteDashboardProduct(productId) {
     if (confirm('Are you sure you want to delete this product?')) {
@@ -3267,7 +3319,16 @@ function editDashboardProduct(productId) {
                 document.getElementById('editProductPrice').value = product.price;
                 document.getElementById('editProductDescription').value = product.description;
                 document.getElementById('editProductCategory').value = product.category;
-                document.getElementById('editProductImage').value = product.image;
+                
+                // Populate all image fields
+                const images = product.images || [product.image];
+                for (let i = 1; i <= 5; i++) {
+                    const imageField = document.getElementById(`editProductImage${i}`);
+                    if (imageField) {
+                        imageField.value = images[i-1] || '';
+                    }
+                }
+                
                 document.getElementById('editKnutsfordDelivery').value = product.knutsfordDelivery || '';
                 document.getElementById('editTaraDelivery').value = product.taraDelivery || '';
                 
@@ -3289,12 +3350,28 @@ function handleEditProduct(event) {
     event.preventDefault();
     
     const productId = document.getElementById('editProductId').value;
+    
+    // Collect all image URLs
+    const images = [];
+    for (let i = 1; i <= 5; i++) {
+        const imageUrl = document.getElementById(`editProductImage${i}`)?.value;
+        if (imageUrl && imageUrl.trim()) {
+            images.push(imageUrl.trim());
+        }
+    }
+    
+    if (images.length === 0) {
+        alert('Please provide at least one product image');
+        return;
+    }
+    
     const updatedProduct = {
         name: document.getElementById('editProductName').value,
         description: document.getElementById('editProductDescription').value,
         price: parseFloat(document.getElementById('editProductPrice').value),
         category: document.getElementById('editProductCategory').value,
-        image: document.getElementById('editProductImage').value,
+        image: images[0], // First image as main
+        images: images, // All images
         knutsfordDelivery: document.getElementById('editKnutsfordDelivery').value,
         taraDelivery: document.getElementById('editTaraDelivery').value,
         updatedAt: new Date().toISOString()
@@ -3336,6 +3413,96 @@ function updateSellerButton() {
 
 
 let currentPhotoIndex = 0;
+let isPointerDown = false;
+let startX = 0;
+let currentX = 0;
+let startTime = 0;
+let currentProductId = null;
+
+function initializePhotoGallery(productId) {
+    currentProductId = productId;
+    currentPhotoIndex = 0;
+    
+    const container = document.getElementById(`photoContainer-${productId}`);
+    if (!container) return;
+    
+    // Mouse events
+    container.addEventListener('mousedown', handlePointerStart);
+    container.addEventListener('mousemove', handlePointerMove);
+    container.addEventListener('mouseup', handlePointerEnd);
+    container.addEventListener('mouseleave', handlePointerEnd);
+    
+    // Touch events
+    container.addEventListener('touchstart', handlePointerStart, { passive: true });
+    container.addEventListener('touchmove', handlePointerMove, { passive: false });
+    container.addEventListener('touchend', handlePointerEnd);
+    
+    // Prevent default drag behavior
+    container.addEventListener('dragstart', e => e.preventDefault());
+}
+
+function handlePointerStart(e) {
+    isPointerDown = true;
+    startTime = Date.now();
+    const container = e.currentTarget;
+    
+    if (e.type === 'mousedown') {
+        startX = e.clientX;
+        container.style.cursor = 'grabbing';
+    } else if (e.type === 'touchstart') {
+        startX = e.touches[0].clientX;
+    }
+    
+    currentX = startX;
+    container.classList.add('dragging');
+}
+
+function handlePointerMove(e) {
+    if (!isPointerDown) return;
+    
+    e.preventDefault();
+    const container = e.currentTarget;
+    
+    if (e.type === 'mousemove') {
+        currentX = e.clientX;
+    } else if (e.type === 'touchmove') {
+        currentX = e.touches[0].clientX;
+    }
+    
+    const deltaX = currentX - startX;
+    const baseTransform = -currentPhotoIndex * 20;
+    const dragPercent = (deltaX / container.offsetWidth) * 20;
+    
+    container.style.transform = `translateX(${baseTransform + dragPercent}%)`;
+}
+
+function handlePointerEnd(e) {
+    if (!isPointerDown) return;
+    
+    isPointerDown = false;
+    const container = e.currentTarget;
+    const deltaX = currentX - startX;
+    const deltaTime = Date.now() - startTime;
+    const velocity = Math.abs(deltaX) / deltaTime;
+    
+    container.style.cursor = 'grab';
+    container.classList.remove('dragging');
+    
+    // Determine if swipe was significant enough
+    const threshold = container.offsetWidth * 0.25; // 25% of container width
+    const shouldSwipe = Math.abs(deltaX) > threshold || velocity > 0.5;
+    
+    if (shouldSwipe) {
+        if (deltaX > 0) {
+            changePhoto(currentProductId, -1);
+        } else {
+            changePhoto(currentProductId, 1);
+        }
+    } else {
+        // Snap back to current position
+        updatePhotoDisplay(currentProductId);
+    }
+}
 
 function changePhoto(productId, direction) {
     const product = products.find(p => p.id === productId);
@@ -3357,14 +3524,17 @@ function updatePhotoDisplay(productId) {
     const container = document.getElementById(`photoContainer-${productId}`);
     const dots = document.querySelectorAll('.photo-dot');
     
-    container.style.transform = `translateX(-${currentPhotoIndex * 20}%)`;
+    if (container) {
+        container.style.transform = `translateX(-${currentPhotoIndex * 20}%)`;
+    }
     
     dots.forEach((dot, i) => {
         dot.classList.toggle('active', i === currentPhotoIndex);
     });
 }
 
-
+        setTimeout(() => initializePhotoGallery('${product.id}'), 100);
+    
 </script>
 </body>
 </html>
