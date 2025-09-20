@@ -30,8 +30,6 @@ body {
     padding: 1rem;
     backdrop-filter: blur(10px);
     border-bottom: 2px solid #ffd700;
-    margin-top: 0px;
-    margin-bottom: 0px;
     position: relative;
     z-index: 1001;
 }
@@ -39,8 +37,8 @@ body {
 .header-content {
     display: flex;
     align-items: center;
-    gap: 1rem;
     justify-content: space-between;
+    gap: 1rem;
     margin-bottom: 1rem;
 }
 
@@ -59,15 +57,18 @@ body {
         0 2px 0 #ffd700;
 }
 
+/* Profile Section - Stack vertically */
 .profile-section {
     display: flex;
+    flex-direction: column;
     align-items: center;
-    gap: 0.5rem;
+    gap: 0.3rem;
     flex-shrink: 0;
     cursor: pointer;
-    padding: 0.3rem;
+    padding: 0.5rem;
     border-radius: 8px;
     transition: background 0.3s ease;
+    min-width: 80px;
 }
 
 .profile-section:hover {
@@ -75,8 +76,8 @@ body {
 }
 
 .profile-avatar {
-    width: 40px;
-    height: 40px;
+    width: 35px;
+    height: 35px;
     border-radius: 50%;
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     display: flex;
@@ -84,7 +85,7 @@ body {
     justify-content: center;
     color: white;
     font-weight: bold;
-    font-size: 18px;
+    font-size: 16px;
     border: 2px solid #ffd700;
     box-shadow: 0 2px 8px rgba(0,0,0,0.2);
 }
@@ -97,9 +98,10 @@ body {
 }
 
 .profile-btn {
-    font-size: 0.8rem;
-    padding: 0.4rem 0.8rem;
+    font-size: 0.7rem;
+    padding: 0.2rem 0.5rem;
     white-space: nowrap;
+    margin: 0;
 }
 
 .btn {
@@ -120,22 +122,24 @@ body {
     box-shadow: 0 5px 15px rgba(255, 215, 0, 0.3);
 }
 
+/* Search Container - Centered and compact */
 .search-container {
-    flex: 1;
-    max-width: 500px;
+    flex: 0 0 auto;
+    width: 300px;
+    max-width: 300px;
     position: relative;
-    margin: 0 1rem;
+    margin: 0 auto;
 }
-        
+
 .search-bar {
     width: 100%;
-    padding: 0.8rem 50px 0.8rem 1rem;
+    padding: 0.7rem 45px 0.7rem 1rem;
     border: none;
     border-radius: 25px;
     background: rgba(255, 255, 255, 0.1);
     backdrop-filter: blur(10px);
     color: white;
-    font-size: 1rem;
+    font-size: 0.9rem;
     border: 2px solid rgba(255, 215, 0, 0.3);
 }
 
@@ -151,17 +155,17 @@ body {
 
 .search-btn {
     position: absolute;
-    right: 5px;
+    right: 3px;
     top: 50%;
     transform: translateY(-50%);
-    width: 40px;
-    height: 40px;
+    width: 35px;
+    height: 35px;
     background: linear-gradient(45deg, #ffd700, #ffed4a);
     color: #333;
     border: none;
     border-radius: 50%;
     cursor: pointer;
-    font-size: 1rem;
+    font-size: 0.9rem;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -170,44 +174,73 @@ body {
 
 .search-btn:hover {
     transform: translateY(-50%) scale(1.05);
-    box-shadow: 0 5px 15px rgba(255, 215, 0, 0.3);
+    box-shadow: 0 3px 10px rgba(255, 215, 0, 0.3);
 }
-
-.sell-btn {
+            
+/* Sell Button - No background, clean design */
+.sell-btn-clean {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.2rem;
+    background: none;
+    border: none;
+    color: white;
+    cursor: pointer;
+    padding: 0.5rem;
+    border-radius: 8px;
+    transition: all 0.3s ease;
     flex-shrink: 0;
-    font-size: 0.8rem;
-    padding: 0.6rem 1rem;
-    white-space: nowrap;
-    min-width: fit-content;
+    min-width: 60px;
 }
 
-/* Floating Cart Button */
-.floating-cart {
+.sell-btn-clean:hover {
+    background: rgba(255, 255, 255, 0.1);
+    transform: translateY(-1px);
+}
+
+.sell-icon {
+    color: #ffd700;
+    margin-bottom: 0.1rem;
+}
+
+.sell-btn-clean span {
+    font-size: 0.7rem;
+    font-weight: bold;
+    color: white;
+    text-align: center;
+}
+            
+/* Floating Cart Widget */
+.floating-cart-widget {
     position: fixed;
     bottom: 20px;
     right: 20px;
     width: 60px;
     height: 60px;
     background: linear-gradient(45deg, #ffd700, #ffed4a);
-    color: #333;
-    border: none;
     border-radius: 50%;
-    font-size: 1.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     cursor: pointer;
     z-index: 2000;
     box-shadow: 0 4px 15px rgba(0,0,0,0.3);
     transition: all 0.3s ease;
-    display: flex;
-    align-items: center;
-    justify-content: center;
 }
 
-.floating-cart:hover {
+.floating-cart-widget:hover {
     transform: scale(1.1);
     box-shadow: 0 6px 20px rgba(0,0,0,0.4);
 }
 
-.cart-count-float {
+
+.cart-icon {
+    font-size: 1.5rem;
+    color: #333;
+}
+
+.cart-count-badge {
     position: absolute;
     top: -5px;
     right: -5px;
@@ -224,7 +257,7 @@ body {
     border: 2px solid white;
     min-width: 22px;
 }
-
+            
 /* Sidebar Menu */
 .sidebar {
     position: fixed;
@@ -1044,7 +1077,7 @@ body {
     }
     
     .header {
-        padding: 0.8rem;
+        padding: 0.8rem 0.5rem;
     }
     
     .header-content {
@@ -1052,24 +1085,39 @@ body {
     }
     
     .search-container {
-        margin: 0 0.3rem;
-        min-width: 0;
+        width: 200px;
+        max-width: 200px;
     }
     
     .search-bar {
-        padding: 0.7rem 45px 0.7rem 0.8rem;
-        font-size: 0.9rem;
+        padding: 0.6rem 40px 0.6rem 0.8rem;
+        font-size: 0.8rem;
     }
     
     .search-btn {
-        width: 35px;
-        height: 35px;
-        font-size: 0.9rem;
+        width: 30px;
+        height: 30px;
+        font-size: 0.8rem;
     }
     
-    .profile-btn, .sell-btn {
-        font-size: 0.7rem;
-        padding: 0.4rem 0.6rem;
+
+    .profile-btn {
+        font-size: 0.6rem;
+        padding: 0.2rem 0.3rem;
+    }
+
+    .sell-btn-clean {
+        min-width: 50px;
+        padding: 0.3rem;
+    }
+    
+    .sell-btn-clean span {
+        font-size: 0.6rem;
+    }
+    
+    .sell-icon svg {
+        width: 20px;
+        height: 20px;
     }
     
     #sellerBtnText {
@@ -1082,15 +1130,25 @@ body {
         font-size: 16px;
     }
     
-    .floating-cart {
+    .floating-cart-widget {
         width: 55px;
         height: 55px;
         bottom: 15px;
         right: 15px;
-        font-size: 1.3rem;
     }
+
+  .cart-icon {
+        font-size: 1.3rem;
+  }
     
     .cart-count-float {
+        width: 20px;
+        height: 20px;
+        font-size: 0.7rem;
+        min-width: 20px;
+    }
+
+    .cart-count-badge {
         width: 20px;
         height: 20px;
         font-size: 0.7rem;
@@ -2326,9 +2384,13 @@ function setRating(productId, rating) {
 
 function updateCartCount() {
     const count = cart.reduce((total, item) => total + item.quantity, 0);
-    document.getElementById('cartCount').textContent = count; // Old cart counter
-    document.getElementById('cartCountFloat').textContent = count; // New floating cart counter
+    const cartBadge = document.getElementById('cartCountFloat');
+    if (cartBadge) {
+        cartBadge.textContent = count;
+        cartBadge.style.display = count > 0 ? 'flex' : 'none';
+    }
 }
+    
 function showCartNotification(productName) {
     const notification = document.createElement('div');
     notification.style.cssText = `
