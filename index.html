@@ -2296,25 +2296,23 @@ function createProductCard(product) {
     }
     
     card.innerHTML = `
-        <div class="product-image">
-            <img src="${product.image || 'https://via.placeholder.com/200x250?text=No+Image'}" alt="${product.name || 'Product'}" onerror="this.src='https://via.placeholder.com/200x250?text=No+Image'">
-        </div>
-        <div class="product-details">
-            <div class="product-header">
-                <h3 class="product-title">${product.name || 'Untitled Product'}</h3>
-                <p class="product-description">${truncatedDescription}</p>
-            </div>
-            <div class="rating-section">
-                <div class="stars">${starsHTML} <span class="review-count">(${reviewCount})</span></div>
-            </div>
+    <div class="product-image">
+        <img src="${product.image || 'https://via.placeholder.com/200x250?text=No+Image'}" alt="${product.name || 'Product'}" onerror="this.src='https://via.placeholder.com/200x250?text=No+Image'">
+    </div>
+    <div class="product-details">
+        <div class="product-header">
+            <h3 class="product-title">${product.name || 'Untitled Product'}</h3>
+            <p class="product-description">${truncatedDescription}</p>
+            <div class="stars">${starsHTML} <span class="review-count">(${reviewCount})</span></div>
             ${deliveryHTML ? `<div class="delivery-info">${deliveryHTML}</div>` : ''}
-            ${product.category === 'clothing' && product.sizes && product.sizes.length > 0 ? 
-            `<p style="color: #666; font-size: 0.8rem; margin: 0.2rem 0;">Sizes: ${product.sizes.join(', ')}</p>` : ''}
-            ${sellerInfo ? `<p class="seller-info">${sellerInfo}</p>` : ''}
-            <div class="product-price">$${product.price || '0.00'}</div>
-            <button class="add-to-cart" data-product-id="${product.id}">Add to cart</button>
         </div>
-    `;
+        ${product.category === 'clothing' && product.sizes && product.sizes.length > 0 ? 
+        `<p style="color: #666; font-size: 0.8rem; margin: 0.2rem 0;">Sizes: ${product.sizes.join(', ')}</p>` : ''}
+        ${sellerInfo ? `<p class="seller-info">${sellerInfo}</p>` : ''}
+        <div class="product-price">$${product.price || '0.00'}</div>
+        <button class="add-to-cart" data-product-id="${product.id}">Add to cart</button>
+    </div>
+`;
     
     // Add click event to the entire card first
     card.addEventListener('click', function(e) {
