@@ -1158,29 +1158,30 @@ body {
 
     /* Product cards - keep ALL content visible */
     .product-card {
-    flex-direction: row;
-    padding: 0;
-    gap: 0;
-    min-height: 200px;
-    user-select: none;
-    -webkit-user-select: none;
-    -moz-user-select: none;
-    -ms-user-select: none;
-    overflow: visible;
-    position: relative;
-    display: flex;
-    align-items: stretch;
-    }
-    
-    .product-image {
-    width: 120px;
-    align-self: stretch; /* This makes it take full card height */
-    background: white;
-    flex-shrink: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    }
+flex-direction: row;
+padding: 0;
+gap: 0;
+min-height: 200px;
+user-select: none;
+-webkit-user-select: none;
+-moz-user-select: none;
+-ms-user-select: none;
+overflow: hidden; /* Change back to hidden so border radius works */
+position: relative;
+display: flex;
+align-items: stretch;
+}
+
+.product-image {
+width: 120px;
+height: 100%; /* Force full height */
+background: white;
+flex-shrink: 0;
+display: flex;
+align-items: center;
+justify-content: center;
+border-radius: 12px 0 0 12px; /* Take left border radius from card */
+}
     
     .product-image img {
         width: 100%;
