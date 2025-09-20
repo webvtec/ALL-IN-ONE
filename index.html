@@ -2659,24 +2659,18 @@ document.addEventListener('click', function(event) {
 
                     <div class="logo">WEB VTEC</div>
                     
-                    <!-- Close Button - Right -->
+                    <!-- Sell Button - Right (original structure) -->
                     <button class="sell-btn-clean" onclick="closeProductDetail()">
                         <div class="sell-icon">
                             <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
-                                <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
+                                <path d="M12 3L2 12h3v8h6v-6h2v6h6v-8h3L12 3zm0 2.8l6 6V20h-2v-6H8v6H6v-8.2l6-6z"/>
                             </svg>
                         </div>
-                        <span>CLOSE</span>
+                        <span id="sellerBtnText">SELL</span>
                     </button>
                 </div>
 
                 <div class="header-separator"></div>
-            </div>
-
-            <!-- Search Container -->
-            <div class="search-container">
-                <input type="text" class="search-bar" placeholder="Search products..." onkeyup="searchProducts()">
-                <button class="search-btn" onclick="searchProducts()">🔍</button>
             </div>
         </header>
 
