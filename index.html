@@ -544,39 +544,86 @@
         padding: 12px;
         gap: 12px;
         min-height: 200px;
+        max-height: 240px; /* Set max height to prevent overflow */
         user-select: none;
         -webkit-user-select: none;
         -moz-user-select: none;
         -ms-user-select: none;
+        overflow: hidden; /* Prevent content overflow */
+        position: relative;
     }
     
     .product-image {
         width: 130px;
         min-height: 180px;
+        max-height: 180px;
         background: white;
         flex-shrink: 0;
+        overflow: hidden; /* Prevent image overflow */
+    }
+    
+    .product-image img {
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
     }
     
     .product-details {
-        padding: 8px 12px 12px 0;
+        padding: 8px 8px 12px 0; /* Reduced right padding */
         flex: 1;
         display: flex;
         flex-direction: column;
         justify-content: space-between;
+        min-width: 0; /* Allow flex item to shrink */
+        overflow: hidden; /* Prevent overflow */
     }
 
     .product-title {
-        font-size: 1.3rem;
+        font-size: 1.2rem; /* Slightly smaller */
         margin-bottom: 0.3rem;
+        line-height: 1.2;
+        word-wrap: break-word;
+        overflow: hidden;
+        display: -webkit-box;
+        -webkit-line-clamp: 2; /* Limit to 2 lines */
+        -webkit-box-orient: vertical;
     }
 
     .product-description {
-        font-size: 0.9rem;
-        margin-bottom: 0.8rem;
+        font-size: 0.85rem; /* Smaller text */
+        margin-bottom: 0.5rem;
+        line-height: 1.2;
+        overflow: hidden;
+        display: -webkit-box;
+        -webkit-line-clamp: 2; /* Limit to 2 lines */
+        -webkit-box-orient: vertical;
+        word-wrap: break-word;
     }
 
+    .delivery-info {
+    color: #007185 !important;
+    font-size: 0.8rem !important;
+    margin: 0.2rem 0 !important;
+    font-weight: 500 !important;
+    line-height: 1.1 !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    white-space: nowrap !important;
+}
+
+.seller-info {
+    color: #666 !important;
+    font-size: 0.8rem !important;
+    font-weight: bold !important;
+    margin: 0.2rem 0 !important;
+    line-height: 1.1 !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    white-space: nowrap !important;
+}
+
     .rating-section {
-        margin-bottom: 0.8rem;
+        margin-bottom: 0.5rem;
     }
 
     .rating-section h4 {
@@ -585,20 +632,39 @@
 
     .stars {
         gap: 2px;
+        margin-bottom: 0.3rem;
     }
 
     .star {
-        font-size: 1.2rem;
+        font-size: 1.1rem; /* Slightly smaller */
+    }
+
+    .review-count {
+        font-size: 1rem; /* Smaller review count */
+    }
+
+    /* Delivery and seller info */
+    .product-details p[style*="color: #007185"],
+    .product-details p[style*="color: #666"] {
+        font-size: 0.8rem !important;
+        margin: 0.2rem 0 !important;
+        line-height: 1.1 !important;
+        overflow: hidden !important;
+        text-overflow: ellipsis !important;
+        white-space: nowrap !important;
     }
 
     .product-price {
-        font-size: 1.8rem;
-        margin-bottom: 1rem;
+        font-size: 1.6rem; /* Smaller price */
+        margin-bottom: 0.8rem;
+        margin-top: auto;
+        line-height: 1;
+        white-space: nowrap;
     }
 
     .add-to-cart {
-        padding: 0.6rem 1.5rem;
-        font-size: 1rem;
+        padding: 0.5rem 1.2rem; /* Smaller padding */
+        font-size: 0.9rem; /* Smaller font */
         margin-top: auto;
         user-select: none !important;
         -webkit-user-select: none !important;
@@ -606,11 +672,13 @@
         -ms-user-select: none !important;
         outline: none !important;
         -webkit-tap-highlight-color: transparent !important;
+        white-space: nowrap;
+        flex-shrink: 0;
     }
 
     *, *::before, *::after {
-    -webkit-tap-highlight-color: transparent;
-    -webkit-touch-callout: none;
+        -webkit-tap-highlight-color: transparent;
+        -webkit-touch-callout: none;
     }
 
     .main-content {
@@ -2079,34 +2147,43 @@ function createProductCard(product) {
         }
     }).join('');
     
-    // Truncate description to first 50 characters
+    // Truncate description - shorter for mobile
     const fullDescription = product.description || 'DESCRIPTION';
-    const truncatedDescription = fullDescription.length > 50 
-        ? fullDescription.substring(0, 50) + '...' 
+    const truncatedDescription = fullDescription.length > 30 
+        ? fullDescription.substring(0, 30) + '...' 
         : fullDescription;
     
-    // Get seller info and calculate delivery - with null checks
-    const sellerInfo = product.sellerBusinessName ? `Sold by ${product.sellerBusinessName}` : '';
+    // Truncate seller name if too long
+    const sellerInfo = product.sellerBusinessName 
+        ? (product.sellerBusinessName.length > 20 
+            ? `Sold by ${product.sellerBusinessName.substring(0, 17)}...`
+            : `Sold by ${product.sellerBusinessName}`)
+        : '';
+    
+    // Calculate delivery with shorter format for mobile
     let deliveryInfo = '';
-
     if (product.knutsfordDelivery || product.taraDelivery) {
         let deliveryParts = [];
         
         if (product.knutsfordDelivery) {
             const knutsfordDates = calculateDeliveryDates(product.knutsfordDelivery);
             if (knutsfordDates) {
-                deliveryParts.push(`Knutsford: ${knutsfordDates.start} - ${knutsfordDates.end}`);
+                deliveryParts.push(`K: ${knutsfordDates.start}-${knutsfordDates.end}`);
             }
         }
         
         if (product.taraDelivery) {
             const taraDates = calculateDeliveryDates(product.taraDelivery);
             if (taraDates) {
-                deliveryParts.push(`Tara: ${taraDates.start} - ${taraDates.end}`);
+                deliveryParts.push(`T: ${taraDates.start}-${taraDates.end}`);
             }
         }
         
         deliveryInfo = deliveryParts.join(' | ');
+        // Truncate if too long for mobile
+        if (deliveryInfo.length > 25) {
+            deliveryInfo = deliveryInfo.substring(0, 22) + '...';
+        }
     }
     
     card.innerHTML = `
@@ -2121,8 +2198,8 @@ function createProductCard(product) {
             <div class="rating-section">
                 <div class="stars">${starsHTML} <span class="review-count">(${reviewCount})</span></div>
             </div>
-            ${deliveryInfo ? `<p style="color: #007185; font-size: 0.9rem; margin: 0.5rem 0; font-weight: 500;">${deliveryInfo}</p>` : ''}
-            ${sellerInfo ? `<p style="color: #666; font-size: 0.9rem; font-weight: bold; margin: 0.3rem 0;">${sellerInfo}</p>` : ''}
+            ${deliveryInfo ? `<p class="delivery-info">${deliveryInfo}</p>` : ''}
+            ${sellerInfo ? `<p class="seller-info">${sellerInfo}</p>` : ''}
             <div class="product-price">$${product.price || '0.00'}</div>
             <button class="add-to-cart" data-product-id="${product.id}">Add to cart</button>
         </div>
