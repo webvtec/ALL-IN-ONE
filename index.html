@@ -2109,7 +2109,7 @@ function updateAuthUI() {
     if (currentUser) {
         const displayName = currentUser.displayName || 'User';
         const firstName = displayName.split(' ')[0];
-        signInBtn.innerHTML = `👤 ${firstName}`;
+        signInBtn.innerHTML = `${firstName}`;
         
         // Update avatar
         if (currentUser.photoURL) {
