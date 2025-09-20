@@ -1489,60 +1489,55 @@ header button:hover {
     <div class="logo">WEB VTEC</div>
 </header>
 
-
-    <!-- Header -->
-    <header class="header">
+<!-- Header -->
+<header class="header">
     <div style="display: flex; justify-content: space-around; align-items: center; margin-bottom: 10px;">
         <button class="btn" onclick="showLogin()">👤 Sign In</button>
         <button class="btn sell-btn" id="dynamicSellerBtn" onclick="handleSellerButton()">
-    <div class="sell-icon">
-        <svg width="32" height="32" viewBox="0 0 24 24" fill="currentColor">
-            <path d="M12 3L2 12h3v8h6v-6h2v6h6v-8h3L12 3zm0 2.8l6 6V20h-2v-6H8v6H6v-8.2l6-6z"/>
-            <path d="M4 6h2v2H4zm14 0h2v2h-2z"/>
-        </svg>
-    </div>
-    <span id="sellerBtnText">SELL ON WEB VTEC</span>
+            <div class="sell-icon">
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M12 3L2 12h3v8h6v-6h2v6h6v-8h3L12 3zm0 2.8l6 6V20h-2v-6H8v6H6v-8.2l6-6z"/>
+                    <path d="M4 6h2v2H4zm14 0h2v2h-2z"/>
+                </svg>
+            </div>
+            <span id="sellerBtnText">SELL ON WEB VTEC</span>
         </button>
         <button class="btn" onclick="showCart()" style="position: relative;">
             🛒 Cart <span class="cart-count" id="cartCount">0</span>
         </button>
     </div>
 
-        
-<div class="search-container">
-    <input type="text" class="search-bar" placeholder="Search for products..." onkeyup="searchProducts()">
-    <button class="search-btn" onclick="searchProducts()">🔍</button>
-</div>
-
-
-        
-<!-- Categories Section -->
-<div class="categories-section" style="padding: 0.5rem 5px; margin-bottom: 0.5rem;">
-    <div class="categories-scroll" style="display: flex; gap: 0.8rem; overflow-x: auto; padding: 0.3rem 0; scrollbar-width: none; -ms-overflow-style: none;">
-        <button class="category-btn active" onclick="filterByCategory('all')" style="background: #333; color: #ffd700; border: none; padding: 0.6rem 1.2rem; border-radius: 20px; white-space: nowrap; cursor: pointer; font-weight: bold; min-width: 70px; font-size: 0.85rem; text-align: center; display: flex; align-items: center; justify-content: center;">All</button>
-        <button class="category-btn" onclick="filterByCategory('electronics')" style="background: #ffd700; color: #333; border: none; padding: 0.6rem 1.2rem; border-radius: 20px; white-space: nowrap; cursor: pointer; font-weight: bold; min-width: 90px; font-size: 0.85rem; text-align: center; display: flex; align-items: center; justify-content: center;">Electronics</button>
-        <button class="category-btn" onclick="filterByCategory('clothing')" style="background: #ffd700; color: #333; border: none; padding: 0.6rem 1.2rem; border-radius: 20px; white-space: nowrap; cursor: pointer; font-weight: bold; min-width: 80px; font-size: 0.85rem; text-align: center; display: flex; align-items: center; justify-content: center;">Clothing</button>
-        <button class="category-btn" onclick="filterByCategory('home')" style="background: #ffd700; color: #333; border: none; padding: 0.6rem 1.2rem; border-radius: 20px; white-space: nowrap; cursor: pointer; font-weight: bold; min-width: 70px; font-size: 0.85rem; text-align: center; display: flex; align-items: center; justify-content: center;">Home</button>
-        <button class="category-btn" onclick="filterByCategory('beauty')" style="background: #ffd700; color: #333; border: none; padding: 0.6rem 1.2rem; border-radius: 20px; white-space: nowrap; cursor: pointer; font-weight: bold; min-width: 70px; font-size: 0.85rem; text-align: center; display: flex; align-items: center; justify-content: center;">Beauty</button>
-        <button class="category-btn" onclick="filterByCategory('sports')" style="background: #ffd700; color: #333; border: none; padding: 0.6rem 1.2rem; border-radius: 20px; white-space: nowrap; cursor: pointer; font-weight: bold; min-width: 70px; font-size: 0.85rem; text-align: center; display: flex; align-items: center; justify-content: center;">Sports</button>
-        <button class="category-btn" onclick="filterByCategory('books')" style="background: #ffd700; color: #333; border: none; padding: 0.6rem 1.2rem; border-radius: 20px; white-space: nowrap; cursor: pointer; font-weight: bold; min-width: 70px; font-size: 0.85rem; text-align: center; display: flex; align-items: center; justify-content: center;">Books</button>
-        <button class="category-btn" onclick="filterByCategory('toys')" style="background: #ffd700; color: #333; border: none; padding: 0.6rem 1.2rem; border-radius: 20px; white-space: nowrap; cursor: pointer; font-weight: bold; min-width: 70px; font-size: 0.85rem; text-align: center; display: flex; align-items: center; justify-content: center;">Toys</button>
-        <button class="category-btn" onclick="filterByCategory('automotive')" style="background: #ffd700; color: #333; border: none; padding: 0.6rem 1.2rem; border-radius: 20px; white-space: nowrap; cursor: pointer; font-weight: bold; min-width: 95px; font-size: 0.85rem; text-align: center; display: flex; align-items: center; justify-content: center;">Automotive</button>
-        <button class="category-btn" onclick="filterByCategory('jewelry')" style="background: #ffd700; color: #333; border: none; padding: 0.6rem 1.2rem; border-radius: 20px; white-space: nowrap; cursor: pointer; font-weight: bold; min-width: 80px; font-size: 0.85rem; text-align: center; display: flex; align-items: center; justify-content: center;">Jewelry</button>
-        <button class="category-btn" onclick="filterByCategory('health')" style="background: #ffd700; color: #333; border: none; padding: 0.6rem 1.2rem; border-radius: 20px; white-space: nowrap; cursor: pointer; font-weight: bold; min-width: 70px; font-size: 0.85rem; text-align: center; display: flex; align-items: center; justify-content: center;">Health</button>
-        <button class="category-btn" onclick="filterByCategory('music')" style="background: #ffd700; color: #333; border: none; padding: 0.6rem 1.2rem; border-radius: 20px; white-space: nowrap; cursor: pointer; font-weight: bold; min-width: 70px; font-size: 0.85rem; text-align: center; display: flex; align-items: center; justify-content: center;">Music</button>
+    <div class="search-container">
+        <input type="text" class="search-bar" placeholder="Search for products..." onkeyup="searchProducts()">
+        <button class="search-btn" onclick="searchProducts()">🔍</button>
     </div>
-</div>
-        
-    </header>
 
-    <main class="main-content">
-        <div class="products-grid" id="productsGrid">
-            <!-- Products will be loaded here -->
+    <!-- Categories Section -->
+    <div class="categories-section" style="padding: 0.5rem 5px; margin-bottom: 0.5rem;">
+        <div class="categories-scroll" style="display: flex; gap: 0.8rem; overflow-x: auto; padding: 0.3rem 0; scrollbar-width: none; -ms-overflow-style: none;">
+            <button class="category-btn active" onclick="filterByCategory('all')" style="background: #333; color: #ffd700; border: none; padding: 0.6rem 1.2rem; border-radius: 20px; white-space: nowrap; cursor: pointer; font-weight: bold; min-width: 70px; font-size: 0.85rem; text-align: center; display: flex; align-items: center; justify-content: center;">All</button>
+            <button class="category-btn" onclick="filterByCategory('electronics')" style="background: #ffd700; color: #333; border: none; padding: 0.6rem 1.2rem; border-radius: 20px; white-space: nowrap; cursor: pointer; font-weight: bold; min-width: 90px; font-size: 0.85rem; text-align: center; display: flex; align-items: center; justify-content: center;">Electronics</button>
+            <button class="category-btn" onclick="filterByCategory('clothing')" style="background: #ffd700; color: #333; border: none; padding: 0.6rem 1.2rem; border-radius: 20px; white-space: nowrap; cursor: pointer; font-weight: bold; min-width: 80px; font-size: 0.85rem; text-align: center; display: flex; align-items: center; justify-content: center;">Clothing</button>
+            <button class="category-btn" onclick="filterByCategory('home')" style="background: #ffd700; color: #333; border: none; padding: 0.6rem 1.2rem; border-radius: 20px; white-space: nowrap; cursor: pointer; font-weight: bold; min-width: 70px; font-size: 0.85rem; text-align: center; display: flex; align-items: center; justify-content: center;">Home</button>
+            <button class="category-btn" onclick="filterByCategory('beauty')" style="background: #ffd700; color: #333; border: none; padding: 0.6rem 1.2rem; border-radius: 20px; white-space: nowrap; cursor: pointer; font-weight: bold; min-width: 70px; font-size: 0.85rem; text-align: center; display: flex; align-items: center; justify-content: center;">Beauty</button>
+            <button class="category-btn" onclick="filterByCategory('sports')" style="background: #ffd700; color: #333; border: none; padding: 0.6rem 1.2rem; border-radius: 20px; white-space: nowrap; cursor: pointer; font-weight: bold; min-width: 70px; font-size: 0.85rem; text-align: center; display: flex; align-items: center; justify-content: center;">Sports</button>
+            <button class="category-btn" onclick="filterByCategory('books')" style="background: #ffd700; color: #333; border: none; padding: 0.6rem 1.2rem; border-radius: 20px; white-space: nowrap; cursor: pointer; font-weight: bold; min-width: 70px; font-size: 0.85rem; text-align: center; display: flex; align-items: center; justify-content: center;">Books</button>
+            <button class="category-btn" onclick="filterByCategory('toys')" style="background: #ffd700; color: #333; border: none; padding: 0.6rem 1.2rem; border-radius: 20px; white-space: nowrap; cursor: pointer; font-weight: bold; min-width: 70px; font-size: 0.85rem; text-align: center; display: flex; align-items: center; justify-content: center;">Toys</button>
+            <button class="category-btn" onclick="filterByCategory('automotive')" style="background: #ffd700; color: #333; border: none; padding: 0.6rem 1.2rem; border-radius: 20px; white-space: nowrap; cursor: pointer; font-weight: bold; min-width: 95px; font-size: 0.85rem; text-align: center; display: flex; align-items: center; justify-content: center;">Automotive</button>
+            <button class="category-btn" onclick="filterByCategory('jewelry')" style="background: #ffd700; color: #333; border: none; padding: 0.6rem 1.2rem; border-radius: 20px; white-space: nowrap; cursor: pointer; font-weight: bold; min-width: 80px; font-size: 0.85rem; text-align: center; display: flex; align-items: center; justify-content: center;">Jewelry</button>
+            <button class="category-btn" onclick="filterByCategory('health')" style="background: #ffd700; color: #333; border: none; padding: 0.6rem 1.2rem; border-radius: 20px; white-space: nowrap; cursor: pointer; font-weight: bold; min-width: 70px; font-size: 0.85rem; text-align: center; display: flex; align-items: center; justify-content: center;">Health</button>
+            <button class="category-btn" onclick="filterByCategory('music')" style="background: #ffd700; color: #333; border: none; padding: 0.6rem 1.2rem; border-radius: 20px; white-space: nowrap; cursor: pointer; font-weight: bold; min-width: 70px; font-size: 0.85rem; text-align: center; display: flex; align-items: center; justify-content: center;">Music</button>
         </div>
-    </main>
+    </div>
+</header>
 
-    <!-- Login Modal -->
+<main class="main-content">
+    <div class="products-grid" id="productsGrid">
+        <!-- Products will be loaded here -->
+    </div>
+</main>
+
+<!-- Login Modal -->
 <div id="loginModal" class="modal">
     <div class="modal-content">
         <span class="close" onclick="closeLogin()">&times;</span>
@@ -1558,22 +1553,17 @@ header button:hover {
                 <div class="form-group">
                     <label>Password:</label>
                     <input type="password" id="password" required minlength="6">
-                </div>
-
-                <div class="form-group">
-    <label>Password:</label>
-    <input type="password" id="password" required minlength="6">
-    <a href="#" onclick="showForgotPassword()" style="color: #ffd700; font-size: 0.8rem; text-decoration: none; margin-top: 0.3rem; display: block;">Forgot Password?</a>
+                    <a href="#" onclick="showForgotPassword()" style="color: #ffd700; font-size: 0.8rem; text-decoration: none; margin-top: 0.3rem; display: block;">Forgot Password?</a>
                 </div>
 
                 <!-- Google Sign In Button (only show when not signed in) -->
-        <div id="googleSignInSection">
-            <button type="button" onclick="signInWithGoogle()" class="google-btn" style="width: 100%; margin-bottom: 1rem; padding: 0.7rem; border: 1px solid #ddd; border-radius: 8px; background: white; color: #333; font-size: 1rem; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px;">
-                <img src="https://developers.google.com/identity/images/g-logo.png" alt="Google" style="width: 18px; height: 18px;">
-                Continue with Google
-            </button>
-            <div style="text-align: center; margin: 1rem 0; color: #ccc;">OR</div>
-        </div>
+                <div id="googleSignInSection">
+                    <button type="button" onclick="signInWithGoogle()" class="google-btn" style="width: 100%; margin-bottom: 1rem; padding: 0.7rem; border: 1px solid #ddd; border-radius: 8px; background: white; color: #333; font-size: 1rem; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px;">
+                        <img src="https://developers.google.com/identity/images/g-logo.png" alt="Google" style="width: 18px; height: 18px;">
+                        Continue with Google
+                    </button>
+                    <div style="text-align: center; margin: 1rem 0; color: #ccc;">OR</div>
+                </div>
                 
                 <button type="submit" class="btn" style="width: 100%;" id="authSubmitBtn">Sign In</button>
             </form>
@@ -1597,8 +1587,7 @@ header button:hover {
     </div>
 </div>
 
-
-    <!-- Seller Signup Modal -->
+<!-- Seller Signup Modal -->
 <div id="sellerModal" class="modal">
     <div class="modal-content" style="max-width: 450px; padding: 1.5rem;">
         <span class="close" onclick="closeSellerSignup()">&times;</span>
@@ -1670,189 +1659,185 @@ header button:hover {
                 </p>
             </div>
 
-    <!-- Add Google Sign-In for Sellers -->
-    <button type="button" onclick="signUpSellerWithGoogle()" class="google-btn" style="width: 100%; margin-bottom: 1rem; padding: 0.7rem; border: 1px solid #ddd; border-radius: 8px; background: white; color: #333; font-size: 0.9rem; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px;">
-        <img src="https://developers.google.com/identity/images/g-logo.png" alt="Google" style="width: 16px; height: 16px;">
-        Continue with Google
-    </button>
-    <div style="text-align: center; margin: 1rem 0; color: #ccc; font-size: 0.85rem;">OR</div>
-    
+            <!-- Add Google Sign-In for Sellers -->
+            <button type="button" onclick="signUpSellerWithGoogle()" class="google-btn" style="width: 100%; margin-bottom: 1rem; padding: 0.7rem; border: 1px solid #ddd; border-radius: 8px; background: white; color: #333; font-size: 0.9rem; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px;">
+                <img src="https://developers.google.com/identity/images/g-logo.png" alt="Google" style="width: 16px; height: 16px;">
+                Continue with Google
+            </button>
+            <div style="text-align: center; margin: 1rem 0; color: #ccc; font-size: 0.85rem;">OR</div>
             
             <button type="submit" class="btn" style="width: 100%; font-size: 1rem; padding: 0.8rem;">Sign Up as Seller ($25/month)</button>
         </form>
     </div>
 </div>
 
-
 <!-- Seller Dashboard Page -->
 <div id="sellerDashboardPage" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100vh; background: #f8f9fa; z-index: 2000; overflow-y: auto;">
-<!-- Header -->
-<header style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 1.5rem 0; position: sticky; top: 0; z-index: 100;">
-    <div style="max-width: 1200px; margin: 0 auto; padding: 0 2rem;">
-        <div style="display: flex; justify-content: space-between; align-items: center;">
-            <button onclick="closeSellerDashboardPage()" style="background: rgba(255,255,255,0.2); color: white; border: 1px solid rgba(255,255,255,0.3); padding: 0.6rem 1.2rem; border-radius: 20px; cursor: pointer; font-size: 0.85rem; transition: all 0.3s ease; backdrop-filter: blur(10px);">← Back to Store</button>
-            <div style="text-align: center;">
-                <h1 style="color: white; margin: 0; font-size: 1.8rem; font-weight: 500;">Seller Dashboard</h1>
-                <p style="color: rgba(255,255,255,0.9); margin: 0.3rem 0 0 0; font-size: 0.9rem;" id="sellerWelcome">Welcome back!</p>
+    <!-- Header -->
+    <header style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 1.5rem 0; position: sticky; top: 0; z-index: 100;">
+        <div style="max-width: 1200px; margin: 0 auto; padding: 0 2rem;">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <button onclick="closeSellerDashboardPage()" style="background: rgba(255,255,255,0.2); color: white; border: 1px solid rgba(255,255,255,0.3); padding: 0.6rem 1.2rem; border-radius: 20px; cursor: pointer; font-size: 0.85rem; transition: all 0.3s ease; backdrop-filter: blur(10px);">← Back to Store</button>
+                <div style="text-align: center;">
+                    <h1 style="color: white; margin: 0; font-size: 1.8rem; font-weight: 500;">Seller Dashboard</h1>
+                    <p style="color: rgba(255,255,255,0.9); margin: 0.3rem 0 0 0; font-size: 0.9rem;" id="sellerWelcome">Welcome back!</p>
+                </div>
             </div>
-             </div>
-         </div>
+        </div>
     </header>
 
     <!-- Main Content -->
     <div style="max-width: 1200px; margin: 0 auto; padding: 2rem;">
         <!-- Navigation Tabs -->
-<div class="dashboard-content-wrapper" style="margin-bottom: 2rem;">
-    <div class="dashboard-tabs">
-        <button class="dashboard-tab active" onclick="showDashboardTab('overview', event)">📊 Overview</button>
-        <button class="dashboard-tab" onclick="showDashboardTab('my-products', event)">📦 My Products</button>
-        <button class="dashboard-tab" onclick="showDashboardTab('add-product', event)">➕ Add Product</button>
-    </div>
-</div>
+        <div class="dashboard-content-wrapper" style="margin-bottom: 2rem;">
+            <div class="dashboard-tabs">
+                <button class="dashboard-tab active" onclick="showDashboardTab('overview', event)">📊 Overview</button>
+                <button class="dashboard-tab" onclick="showDashboardTab('my-products', event)">📦 My Products</button>
+                <button class="dashboard-tab" onclick="showDashboardTab('add-product', event)">➕ Add Product</button>
+            </div>
+        </div>
 
         <!-- Overview Tab -->
-<div id="overview-tab" class="dashboard-content">
-    <div style="display: flex; gap: 1.5rem; justify-content: center; margin-bottom: 2rem;">
-        <div style="background: white; padding: 1.5rem; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); text-align: center; min-width: 180px;">
-            <div style="width: 40px; height: 40px; background: rgba(0, 113, 133, 0.1); color: #007185; border-radius: 10px; display: flex; align-items: center; justify-content: center; margin: 0 auto 1rem auto; font-size: 1.2rem;">📦</div>
-            <h3 style="color: #666; margin: 0 0 0.5rem 0; font-size: 0.85rem; font-weight: 500; text-transform: uppercase;">Total Products</h3>
-            <div style="font-size: 1.8rem; font-weight: 700; color: #007185;" id="totalProducts">0</div>
-        </div>
-        <div style="background: white; padding: 1.5rem; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); text-align: center; min-width: 180px;">
-            <div style="width: 40px; height: 40px; background: rgba(40, 167, 69, 0.1); color: #28a745; border-radius: 10px; display: flex; align-items: center; justify-content: center; margin: 0 auto 1rem auto; font-size: 1.2rem;">💰</div>
-            <h3 style="color: #666; margin: 0 0 0.5rem 0; font-size: 0.85rem; font-weight: 500; text-transform: uppercase;">Monthly Revenue</h3>
-            <div style="font-size: 1.8rem; font-weight: 700; color: #28a745;">$0</div>
-        </div>
-    </div>
-</div>
-    
-    
-        <!-- Add Product Tab -->
-<div id="add-product-tab" class="dashboard-content" style="display: none;">
-    <div class="dashboard-content-wrapper">
-        <div style="padding: 2rem; border-bottom: 1px solid #e9ecef;">
-            <h3 style="color: #333; margin: 0; font-size: 1.4rem; font-weight: 600;">Add New Product</h3>
-            <p style="color: #666; margin: 0.5rem 0 0 0;">Fill in the details below to add a new product to your store.</p>
+        <div id="overview-tab" class="dashboard-content">
+            <div style="display: flex; gap: 1.5rem; justify-content: center; margin-bottom: 2rem;">
+                <div style="background: white; padding: 1.5rem; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); text-align: center; min-width: 180px;">
+                    <div style="width: 40px; height: 40px; background: rgba(0, 113, 133, 0.1); color: #007185; border-radius: 10px; display: flex; align-items: center; justify-content: center; margin: 0 auto 1rem auto; font-size: 1.2rem;">📦</div>
+                    <h3 style="color: #666; margin: 0 0 0.5rem 0; font-size: 0.85rem; font-weight: 500; text-transform: uppercase;">Total Products</h3>
+                    <div style="font-size: 1.8rem; font-weight: 700; color: #007185;" id="totalProducts">0</div>
+                </div>
+                <div style="background: white; padding: 1.5rem; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); text-align: center; min-width: 180px;">
+                    <div style="width: 40px; height: 40px; background: rgba(40, 167, 69, 0.1); color: #28a745; border-radius: 10px; display: flex; align-items: center; justify-content: center; margin: 0 auto 1rem auto; font-size: 1.2rem;">💰</div>
+                    <h3 style="color: #666; margin: 0 0 0.5rem 0; font-size: 0.85rem; font-weight: 500; text-transform: uppercase;">Monthly Revenue</h3>
+                    <div style="font-size: 1.8rem; font-weight: 700; color: #28a745;">$0</div>
+                </div>
+            </div>
         </div>
         
-        <form id="dashboardAddProductForm" onsubmit="handleDashboardAddProduct(event)" class="product-form">
-            <div class="form-row">
-                <div class="form-field">
-                    <label>Product Name</label>
-                    <input type="text" id="dashboardProductName" required placeholder="Enter product name" maxlength="30">
+        <!-- Add Product Tab -->
+        <div id="add-product-tab" class="dashboard-content" style="display: none;">
+            <div class="dashboard-content-wrapper">
+                <div style="padding: 2rem; border-bottom: 1px solid #e9ecef;">
+                    <h3 style="color: #333; margin: 0; font-size: 1.4rem; font-weight: 600;">Add New Product</h3>
+                    <p style="color: #666; margin: 0.5rem 0 0 0;">Fill in the details below to add a new product to your store.</p>
                 </div>
-                <div class="form-field">
-                    <label>Price ($)</label>
-                    <input type="number" id="dashboardProductPrice" step="0.01" min="0" required placeholder="0.00">
-                </div>
-            </div>
-            
-            <div class="form-field">
-                <label>Description</label>
-                <textarea id="dashboardProductDescription" rows="4" required placeholder="Describe your product..."></textarea>
-            </div>
-            
-            <div class="form-row">
-                <div class="form-field">
-                    <label>Category</label>
-                    <select id="dashboardProductCategory" required>
-                        <option value="">Select Category</option>
-                        <option value="electronics">Electronics</option>
-                        <option value="clothing">Clothing</option>
-                        <option value="home">Home</option>
-                        <option value="beauty">Beauty</option>
-                        <option value="sports">Sports</option>
-                        <option value="books">Books</option>
-                        <option value="toys">Toys</option>
-                        <option value="automotive">Automotive</option>
-                        <option value="jewelry">Jewelry</option>
-                        <option value="health">Health</option>
-                        <option value="music">Music</option>
-                    </select>
-                </div>
-                <div class="form-field">
-    <label>Product Images (up to 5 URLs)</label>
-    <input type="url" id="dashboardProductImage1" required placeholder="Main image URL" style="margin-bottom: 0.5rem;">
-    <input type="url" id="dashboardProductImage2" placeholder="Additional image URL (optional)" style="margin-bottom: 0.5rem;">
-    <input type="url" id="dashboardProductImage3" placeholder="Additional image URL (optional)" style="margin-bottom: 0.5rem;">
-    <input type="url" id="dashboardProductImage4" placeholder="Additional image URL (optional)" style="margin-bottom: 0.5rem;">
-    <input type="url" id="dashboardProductImage5" placeholder="Additional image URL (optional)">
-                  </div>
-                </div>
-
-            <div class="form-row" id="clothingSizeRow" style="display: none;">
-                <div class="form-field">
-                    <label>Available Sizes</label>
-                    <div style="display: flex; gap: 10px; flex-wrap: wrap;">
-                        <label style="display: flex; align-items: center; gap: 5px;">
-                            <input type="checkbox" value="XS"> XS
-                        </label>
-                        <label style="display: flex; align-items: center; gap: 5px;">
-                            <input type="checkbox" value="S"> S
-                        </label>
-                        <label style="display: flex; align-items: center; gap: 5px;">
-                            <input type="checkbox" value="M"> M
-                        </label>
-                        <label style="display: flex; align-items: center; gap: 5px;">
-                            <input type="checkbox" value="L"> L
-                        </label>
-                        <label style="display: flex; align-items: center; gap: 5px;">
-                            <input type="checkbox" value="XL"> XL
-                        </label>
-                        <label style="display: flex; align-items: center; gap: 5px;">
-                            <input type="checkbox" value="XXL"> XXL
-                        </label>
+                
+                <form id="dashboardAddProductForm" onsubmit="handleDashboardAddProduct(event)" class="product-form">
+                    <div class="form-row">
+                        <div class="form-field">
+                            <label>Product Name</label>
+                            <input type="text" id="dashboardProductName" required placeholder="Enter product name" maxlength="30">
+                        </div>
+                        <div class="form-field">
+                            <label>Price ($)</label>
+                            <input type="number" id="dashboardProductPrice" step="0.01" min="0" required placeholder="0.00">
+                        </div>
                     </div>
-                </div>
+                    
+                    <div class="form-field">
+                        <label>Description</label>
+                        <textarea id="dashboardProductDescription" rows="4" required placeholder="Describe your product..."></textarea>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-field">
+                            <label>Category</label>
+                            <select id="dashboardProductCategory" required>
+                                <option value="">Select Category</option>
+                                <option value="electronics">Electronics</option>
+                                <option value="clothing">Clothing</option>
+                                <option value="home">Home</option>
+                                <option value="beauty">Beauty</option>
+                                <option value="sports">Sports</option>
+                                <option value="books">Books</option>
+                                <option value="toys">Toys</option>
+                                <option value="automotive">Automotive</option>
+                                <option value="jewelry">Jewelry</option>
+                                <option value="health">Health</option>
+                                <option value="music">Music</option>
+                            </select>
+                        </div>
+                        <div class="form-field">
+                            <label>Product Images (up to 5 URLs)</label>
+                            <input type="url" id="dashboardProductImage1" required placeholder="Main image URL" style="margin-bottom: 0.5rem;">
+                            <input type="url" id="dashboardProductImage2" placeholder="Additional image URL (optional)" style="margin-bottom: 0.5rem;">
+                            <input type="url" id="dashboardProductImage3" placeholder="Additional image URL (optional)" style="margin-bottom: 0.5rem;">
+                            <input type="url" id="dashboardProductImage4" placeholder="Additional image URL (optional)" style="margin-bottom: 0.5rem;">
+                            <input type="url" id="dashboardProductImage5" placeholder="Additional image URL (optional)">
+                        </div>
+                    </div>
+
+                    <div class="form-row" id="clothingSizeRow" style="display: none;">
+                        <div class="form-field">
+                            <label>Available Sizes</label>
+                            <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                                <label style="display: flex; align-items: center; gap: 5px;">
+                                    <input type="checkbox" value="XS"> XS
+                                </label>
+                                <label style="display: flex; align-items: center; gap: 5px;">
+                                    <input type="checkbox" value="S"> S
+                                </label>
+                                <label style="display: flex; align-items: center; gap: 5px;">
+                                    <input type="checkbox" value="M"> M
+                                </label>
+                                <label style="display: flex; align-items: center; gap: 5px;">
+                                    <input type="checkbox" value="L"> L
+                                </label>
+                                <label style="display: flex; align-items: center; gap: 5px;">
+                                    <input type="checkbox" value="XL"> XL
+                                </label>
+                                <label style="display: flex; align-items: center; gap: 5px;">
+                                    <input type="checkbox" value="XXL"> XXL
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-field">
+                            <label>Knutsford Delivery Time</label>
+                            <select id="dashboardKnutsfordDelivery" required>
+                                <option value="">Select Delivery Time</option>
+                                <option value="1-2">1-2 days</option>
+                                <option value="3-5">3-5 days</option>
+                                <option value="5-7">5-7 days</option>
+                                <option value="7-10">7-10 days</option>
+                                <option value="10-14">10-14 days</option>
+                                <option value="14-21">14-21 days</option>
+                            </select>
+                        </div>
+                        <div class="form-field">
+                            <label>Tara Delivery Time</label>
+                            <select id="dashboardTaraDelivery" required>
+                                <option value="">Select Delivery Time</option>
+                                <option value="2-7">2-7 days</option>
+                                <option value="7-10">7-10 days</option>
+                                <option value="10-14">10-14 days</option>
+                                <option value="14-21">14-21 days</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <button type="submit" class="btn-primary">Add Product</button>
+                </form>
             </div>
-            
-            <div class="form-row">
-                <div class="form-field">
-                    <label>Knutsford Delivery Time</label>
-                    <select id="dashboardKnutsfordDelivery" required>
-                        <option value="">Select Delivery Time</option>
-                        <option value="1-2">1-2 days</option>
-                        <option value="3-5">3-5 days</option>
-                        <option value="5-7">5-7 days</option>
-                        <option value="7-10">7-10 days</option>
-                        <option value="10-14">10-14 days</option>
-                        <option value="14-21">14-21 days</option>
-                    </select>
-                </div>
-                <div class="form-field">
-                    <label>Tara Delivery Time</label>
-                    <select id="dashboardTaraDelivery" required>
-    <option value="">Select Delivery Time</option>
-    <option value="2-7">2-7 days</option>
-    <option value="7-10">7-10 days</option>
-    <option value="10-14">10-14 days</option>
-    <option value="14-21">14-21 days</option>
-                    </select>
-                </div>
-            </div>
-            
-            <button type="submit" class="btn-primary">Add Product</button>
-        </form>
-    </div>
-</div>
+        </div>
 
         <!-- My Products Tab -->
-<div id="my-products-tab" class="dashboard-content" style="display: none;">
-    <div class="dashboard-content-wrapper">
-        <div style="padding: 2rem; border-bottom: 1px solid #e9ecef;">
-            <h3 style="color: #333; margin: 0; font-size: 1.4rem; font-weight: 600;">My Products</h3>
-            <p style="color: #666; margin: 0.5rem 0 0 0;">Manage your product listings below.</p>
-        </div>
-        <div id="dashboardProductsList" class="product-grid">
-            <!-- Products will be loaded here -->
+        <div id="my-products-tab" class="dashboard-content" style="display: none;">
+            <div class="dashboard-content-wrapper">
+                <div style="padding: 2rem; border-bottom: 1px solid #e9ecef;">
+                    <h3 style="color: #333; margin: 0; font-size: 1.4rem; font-weight: 600;">My Products</h3>
+                    <p style="color: #666; margin: 0.5rem 0 0 0;">Manage your product listings below.</p>
+                </div>
+                <div id="dashboardProductsList" class="product-grid">
+                    <!-- Products will be loaded here -->
+                </div>
+            </div>
         </div>
     </div>
 </div>
 
-    </div>
-</div>
-
-    <!-- Forgot Password Modal -->
+<!-- Forgot Password Modal -->
 <div id="forgotPasswordModal" class="modal">
     <div class="modal-content" style="max-width: 400px;">
         <span class="close" onclick="closeForgotPassword()">&times;</span>
@@ -1873,7 +1858,6 @@ header button:hover {
     </div>
 </div>
 
-
 <!-- Edit Product Modal -->
 <div id="editProductModal" class="modal">
     <div class="modal-content" style="max-width: 700px; padding: 0; border-radius: 16px; overflow: hidden; max-height: 90vh; overflow-y: auto;">
@@ -1884,7 +1868,7 @@ header button:hover {
         </div>
         
         <div style="padding: 2rem;">
-            <form id="editProductForm" onsubmit="handleEditProduct(event)" class="product-form">
+             <form id="editProductForm" onsubmit="handleEditProduct(event)" class="product-form">
                 <input type="hidden" id="editProductId">
                 
                 <div class="form-row">
@@ -1922,12 +1906,12 @@ header button:hover {
                         </select>
                     </div>
                     <div class="form-field">
-    <label>Product Images (up to 5 URLs)</label>
-    <input type="url" id="editProductImage1" required placeholder="Main image URL" style="margin-bottom: 0.5rem;">
-    <input type="url" id="editProductImage2" placeholder="Additional image URL (optional)" style="margin-bottom: 0.5rem;">
-    <input type="url" id="editProductImage3" placeholder="Additional image URL (optional)" style="margin-bottom: 0.5rem;">
-    <input type="url" id="editProductImage4" placeholder="Additional image URL (optional)" style="margin-bottom: 0.5rem;">
-    <input type="url" id="editProductImage5" placeholder="Additional image URL (optional)">
+                        <label>Product Images (up to 5 URLs)</label>
+                        <input type="url" id="editProductImage1" required placeholder="Main image URL" style="margin-bottom: 0.5rem;">
+                        <input type="url" id="editProductImage2" placeholder="Additional image URL (optional)" style="margin-bottom: 0.5rem;">
+                        <input type="url" id="editProductImage3" placeholder="Additional image URL (optional)" style="margin-bottom: 0.5rem;">
+                        <input type="url" id="editProductImage4" placeholder="Additional image URL (optional)" style="margin-bottom: 0.5rem;">
+                        <input type="url" id="editProductImage5" placeholder="Additional image URL (optional)">
                     </div>
                 </div>
                 
@@ -1947,11 +1931,11 @@ header button:hover {
                     <div class="form-field">
                         <label>Tara Delivery Time</label>
                         <select id="editTaraDelivery" required>
-    <option value="">Select Delivery Time</option>
-    <option value="2-7">2-7 days</option>
-    <option value="7-10">7-10 days</option>
-    <option value="10-14">10-14 days</option>
-    <option value="14-21">14-21 days</option>
+                            <option value="">Select Delivery Time</option>
+                            <option value="2-7">2-7 days</option>
+                            <option value="7-10">7-10 days</option>
+                            <option value="10-14">10-14 days</option>
+                            <option value="14-21">14-21 days</option>
                         </select>
                     </div>
                 </div>
@@ -1964,7 +1948,6 @@ header button:hover {
         </div>
     </div>
 </div>
-
 
 <script>
 // Firebase configuration - MOVE THIS TO THE TOP
