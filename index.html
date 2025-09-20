@@ -2648,31 +2648,31 @@ document.addEventListener('click', function(event) {
     }).join('');
     
     detailView.innerHTML = `
-        <header class="header" style="background: transparent; padding: 0; backdrop-filter: none; border-bottom: none;">
-            <div class="header-top">
-                <div class="header-content">
-                    <!-- Profile Section - Left -->
-                    <div class="profile-section" onclick="showLogin()">
-                        <div class="profile-avatar" id="detailProfileAvatar">W</div>
-                        <button class="btn profile-btn" id="detailSignInBtn">PROFILE</button>
-                    </div>
-
-                    <div class="logo">WEB VTEC</div>
-                    
-                    <!-- Sell Button - Right (original structure) -->
-                    <button class="sell-btn-clean" onclick="closeProductDetail()">
-                        <div class="sell-icon">
-                            <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
-                                <path d="M12 3L2 12h3v8h6v-6h2v6h6v-8h3L12 3zm0 2.8l6 6V20h-2v-6H8v6H6v-8.2l6-6z"/>
-                            </svg>
-                        </div>
-                        <span id="sellerBtnText">SELL</span>
-                    </button>
+    <header class="header" style="background: transparent; padding: 0; backdrop-filter: none; border-bottom: none;">
+        <div class="header-top">
+            <div class="header-content">
+                <!-- Profile Section - Left -->
+                <div class="profile-section" onclick="showLogin()" style="margin-top: 0.3rem;">
+                    <div class="profile-avatar" id="detailProfileAvatar">W</div>
+                    <button class="btn profile-btn" id="detailSignInBtn">PROFILE</button>
                 </div>
 
-                <div class="header-separator"></div>
+                <div class="logo">WEB VTEC</div>
+                
+                <!-- Sell Button - Right (original structure) -->
+                <button class="sell-btn-clean" onclick="closeProductDetail()">
+                    <div class="sell-icon">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M12 3L2 12h3v8h6v-6h2v6h6v-8h3L12 3zm0 2.8l6 6V20h-2v-6H8v6H6v-8.2l6-6z"/>
+                        </svg>
+                    </div>
+                    <span id="sellerBtnText">SELL</span>
+                </button>
             </div>
-        </header>
+
+            <div class="header-separator"></div>
+        </div>
+    </header>
 
         <div style="padding: 20px; margin-top: 10px;">
             <h2 style="text-align: left; color: #333; margin: 0.5rem 0; font-size: 1.5rem; font-weight: bold; text-transform: uppercase;">${product.name}</h2>
