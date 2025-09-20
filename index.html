@@ -1989,25 +1989,7 @@ function showUserProfile() {
     }
 }
 
-function showBasicProfile() {
-    // Basic profile without seller check (fallback)
-    document.getElementById('googleSignInSection').style.display = 'none';
-    document.getElementById('authFormSection').style.display = 'none';
-    document.getElementById('userInfo').style.display = 'block';
-    document.getElementById('modalTitle').textContent = 'Profile';
-    
-    document.getElementById('userName').textContent = currentUser.displayName || 'User';
-    document.getElementById('userEmail').textContent = currentUser.email;
-    
-    if (currentUser.photoURL) {
-        document.getElementById('userPhoto').src = currentUser.photoURL;
-        document.getElementById('userPhoto').style.display = 'block';
-    } else {
-        document.getElementById('userPhoto').style.display = 'none';
-    }
-    
-    document.getElementById('loginModal').style.display = 'block';
-}
+
 
 function closeLogin() {
     document.getElementById('loginModal').style.display = 'none';
@@ -2162,32 +2144,6 @@ function addToCart(productId) {
     return false;
 }
 
-function submitReview(productId) {
-    const name = document.getElementById(`reviewName-${productId}`).value;
-    const text = document.getElementById(`reviewText-${productId}`).value;
-    const rating = window[`selectedRating-${productId}`] || 5;
-
-    if (!name || !text) {
-        alert('Please fill in all fields');
-        return;
-    }
-
-    const newReview = {
-        name: name,
-        rating: rating,
-        comment: text,
-        date: new Date().toISOString()
-    };
-
-    db.collection('products').doc(productId).update({
-        reviews: firebase.firestore.FieldValue.arrayUnion(newReview)
-    }).then(() => {
-        alert('Review submitted successfully!');
-        // Clear form
-        document.getElementById(`reviewName-${productId}`).value = '';
-        document.getElementById(`reviewText-${productId}`).value = '';
-    });
-}
 
 // Keep all other existing functions (toggleMenu, setRating, updateCartCount, showCart, etc.)
 function toggleMenu() {
@@ -2298,41 +2254,6 @@ function searchProducts() {
     }
 }
 
-function showSection(section) {
-    if (section === 'home') {
-        loadProductsFromFirebase();
-    }
-    toggleMenu();
-}
-
-function showRequestForm() {
-    const modal = document.createElement('div');
-    modal.className = 'modal';
-    modal.style.display = 'block';
-    modal.innerHTML = `
-        <div class="modal-content">
-            <span class="close" onclick="this.parentElement.parentElement.remove()">&times;</span>
-            <h2 style="color: #ffd700; margin-bottom: 1rem;">Request a Product</h2>
-            <form onsubmit="handleProductRequest(event)">
-                <div class="form-group">
-                    <label>Product Name:</label>
-                    <input type="text" required>
-                </div>
-                <div class="form-group">
-                    <label>Description:</label>
-                    <textarea rows="3" required></textarea>
-                </div>
-                <div class="form-group">
-                    <label>Your Email:</label>
-                    <input type="email" required>
-                </div>
-                <button type="submit" class="btn" style="width: 100%;">Submit Request</button>
-            </form>
-        </div>
-    `;
-    document.body.appendChild(modal);
-    toggleMenu();
-}
 
 function handleProductRequest(event) {
     event.preventDefault();
@@ -3157,10 +3078,6 @@ function updateSellerButton() {
 
 
 let currentPhotoIndex = 0;
-let isPointerDown = false;
-let startX = 0;
-let currentX = 0;
-let startTime = 0;
 let currentProductId = null;
 
 function initializePhotoGallery(productId) {
@@ -3269,23 +3186,7 @@ function initializePhotoGallery(productId) {
     container.addEventListener('dragstart', e => e.preventDefault());
 }
 
-    
-function handlePointerStart(e) {
-    console.log('Pointer start detected:', e.type);
-    isPointerDown = true;
-    startTime = Date.now();
-    const container = e.currentTarget;
-    
-    if (e.type === 'mousedown') {
-        startX = e.clientX;
-        container.style.cursor = 'grabbing';
-    } else if (e.type === 'touchstart') {
-        startX = e.touches[0].clientX;
-    }
-    
-    currentX = startX;
-    container.classList.add('dragging');
-}
+
 
 function handlePointerMove(e) {
     if (!isPointerDown) return;
