@@ -1174,13 +1174,13 @@ align-items: stretch;
 
 .product-image {
 width: 120px;
-height: 100%; /* Force full height */
 background: white;
 flex-shrink: 0;
 display: flex;
 align-items: center;
 justify-content: center;
-border-radius: 12px 0 0 12px; /* Take left border radius from card */
+border-radius: 12px 0 0 12px;
+align-self: stretch; /* This forces it to stretch to full card height */
 }
     
     .product-image img {
@@ -1192,15 +1192,17 @@ border-radius: 12px 0 0 12px; /* Take left border radius from card */
     }
     
     .product-details {
-    padding: 12px;
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    justify-content: flex-start;
-    min-height: 160px;
-    gap: 0.5rem;
-    position: relative;
+padding: 12px;
+flex: 1;
+display: flex;
+flex-direction: column;
+justify-content: flex-start;
+min-height: 160px;
+gap: 0.5rem;
+position: relative;
+pointer-events: auto; /* Ensure clicks work on the details area */
     }
+    
     .product-header {
         margin-bottom: 0.5rem;
         flex-shrink: 0;
