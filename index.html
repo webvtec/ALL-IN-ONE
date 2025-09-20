@@ -24,6 +24,11 @@ body {
     padding-bottom: 80px;
 }
 
+.header-top {
+    background: rgba(0, 0, 0, 0.6);
+    border-radius: 0;
+}
+
 /* Header */
 .header {
     background: rgba(0, 0, 0, 0.3);
@@ -1416,34 +1421,35 @@ body {
 </head>
 <body>
     
-
 <!-- Header -->
 <header class="header">
-    <div class="header-content">
-        <!-- Profile Section - Left -->
-        <div class="profile-section" onclick="showLogin()">
-            <div class="profile-avatar" id="profileAvatar">W</div>
-            <button class="btn profile-btn" id="signInBtn">PROFILE</button>
-        </div>
-        
-        <!-- Search Container - Center -->
-        <div class="search-container">
-            <input type="text" class="search-bar" placeholder="Search products..." onkeyup="searchProducts()">
-            <button class="search-btn" onclick="searchProducts()">🔍</button>
-        </div>
-        
-        <!-- Sell Button - Right (no background) -->
-        <button class="sell-btn-clean" id="dynamicSellerBtn" onclick="handleSellerButton()">
-            <div class="sell-icon">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M12 3L2 12h3v8h6v-6h2v6h6v-8h3L12 3zm0 2.8l6 6V20h-2v-6H8v6H6v-8.2l6-6z"/>
-                </svg>
+    <div class="header-top">
+        <div class="header-content">
+            <!-- Profile Section - Left -->
+            <div class="profile-section" onclick="showLogin()">
+                <div class="profile-avatar" id="profileAvatar">W</div>
+                <button class="btn profile-btn" id="signInBtn">PROFILE</button>
             </div>
-            <span id="sellerBtnText">SELL</span>
-        </button>
-    </div>
+            
+            <!-- Search Container - Center -->
+            <div class="search-container">
+                <input type="text" class="search-bar" placeholder="Search products..." onkeyup="searchProducts()">
+                <button class="search-btn" onclick="searchProducts()">🔍</button>
+            </div>
+            
+            <!-- Sell Button - Right (no background) -->
+            <button class="sell-btn-clean" id="dynamicSellerBtn" onclick="handleSellerButton()">
+                <div class="sell-icon">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M12 3L2 12h3v8h6v-6h2v6h6v-8h3L12 3zm0 2.8l6 6V20h-2v-6H8v6H6v-8.2l6-6z"/>
+                    </svg>
+                </div>
+                <span id="sellerBtnText">SELL</span>
+            </button>
+        </div>
 
-    <div class="header-separator"></div>
+        <div class="header-separator"></div>
+    </div>
 
     <!-- Categories Section -->
     <div class="categories-section" style="padding: 0.5rem 5px; margin-bottom: 0.5rem;">
@@ -1469,6 +1475,7 @@ body {
     <div class="cart-icon">🛒</div>
     <span class="cart-count-badge" id="cartCountFloat">0</span>
 </div>
+
     
 <main class="main-content">
     <div class="products-grid" id="productsGrid">
