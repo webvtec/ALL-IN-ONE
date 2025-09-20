@@ -2326,9 +2326,9 @@ function setRating(productId, rating) {
 
 function updateCartCount() {
     const count = cart.reduce((total, item) => total + item.quantity, 0);
-    document.getElementById('cartCount').textContent = count;
+    document.getElementById('cartCount').textContent = count; // Old cart counter
+    document.getElementById('cartCountFloat').textContent = count; // New floating cart counter
 }
-
 function showCartNotification(productName) {
     const notification = document.createElement('div');
     notification.style.cssText = `
