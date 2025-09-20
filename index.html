@@ -177,13 +177,12 @@ body {
     box-shadow: 0 3px 10px rgba(255, 215, 0, 0.3);
 }
             
-/* Sell Button - No background, clean design */
 .sell-btn-clean {
     display: flex;
     flex-direction: column;
     align-items: center;
     gap: 0.2rem;
-    background: none;
+    background: none !important;
     border: none;
     color: white;
     cursor: pointer;
@@ -195,7 +194,7 @@ body {
 }
 
 .sell-btn-clean:hover {
-    background: rgba(255, 255, 255, 0.1);
+    background: rgba(255, 255, 255, 0.1) !important;
     transform: translateY(-1px);
 }
 
@@ -213,9 +212,9 @@ body {
             
 /* Floating Cart Widget */
 .floating-cart-widget {
-    position: fixed;
-    bottom: 20px;
-    right: 20px;
+    position: fixed !important;
+    bottom: 20px !important;
+    right: 20px !important;
     width: 60px;
     height: 60px;
     background: linear-gradient(45deg, #ffd700, #ffed4a);
@@ -1131,10 +1130,10 @@ body {
     }
     
     .floating-cart-widget {
-        width: 55px;
-        height: 55px;
-        bottom: 15px;
-        right: 15px;
+        width: 55px !important;
+        height: 55px !important;
+        bottom: 15px !important;
+        right: 15px !important;
     }
 
   .cart-icon {
@@ -1154,7 +1153,7 @@ body {
         font-size: 0.7rem;
         min-width: 20px;
     }
-
+    
     .product-card {
         flex-direction: row;
         padding: 12px;
@@ -1407,33 +1406,28 @@ body {
 
 <!-- Header -->
 <header class="header">
-    <div style="display: flex; justify-content: space-around; align-items: center; margin-bottom: 10px;">
-    <div class="profile-section" onclick="showLogin()">
-        <div class="profile-avatar" id="profileAvatar">
-            W
+    <div class="header-content">
+        <!-- Profile Section - Left -->
+        <div class="profile-section" onclick="showLogin()">
+            <div class="profile-avatar" id="profileAvatar">W</div>
+            <button class="btn profile-btn" id="signInBtn">PROFILE</button>
         </div>
-        <button class="btn" id="signInBtn" style="font-size: 0.8rem; padding: 0.3rem 0.6rem;">PROFILE</button>
-    </div>
-    
-    <button class="btn sell-btn" id="dynamicSellerBtn" onclick="handleSellerButton()">
-        <div class="sell-icon">
-            <svg width="32" height="32" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M12 3L2 12h3v8h6v-6h2v6h6v-8h3L12 3zm0 2.8l6 6V20h-2v-6H8v6H6v-8.2l6-6z"/>
-                <path d="M4 6h2v2H4zm14 0h2v2h-2z"/>
-            </svg>
+        
+        <!-- Search Container - Center -->
+        <div class="search-container">
+            <input type="text" class="search-bar" placeholder="Search products..." onkeyup="searchProducts()">
+            <button class="search-btn" onclick="searchProducts()">🔍</button>
         </div>
-        <span id="sellerBtnText">SELL ON WEB VTEC</span>
-    </button>
-    
-    <button class="btn" onclick="showCart()" style="position: relative;">
-        🛒 Cart <span class="cart-count" id="cartCount">0</span>
-    </button>
-    </div>
-    </div>
-
-    <div class="search-container">
-        <input type="text" class="search-bar" placeholder="Search for products..." onkeyup="searchProducts()">
-        <button class="search-btn" onclick="searchProducts()">🔍</button>
+        
+        <!-- Sell Button - Right (no background) -->
+        <button class="sell-btn-clean" id="dynamicSellerBtn" onclick="handleSellerButton()">
+            <div class="sell-icon">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M12 3L2 12h3v8h6v-6h2v6h6v-8h3L12 3zm0 2.8l6 6V20h-2v-6H8v6H6v-8.2l6-6z"/>
+                </svg>
+            </div>
+            <span id="sellerBtnText">SELL</span>
+        </button>
     </div>
 
     <!-- Categories Section -->
@@ -1455,6 +1449,12 @@ body {
     </div>
 </header>
 
+<!-- Floating Cart Widget -->
+<div class="floating-cart-widget" onclick="showCart()">
+    <div class="cart-icon">🛒</div>
+    <span class="cart-count-badge" id="cartCountFloat">0</span>
+</div>
+    
 <main class="main-content">
     <div class="products-grid" id="productsGrid">
         <!-- Products will be loaded here -->
