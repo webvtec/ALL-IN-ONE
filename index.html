@@ -2294,6 +2294,8 @@ function createProductCard(product) {
             deliveryHTML = deliveryLines.map(line => `<p class="delivery-line">${line}</p>`).join('');
         }
     }
+
+    
     
     card.innerHTML = `
     <div class="product-image">
@@ -2305,17 +2307,16 @@ function createProductCard(product) {
             <p class="product-description">${truncatedDescription}</p>
             <div class="stars">${starsHTML} <span class="review-count">(${reviewCount})</span></div>
             ${deliveryHTML ? `<div class="delivery-info">${deliveryHTML}</div>` : ''}
-            ${sellerInfo ? `<p class="seller-info" style="margin-bottom: 1rem;">${sellerInfo}</p>` : ''}
+            ${sellerInfo ? `<p class="seller-info" style="margin-bottom: 1.5rem;">${sellerInfo}</p>` : ''}
             ${product.category === 'clothing' && product.sizes && product.sizes.length > 0 ? 
-            `<p style="color: #666; font-size: 0.8rem; margin: 0.2rem 0;">Sizes: ${product.sizes.join(', ')}</p>` : ''}
-            <div class="product-price">$${product.price || '0.00'}</div>
-        </div>
-        <div style="text-align: center; margin-top: 0.3rem;">
-            <button class="add-to-cart" data-product-id="${product.id}">Add to cart</button>
+            `<p style="color: #666; font-size: 0.8rem; margin: 0.2rem 0 1.5rem 0;">Sizes: ${product.sizes.join(', ')}</p>` : ''}
+            <div class="product-price" style="margin-bottom: 0.5rem;">$${product.price || '0.00'}</div>
+            <div style="text-align: center;">
+                <button class="add-to-cart" data-product-id="${product.id}">Add to cart</button>
+            </div>
         </div>
     </div>
 `;
-    
     // Add click event to the entire card first
     card.addEventListener('click', function(e) {
         // Check if click is NOT on add-to-cart button or its children
