@@ -1563,7 +1563,20 @@ header button:hover {
     display: flex;
     transition: transform 0.3s ease;
     width: 500%;
-    touch-action: pan-y; /* Allow vertical panning only */
+    touch-action: pan-y; /* Prioritize vertical scrolling */
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    user-select: none;
+}
+
+.photo-slide img {
+    width: 100%;
+    height: 400px;
+    object-fit: contain;
+    background: white;
+    pointer-events: none;
+    -webkit-user-drag: none;
+    user-drag: none;
 }
     </style>
 </head>
@@ -3511,51 +3524,68 @@ function initializePhotoGallery(productId) {
         return;
     }
     
-    // Only add mouse events, remove all touch event prevention
-    container.addEventListener('mousedown', handlePointerStart);
-    container.addEventListener('mousemove', handlePointerMove);
-    container.addEventListener('mouseup', handlePointerEnd);
-    container.addEventListener('mouseleave', handlePointerEnd);
-    
-    // For touch, only handle horizontal swipes with minimal interference
     let touchStartX = 0;
     let touchStartY = 0;
     let touchStartTime = 0;
+    let isScrolling = null;
     
     container.addEventListener('touchstart', (e) => {
         touchStartX = e.touches[0].clientX;
         touchStartY = e.touches[0].clientY;
         touchStartTime = Date.now();
+        isScrolling = null;
     }, { passive: true });
+    
+    container.addEventListener('touchmove', (e) => {
+        if (!touchStartX || !touchStartY) return;
+        
+        const touchX = e.touches[0].clientX;
+        const touchY = e.touches[0].clientY;
+        const deltaX = touchStartX - touchX;
+        const deltaY = touchStartY - touchY;
+        
+        // Determine scroll direction on first move
+        if (isScrolling === null) {
+            isScrolling = Math.abs(deltaX) < Math.abs(deltaY) ? 'vertical' : 'horizontal';
+        }
+        
+        // Only prevent default for clear horizontal swipes
+        if (isScrolling === 'horizontal' && Math.abs(deltaX) > 20) {
+            e.preventDefault();
+        }
+    }, { passive: false });
     
     container.addEventListener('touchend', (e) => {
         if (!e.changedTouches[0]) return;
         
         const touchEndX = e.changedTouches[0].clientX;
-        const touchEndY = e.changedTouches[0].clientY;
-        const touchEndTime = Date.now();
-        
         const deltaX = touchEndX - touchStartX;
-        const deltaY = touchEndY - touchStartY;
-        const deltaTime = touchEndTime - touchStartTime;
+        const deltaTime = Date.now() - touchStartTime;
         
-        // Only trigger swipe if it's clearly horizontal and fast
-        const isHorizontalSwipe = Math.abs(deltaX) > Math.abs(deltaY) * 2;
-        const isFastSwipe = deltaTime < 300;
-        const isLongSwipe = Math.abs(deltaX) > 50;
-        
-        if (isHorizontalSwipe && isFastSwipe && isLongSwipe) {
-            if (deltaX > 0) {
+        // Only trigger photo change for clear horizontal swipes
+        if (isScrolling === 'horizontal' && Math.abs(deltaX) > 50 && deltaTime < 500) {
+            if (deltaX > 50) {
                 changePhoto(currentProductId, -1);
-            } else {
+            } else if (deltaX < -50) {
                 changePhoto(currentProductId, 1);
             }
         }
+        
+        // Reset values
+        touchStartX = 0;
+        touchStartY = 0;
+        isScrolling = null;
     }, { passive: true });
     
-    // Prevent image dragging
+    // Mouse events for desktop
+    container.addEventListener('mousedown', handlePointerStart);
+    container.addEventListener('mousemove', handlePointerMove);
+    container.addEventListener('mouseup', handlePointerEnd);
+    container.addEventListener('mouseleave', handlePointerEnd);
+    
     container.addEventListener('dragstart', e => e.preventDefault());
 }
+    
 function handlePointerStart(e) {
     console.log('Pointer start detected:', e.type);
     isPointerDown = true;
