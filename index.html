@@ -31,7 +31,7 @@ body {
    ========================================================================== */
 .header {
     background: rgba(0, 0, 0, 0.3);
-    padding: 1rem;
+    padding: 1rem 1.5rem; /* Increased horizontal padding */
     backdrop-filter: blur(10px);
     border-bottom: 2px solid #ffd700;
     position: relative;
@@ -50,10 +50,10 @@ body {
 
 .search-container {
     position: relative;
-    width: 280px;
+    width: 320px; /* Increased from 280px */
     flex-shrink: 0;
 }
-
+    
  .profile-section {
     flex-shrink: 0;
     min-width: 80px;
@@ -413,8 +413,9 @@ body {
    ========================================================================== */
 .main-content {
     margin-left: 0;
-    padding: 1rem 4px;
-    max-width: 800px;
+    padding: 1rem 8px; /* Increased from 4px */
+    max-width: 100%; /* Changed from 800px */
+    width: 100%;
     margin: 0 auto;
     transition: margin-left 0.3s ease;
 }
@@ -424,7 +425,7 @@ body {
     flex-direction: column;
     gap: 1rem;
     margin-top: 1rem;
-    padding: 0 5px;
+    padding: 0 8px; /* Increased from 5px */
 }
 
 /* ==========================================================================
@@ -714,7 +715,10 @@ body {
     border-radius: 16px;
     box-shadow: 0 4px 20px rgba(0,0,0,0.1);
     overflow: hidden;
+    width: 100%; /* Ensure full width */
+    max-width: none; /* Remove any max-width restrictions */
 }
+
 
 .dashboard-tabs {
     display: flex;
@@ -757,7 +761,7 @@ body {
 .product-form {
     display: grid;
     gap: 1.5rem;
-    padding: 2rem;
+    padding: 2rem 3rem; /* Increased horizontal padding */
 }
 
 .form-row {
@@ -796,7 +800,7 @@ body {
 .product-grid {
     display: grid;
     gap: 1rem;
-    padding: 2rem;
+    padding: 2rem 3rem; /* Increased horizontal padding */
 }
 
 .dashboard-product-card {
@@ -1064,7 +1068,7 @@ body {
     /* Header Layout */
     header {
         flex-direction: column;
-        padding: 0.8rem;
+        padding: 1rem;
         gap: 0.8rem;
         align-items: stretch;
     }
@@ -1079,7 +1083,7 @@ body {
     
     .search-container {
         width: 200px;
-        flex: 0 0 200px;
+        flex: 0 0 220px;
         margin: 0;
     }
     
@@ -1170,12 +1174,12 @@ body {
     
     /* Main Content */
     .main-content {
-        padding: 0.5rem 4px;
+        padding: 0.5rem 8px;
     }
     
     .products-grid {
         gap: 0.8rem;
-        padding: 0 5px;
+        padding: 0 8px;
     }
     
     /* Product Cards */
