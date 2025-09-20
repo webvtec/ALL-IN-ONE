@@ -2648,32 +2648,57 @@ document.addEventListener('click', function(event) {
     }).join('');
     
     detailView.innerHTML = `
-    <header class="header" style="background: transparent; backdrop-filter: none; border-bottom: none;">
-        <div class="header-top">
-            <div class="header-content">
-                <!-- Profile Section - Left -->
-                <div class="profile-section" onclick="showLogin()">
-                    <div class="profile-avatar" id="detailProfileAvatar">W</div>
-                    <button class="btn profile-btn" id="detailSignInBtn">PROFILE</button>
+        <!-- Header -->
+        <header class="header">
+            <div class="header-top">
+                <div class="header-content">
+                    <!-- Profile Section - Left -->
+                    <div class="profile-section" onclick="showLogin()">
+                        <div class="profile-avatar" id="detailProfileAvatar">W</div>
+                        <button class="btn profile-btn" id="detailSignInBtn">PROFILE</button>
+                    </div>
+
+                    <div class="logo">WEB VTEC</div>
+                    
+                    <!-- Sell Button - Right -->
+                    <button class="sell-btn-clean" onclick="closeProductDetail()">
+                        <div class="sell-icon">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M12 3L2 12h3v8h6v-6h2v6h6v-8h3L12 3zm0 2.8l6 6V20h-2v-6H8v6H6v-8.2l6-6z"/>
+                            </svg>
+                        </div>
+                        <span id="detailSellerBtnText">SELL</span>
+                    </button>
                 </div>
 
-                <div class="logo">WEB VTEC</div>
-                
-                <!-- Sell Button - Right (original structure) -->
-                <button class="sell-btn-clean" onclick="closeProductDetail()">
-                    <div class="sell-icon">
-                        <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
-                            <path d="M12 3L2 12h3v8h6v-6h2v6h6v-8h3L12 3zm0 2.8l6 6V20h-2v-6H8v6H6v-8.2l6-6z"/>
-                        </svg>
-                    </div>
-                    <span id="sellerBtnText">SELL</span>
-                </button>
+                <div class="header-separator"></div>
             </div>
 
-            <div class="header-separator"></div>
-        </div>
-    </header>
-    
+            <!-- Categories Section -->
+            <div class="categories-section" style="padding: 0.2rem 5px; margin-bottom: 0.25rem;">
+                <div class="categories-scroll" style="display: flex; gap: 0.8rem; overflow-x: auto; padding: 0.3rem 0; scrollbar-width: none; -ms-overflow-style: none;">
+                    <button class="category-btn active" onclick="filterByCategory('all')" style="background: #333; color: #ffd700; border: none; padding: 0.6rem 1.2rem; border-radius: 20px; white-space: nowrap; cursor: pointer; font-weight: bold; min-width: 70px; font-size: 0.85rem; text-align: center; display: flex; align-items: center; justify-content: center;">All</button>
+                    <button class="category-btn" onclick="filterByCategory('electronics')" style="background: #ffd700; color: #333; border: none; padding: 0.6rem 1.2rem; border-radius: 20px; white-space: nowrap; cursor: pointer; font-weight: bold; min-width: 90px; font-size: 0.85rem; text-align: center; display: flex; align-items: center; justify-content: center;">Electronics</button>
+                    <button class="category-btn" onclick="filterByCategory('clothing')" style="background: #ffd700; color: #333; border: none; padding: 0.6rem 1.2rem; border-radius: 20px; white-space: nowrap; cursor: pointer; font-weight: bold; min-width: 80px; font-size: 0.85rem; text-align: center; display: flex; align-items: center; justify-content: center;">Clothing</button>
+                    <button class="category-btn" onclick="filterByCategory('home')" style="background: #ffd700; color: #333; border: none; padding: 0.6rem 1.2rem; border-radius: 20px; white-space: nowrap; cursor: pointer; font-weight: bold; min-width: 70px; font-size: 0.85rem; text-align: center; display: flex; align-items: center; justify-content: center;">Home</button>
+                    <button class="category-btn" onclick="filterByCategory('beauty')" style="background: #ffd700; color: #333; border: none; padding: 0.6rem 1.2rem; border-radius: 20px; white-space: nowrap; cursor: pointer; font-weight: bold; min-width: 70px; font-size: 0.85rem; text-align: center; display: flex; align-items: center; justify-content: center;">Beauty</button>
+                    <button class="category-btn" onclick="filterByCategory('sports')" style="background: #ffd700; color: #333; border: none; padding: 0.6rem 1.2rem; border-radius: 20px; white-space: nowrap; cursor: pointer; font-weight: bold; min-width: 70px; font-size: 0.85rem; text-align: center; display: flex; align-items: center; justify-content: center;">Sports</button>
+                    <button class="category-btn" onclick="filterByCategory('books')" style="background: #ffd700; color: #333; border: none; padding: 0.6rem 1.2rem; border-radius: 20px; white-space: nowrap; cursor: pointer; font-weight: bold; min-width: 70px; font-size: 0.85rem; text-align: center; display: flex; align-items: center; justify-content: center;">Books</button>
+                    <button class="category-btn" onclick="filterByCategory('toys')" style="background: #ffd700; color: #333; border: none; padding: 0.6rem 1.2rem; border-radius: 20px; white-space: nowrap; cursor: pointer; font-weight: bold; min-width: 70px; font-size: 0.85rem; text-align: center; display: flex; align-items: center; justify-content: center;">Toys</button>
+                    <button class="category-btn" onclick="filterByCategory('automotive')" style="background: #ffd700; color: #333; border: none; padding: 0.6rem 1.2rem; border-radius: 20px; white-space: nowrap; cursor: pointer; font-weight: bold; min-width: 95px; font-size: 0.85rem; text-align: center; display: flex; align-items: center; justify-content: center;">Automotive</button>
+                    <button class="category-btn" onclick="filterByCategory('jewelry')" style="background: #ffd700; color: #333; border: none; padding: 0.6rem 1.2rem; border-radius: 20px; white-space: nowrap; cursor: pointer; font-weight: bold; min-width: 80px; font-size: 0.85rem; text-align: center; display: flex; align-items: center; justify-content: center;">Jewelry</button>
+                    <button class="category-btn" onclick="filterByCategory('health')" style="background: #ffd700; color: #333; border: none; padding: 0.6rem 1.2rem; border-radius: 20px; white-space: nowrap; cursor: pointer; font-weight: bold; min-width: 70px; font-size: 0.85rem; text-align: center; display: flex; align-items: center; justify-content: center;">Health</button>
+                    <button class="category-btn" onclick="filterByCategory('music')" style="background: #ffd700; color: #333; border: none; padding: 0.6rem 1.2rem; border-radius: 20px; white-space: nowrap; cursor: pointer; font-weight: bold; min-width: 70px; font-size: 0.85rem; text-align: center; display: flex; align-items: center; justify-content: center;">Music</button>
+                </div>
+            </div>
+
+            <!-- Search Container - Center -->
+            <div class="search-container">
+                <input type="text" class="search-bar" placeholder="Search products..." onkeyup="searchProducts()">
+                <button class="search-btn" onclick="searchProducts()">🔍</button>
+            </div>
+        </header>
+
         <div style="padding: 20px; margin-top: 10px;">
             <h2 style="text-align: left; color: #333; margin: 0.5rem 0; font-size: 1.5rem; font-weight: bold; text-transform: uppercase;">${product.name}</h2>
             
