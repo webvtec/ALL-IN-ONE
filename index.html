@@ -2305,12 +2305,12 @@ function createProductCard(product) {
             <p class="product-description">${truncatedDescription}</p>
             <div class="stars">${starsHTML} <span class="review-count">(${reviewCount})</span></div>
             ${deliveryHTML ? `<div class="delivery-info">${deliveryHTML}</div>` : ''}
-            ${sellerInfo ? `<p class="seller-info">${sellerInfo}</p>` : ''}
+            ${sellerInfo ? `<p class="seller-info" style="margin-bottom: 1rem;">${sellerInfo}</p>` : ''}
             ${product.category === 'clothing' && product.sizes && product.sizes.length > 0 ? 
             `<p style="color: #666; font-size: 0.8rem; margin: 0.2rem 0;">Sizes: ${product.sizes.join(', ')}</p>` : ''}
             <div class="product-price">$${product.price || '0.00'}</div>
         </div>
-        <div style="text-align: center; margin-top: 0.5rem;">
+        <div style="text-align: center; margin-top: 0.3rem;">
             <button class="add-to-cart" data-product-id="${product.id}">Add to cart</button>
         </div>
     </div>
