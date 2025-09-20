@@ -77,6 +77,8 @@ body {
         2px 0 0 #ffd700,
         0 -2px 0 #ffd700,
         0 2px 0 #ffd700;
+    flex: 1;
+    text-align: center;
 }
 
 /* Profile Section - Stack vertically */
@@ -146,7 +148,6 @@ body {
 
 /* Search Container - Centered and compact */
 .search-container {
-    flex: 0 0 auto;
     width: 300px;
     max-width: 300px;
     position: relative;
@@ -1450,11 +1451,6 @@ body {
                 <button class="btn profile-btn" id="signInBtn">PROFILE</button>
             </div>
             
-            <!-- Search Container - Center -->
-            <div class="search-container">
-                <input type="text" class="search-bar" placeholder="Search products..." onkeyup="searchProducts()">
-                <button class="search-btn" onclick="searchProducts()">🔍</button>
-            </div>
             
             <!-- Sell Button - Right (no background) -->
             <button class="sell-btn-clean" id="dynamicSellerBtn" onclick="handleSellerButton()">
@@ -1487,6 +1483,13 @@ body {
             <button class="category-btn" onclick="filterByCategory('music')" style="background: #ffd700; color: #333; border: none; padding: 0.6rem 1.2rem; border-radius: 20px; white-space: nowrap; cursor: pointer; font-weight: bold; min-width: 70px; font-size: 0.85rem; text-align: center; display: flex; align-items: center; justify-content: center;">Music</button>
         </div>
     </div>
+
+
+    <!-- Search Container - Center -->
+            <div class="search-container">
+                <input type="text" class="search-bar" placeholder="Search products..." onkeyup="searchProducts()">
+                <button class="search-btn" onclick="searchProducts()">🔍</button>
+            </div>
 </header>
 
 <!-- Floating Cart Widget -->
