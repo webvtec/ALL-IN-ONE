@@ -2187,22 +2187,30 @@ function updateAuthModalUI() {
 }
 
 function updateAuthUI() {
-    const signInBtn = document.querySelector('.btn[onclick="showLogin()"]');
+    const signInBtn = document.getElementById('signInBtn');
+    const profileAvatar = document.getElementById('profileAvatar');
     
     if (currentUser) {
         const displayName = currentUser.displayName || 'User';
         const firstName = displayName.split(' ')[0];
         signInBtn.innerHTML = `👤 ${firstName}`;
-        signInBtn.onclick = showUserProfile;
+        
+        // Update avatar
+        if (currentUser.photoURL) {
+            profileAvatar.innerHTML = `<img src="${currentUser.photoURL}" alt="Profile">`;
+        } else {
+            // Use first letter of name or email
+            const initial = displayName.charAt(0).toUpperCase() || currentUser.email.charAt(0).toUpperCase();
+            profileAvatar.innerHTML = initial;
+        }
     } else {
         signInBtn.innerHTML = '👤 Sign In';
-        signInBtn.onclick = showLogin;
+        profileAvatar.innerHTML = 'W';
     }
     
-    updateSellerButton(); // Add this line
+    updateSellerButton();
     updateDetailPageAuth();
 }
-
 function showLogin() {
     const modal = document.getElementById('loginModal');
     
