@@ -1158,29 +1158,27 @@ body {
 
     /* Product cards - keep ALL content visible */
     .product-card {
-flex-direction: row;
-padding: 0;
-gap: 0;
-min-height: 200px;
-user-select: none;
--webkit-user-select: none;
--moz-user-select: none;
--ms-user-select: none;
-overflow: hidden; /* Change back to hidden so border radius works */
-position: relative;
-display: flex;
-align-items: stretch;
+    flex-direction: row;
+    padding: 0;
+    gap: 0;
+    min-height: 200px;
+    user-select: none;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    overflow: hidden;
+    position: relative;
+    display: flex;
 }
 
 .product-image {
-width: 120px;
-background: white;
-flex-shrink: 0;
-display: flex;
-align-items: center;
-justify-content: center;
-border-radius: 12px 0 0 12px;
-align-self: stretch; /* This forces it to stretch to full card height */
+    width: 120px;
+    background: white;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 12px 0 0 12px;
 }
     
     .product-image img {
@@ -1190,15 +1188,13 @@ align-self: stretch; /* This forces it to stretch to full card height */
     }
     
     .product-details {
-padding: 12px;
-flex: 1;
-display: flex;
-flex-direction: column;
-justify-content: flex-start;
-min-height: 160px;
-gap: 0.5rem;
-position: relative;
-pointer-events: auto; /* Ensure clicks work on the details area */
+    padding: 12px;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    gap: 0.5rem;
+    position: relative;
     }
     
     .product-header {
