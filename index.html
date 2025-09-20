@@ -2322,14 +2322,14 @@ function createProductCard(product) {
         if (product.knutsfordDelivery) {
             const knutsfordDates = calculateDeliveryDates(product.knutsfordDelivery);
             if (knutsfordDates) {
-                deliveryLines.push(`Knutsford: ${knutsfordDates.start} - ${knutsfordDates.end}`);
+                deliveryLines.push(`KNUTSFORD: ${knutsfordDates.start} - ${knutsfordDates.end}`);
             }
         }
         
         if (product.taraDelivery) {
             const taraDates = calculateDeliveryDates(product.taraDelivery);
             if (taraDates) {
-                deliveryLines.push(`Tara: ${taraDates.start} - ${taraDates.end}`);
+                deliveryLines.push(`TARA: ${taraDates.start} - ${taraDates.end}`);
             }
         }
         
