@@ -860,6 +860,11 @@
         max-height: 90vh;
         overflow-y: auto;
     }
+
+    #editProductModal .modal-content {
+    max-height: 90vh !important;
+    overflow-y: auto !important;
+    }
     
     #sellerModal .modal-content {
         padding: 1rem !important;
@@ -1648,13 +1653,11 @@ header button:hover {
                 <div class="form-field">
                     <label>Tara Delivery Time</label>
                     <select id="dashboardTaraDelivery" required>
-                        <option value="">Select Delivery Time</option>
-                        <option value="1-2">1-2 days</option>
-                        <option value="3-5">3-5 days</option>
-                        <option value="5-7">5-7 days</option>
-                        <option value="7-10">7-10 days</option>
-                        <option value="10-14">10-14 days</option>
-                        <option value="14-21">14-21 days</option>
+    <option value="">Select Delivery Time</option>
+    <option value="2-7">2-7 days</option>
+    <option value="7-10">7-10 days</option>
+    <option value="10-14">10-14 days</option>
+    <option value="14-21">14-21 days</option>
                     </select>
                 </div>
             </div>
@@ -1703,10 +1706,9 @@ header button:hover {
 </div>
 
 
-
 <!-- Edit Product Modal -->
 <div id="editProductModal" class="modal">
-    <div class="modal-content" style="max-width: 700px; padding: 0; border-radius: 16px; overflow: hidden;">
+    <div class="modal-content" style="max-width: 700px; padding: 0; border-radius: 16px; overflow: hidden; max-height: 90vh; overflow-y: auto;">
         <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 2rem; text-align: center; position: relative;">
             <span class="close" onclick="closeEditProduct()" style="position: absolute; top: 1rem; right: 1.5rem; color: white; font-size: 2rem;">&times;</span>
             <h2 style="color: white; margin: 0; font-size: 1.8rem; font-weight: 300;">Edit Product</h2>
@@ -1773,13 +1775,11 @@ header button:hover {
                     <div class="form-field">
                         <label>Tara Delivery Time</label>
                         <select id="editTaraDelivery" required>
-                            <option value="">Select Delivery Time</option>
-                            <option value="1-2">1-2 days</option>
-                            <option value="3-5">3-5 days</option>
-                            <option value="5-7">5-7 days</option>
-                            <option value="7-10">7-10 days</option>
-                            <option value="10-14">10-14 days</option>
-                            <option value="14-21">14-21 days</option>
+    <option value="">Select Delivery Time</option>
+    <option value="2-7">2-7 days</option>
+    <option value="7-10">7-10 days</option>
+    <option value="10-14">10-14 days</option>
+    <option value="14-21">14-21 days</option>
                         </select>
                     </div>
                 </div>
@@ -2349,7 +2349,8 @@ function searchProducts() {
     const searchTerm = searchInput.value.toLowerCase();
     const filteredProducts = products.filter(product => 
         product.name.toLowerCase().includes(searchTerm) || 
-        product.description.toLowerCase().includes(searchTerm)
+        product.description.toLowerCase().includes(searchTerm) ||
+        (product.sellerBusinessName && product.sellerBusinessName.toLowerCase().includes(searchTerm))
     );
     
     const grid = document.getElementById('productsGrid');
@@ -2359,6 +2360,10 @@ function searchProducts() {
         const productCard = createProductCard(product);
         grid.appendChild(productCard);
     });
+    
+    if (filteredProducts.length === 0) {
+        grid.innerHTML = '<div style="text-align: center; color: #666; padding: 2rem;">No products or stores found matching your search.</div>';
+    }
 }
 
 function showSection(section) {
