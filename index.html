@@ -3490,8 +3490,6 @@ function initializePhotoGallery(productId) {
         return;
     }
     
-    console.log('Initializing photo gallery for:', productId);
-    
     // Remove existing listeners to avoid duplicates
     container.removeEventListener('mousedown', handlePointerStart);
     container.removeEventListener('mousemove', handlePointerMove);
@@ -3507,17 +3505,14 @@ function initializePhotoGallery(productId) {
     container.addEventListener('mouseup', handlePointerEnd);
     container.addEventListener('mouseleave', handlePointerEnd);
     
-    // Touch events with proper options
+    // Touch events - only prevent default when necessary
     container.addEventListener('touchstart', handlePointerStart, { passive: true });
     container.addEventListener('touchmove', handlePointerMove, { passive: false });
     container.addEventListener('touchend', handlePointerEnd, { passive: true });
     
     // Prevent default drag behavior
     container.addEventListener('dragstart', e => e.preventDefault());
-    
-    console.log('Photo gallery initialized successfully');
 }
-
 function handlePointerStart(e) {
     console.log('Pointer start detected:', e.type);
     isPointerDown = true;
@@ -3543,8 +3538,16 @@ function handlePointerMove(e) {
     if (e.type === 'mousemove') {
         currentX = e.clientX;
     } else if (e.type === 'touchmove') {
-        e.preventDefault(); // Prevent scrolling
         currentX = e.touches[0].clientX;
+        
+        // Only prevent default for horizontal swipes, allow vertical scrolling
+        const deltaX = Math.abs(currentX - startX);
+        const deltaY = Math.abs(e.touches[0].clientY - (e.touches[0].clientY || 0));
+        
+        // If horizontal movement is greater than vertical, prevent default (horizontal swipe)
+        if (deltaX > deltaY) {
+            e.preventDefault();
+        }
     }
     
     const deltaX = currentX - startX;
