@@ -29,7 +29,7 @@ body {
     background: #6f42c1;
     padding: 1rem 1rem 0 1rem;
     margin: 0;
-    position: fixed;
+    position: absolute;
     top: 0;
     left: 0;
     right: 0;
@@ -40,11 +40,13 @@ body {
 /* Header */
 .header {
     background: rgba(0, 0, 0, 0.3);
+    padding: 0;
+    padding-top: 80px; /* Add space for the purple header */
     backdrop-filter: blur(10px);
     border-bottom: 2px solid #ffd700;
     position: relative;
     z-index: 1001;
-    margin-top: 80;
+    margin-top: 0;
 }
 
 .header-content {
