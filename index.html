@@ -1179,8 +1179,8 @@ body {
         background: white;
         flex-shrink: 0;
         display: flex;
-        align-items: center;
-        justify-content: center;
+        align-items: center; /* Vertically center image */
+        justify-content: center; /* Horizontally center image */
     }
     
     .product-image img {
@@ -1196,9 +1196,10 @@ body {
         flex: 1;
         display: flex;
         flex-direction: column;
-        justify-content: flex-start; /* Changed from space-between */
+        justify-content: flex-start;
         min-height: 160px;
-        gap: 0.5rem; /* Added gap for better spacing */
+        gap: 0.5rem;
+        position: relative; /* Add this for button positioning */
     }
 
     .product-header {
@@ -1280,7 +1281,7 @@ body {
     .add-to-cart {
         padding: 0.6rem 1.2rem;
         font-size: 0.9rem;
-        margin-top: 0.5rem; /* Add some margin */
+        margin-top: 0.5rem;
         flex-shrink: 0;
         user-select: none !important;
         -webkit-user-select: none !important;
@@ -1289,7 +1290,9 @@ body {
         outline: none !important;
         -webkit-tap-highlight-color: transparent !important;
         white-space: nowrap;
-        align-self: flex-start; /* Align to start */
+        align-self: flex-end; /* Move button to the right */
+        width: fit-content; /* Don't stretch full width */
+        margin-left: auto; /* Push to right */
     }
 
     /* Modal fixes */
@@ -1383,6 +1386,13 @@ body {
         color: white;
     }
 
+    .add-to-cart {
+        align-self: flex-end; /* Keep button on the right */
+        margin-left: auto;
+        padding: 0.5rem 1rem;
+        font-size: 0.8rem;
+    }
+
     /* Ensure product cards still show all info */
     .product-card {
         min-height: 260px;
@@ -1392,6 +1402,9 @@ body {
         width: 100px;
         min-height: 140px;
         max-height: 140px;
+        display: flex;
+        align-items: center; /* Keep vertical centering */
+        justify-content: center;
     }
     
     .product-image img {
