@@ -1169,12 +1169,12 @@ body {
         overflow: visible; /* Changed from hidden */
         position: relative;
         display: flex;
-        align-items: stretch;
+        align-items: flex-start;
     }
     
     .product-image {
     width: 120px;
-    height: 100%;
+    align-self: stretch; /* This makes it take full card height */
     background: white;
     flex-shrink: 0;
     display: flex;
