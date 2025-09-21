@@ -4136,8 +4136,17 @@ function editDashboardProduct(productId) {
                 }
                 
                 document.getElementById('editKnutsfordDelivery').value = product.knutsfordDelivery || '';
-                document.getElementById('editProductStock').value = product.stock || 0;
-                document.getElementById('editLowStockAlert').value = product.lowStockAlert || 5;
+                document.getElementById('editTaraDelivery').value = product.taraDelivery || '';
+                
+                // Only populate stock fields if they exist in the form
+                const stockField = document.getElementById('editProductStock');
+                const alertField = document.getElementById('editLowStockAlert');
+                if (stockField) {
+                    stockField.value = product.stock || 0;
+                }
+                if (alertField) {
+                    alertField.value = product.lowStockAlert || 5;
+                }
                 
                 // Show modal
                 document.getElementById('editProductModal').style.display = 'block';
@@ -4148,7 +4157,6 @@ function editDashboardProduct(productId) {
             alert('Error loading product details');
         });
 }
-
 function closeEditProduct() {
     document.getElementById('editProductModal').style.display = 'none';
 }
