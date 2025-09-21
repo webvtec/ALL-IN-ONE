@@ -304,25 +304,6 @@ body {
     border: 2px solid white;
     min-width: 22px;
 }
-            
-/* Sidebar Menu */
-.sidebar {
-    position: fixed;
-    left: 0;
-    top: 0;
-    width: 250px;
-    height: 100vh;
-    background: rgba(0, 0, 0, 0.8);
-    backdrop-filter: blur(10px);
-    padding-top: 2rem;
-    z-index: 1000;
-    transform: translateX(-100%);
-    transition: transform 0.3s ease;
-}
-
-.sidebar.open {
-    transform: translateX(0);
-}
 
 .menu-toggle {
     position: fixed;
@@ -336,30 +317,6 @@ body {
     border-radius: 5px;
     cursor: pointer;
     font-size: 1.2rem;
-}
-
-.sidebar ul {
-    list-style: none;
-}
-
-.sidebar ul li {
-    padding: 1rem 2rem;
-    border-bottom: 1px solid rgba(255, 215, 0, 0.2);
-}
-
-.sidebar ul li a {
-    color: white;
-    text-decoration: none;
-    font-weight: 500;
-    transition: color 0.3s ease;
-}
-
-.sidebar ul li:hover {
-    background: rgba(255, 215, 0, 0.1);
-}
-
-.sidebar ul li a:hover {
-    color: #ffd700;
 }
 
 /* Main Content */
@@ -452,13 +409,6 @@ body {
     margin-bottom: 2rem;
 }
 
-.rating-section h4 {
-    font-size: 1.1rem;
-    color: #333;
-    margin-bottom: 0.5rem;
-    text-transform: uppercase;
-}
-
 .review-count {
     color: #333;
     font-size: 1.2rem;
@@ -504,76 +454,6 @@ body {
 .view-reviews:hover {
     background: #0066c0;
     color: white;
-}
-
-.reviews-section {
-    margin-top: 1rem;
-    display: none;
-}
-
-.reviews-section.active {
-    display: block;
-}
-
-.review-form {
-    background: rgba(0, 0, 0, 0.3);
-    padding: 1rem;
-    border-radius: 10px;
-    margin-bottom: 1rem;
-}
-
-.review-form input, .review-form textarea {
-    width: 100%;
-    padding: 0.5rem;
-    margin-bottom: 0.5rem;
-    border: none;
-    border-radius: 5px;
-    background: rgba(255, 255, 255, 0.1);
-    color: white;
-    border: 1px solid rgba(255, 215, 0, 0.3);
-}
-
-.review-form input::placeholder, .review-form textarea::placeholder {
-    color: rgba(255, 255, 255, 0.6);
-}
-
-.reviews-list {
-    max-height: 200px;
-    overflow-y: auto;
-}
-
-.review-item {
-    background: rgba(255, 255, 255, 0.05);
-    padding: 1rem;
-    border-radius: 8px;
-    margin-bottom: 0.5rem;
-    border-left: 3px solid #ffd700;
-}
-
-.review-header {
-    display: flex;
-    justify-content: space-between;
-    margin-bottom: 0.5rem;
-}
-
-.reviewer-name {
-    font-weight: bold;
-    color: #ffd700;
-}
-
-.review-stars {
-    color: #ffd700;
-}
-
-.cart-count {
-    background: #ff4757;
-    color: white;
-    border-radius: 50%;
-    padding: 0.2rem 0.5rem;
-    font-size: 0.8rem;
-    position: absolute;
-    top: -5px;
-    right: -5px;
 }
 
 /* Login Modal */
@@ -640,11 +520,6 @@ body {
 .form-group select option {
     background: #333;
     color: white;
-}
-
-@keyframes shimmer {
-    0% { transform: translateX(-100%) translateY(-100%) rotate(45deg); }
-    100% { transform: translateX(100%) translateY(100%) rotate(45deg); }
 }
 
 .add-to-cart {
@@ -729,15 +604,6 @@ body {
     to { opacity: 1; transform: translateY(0); }
 }
 
-/* Enhanced Seller Dashboard Styles */
-.dashboard-header {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    color: white;
-}
-
-.stat-card:nth-child(1) .stat-icon { background: rgba(0, 113, 133, 0.1); color: #007185; }
-.stat-card:nth-child(2) .stat-icon { background: rgba(40, 167, 69, 0.1); color: #28a745; }
-.stat-card:nth-child(3) .stat-icon { background: rgba(255, 193, 7, 0.1); color: #ffc107; }
 
 .dashboard-content-wrapper {
     background: white;
@@ -946,26 +812,6 @@ body {
     display: block;
 }
 
-.detail-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 2rem;
-    background: white;
-    padding: 20px 0;
-    border-bottom: 1px solid #ddd;
-    position: relative;
-}
-        
-.detail-close {
-    background: #f0f0f0;
-    border: none;
-    padding: 10px 15px;
-    border-radius: 5px;
-    cursor: pointer;
-    font-size: 16px;
-}
-
 .product-gallery {
     text-align: center;
     margin-bottom: 2rem;
@@ -975,28 +821,6 @@ body {
     width: 100%;
     max-width: 400px;
     height: auto;
-}
-
-.product-options {
-    display: flex;
-    gap: 1rem;
-    margin: 2rem 0;
-    overflow-x: auto;
-}
-
-.option-button {
-    background: #f0f0f0;
-    border: 2px solid #ddd;
-    padding: 10px 20px;
-    border-radius: 8px;
-    cursor: pointer;
-    white-space: nowrap;
-    color: #333;
-}
-
-.option-button.selected {
-    border-color: #007185;
-    background: #e7f3ff;
 }
 
 .detail-price {
@@ -1096,27 +920,6 @@ body {
 
 .photo-dot.active {
     background: #007185;
-}
-
-.photo-arrows {
-    position: absolute;
-    top: 50%;
-    transform: translateY(-50%);
-    background: rgba(0,0,0,0.5);
-    color: white;
-    border: none;
-    padding: 10px 15px;
-    cursor: pointer;
-    font-size: 18px;
-    border-radius: 50%;
-}
-
-.photo-prev {
-    left: 10px;
-}
-
-.photo-next {
-    right: 10px;
 }
 
 
@@ -2298,110 +2101,6 @@ function showUserProfile() {
 }
 
 
-
-// Customer Orders Functions
-function showCustomerOrders() {
-    if (!currentUser) {
-        alert('Please sign in to view your orders');
-        return;
-    }
-    
-    document.getElementById('customerOrdersPage').style.display = 'block';
-    document.body.style.overflow = 'hidden';
-    loadCustomerOrders();
-}
-
-function closeCustomerOrders() {
-    document.getElementById('customerOrdersPage').style.display = 'none';
-    document.body.style.overflow = 'auto';
-}
-
-function loadCustomerOrders() {
-    const ordersList = document.getElementById('customerOrdersList');
-    ordersList.innerHTML = '<div style="text-align: center; padding: 2rem;">Loading orders...</div>';
-    
-    db.collection('orders')
-        .where('buyerId', '==', currentUser.uid)
-        .orderBy('createdAt', 'desc')
-        .onSnapshot((snapshot) => {
-            ordersList.innerHTML = '';
-            
-            if (snapshot.empty) {
-                ordersList.innerHTML = '<div style="text-align: center; color: #666; padding: 3rem;">No orders found. Start shopping!</div>';
-                return;
-            }
-            
-            snapshot.forEach((doc) => {
-                const order = doc.data();
-                const orderElement = createCustomerOrderCard(order);
-                ordersList.appendChild(orderElement);
-            });
-        }, (error) => {
-            console.error('Error loading orders:', error);
-            ordersList.innerHTML = '<div style="text-align: center; color: #ff4757; padding: 2rem;">Error loading orders. Please try again.</div>';
-        });
-}
-
-function createCustomerOrderCard(order) {
-    const card = document.createElement('div');
-    card.style.cssText = 'background: white; border-radius: 12px; padding: 2rem; margin-bottom: 2rem; box-shadow: 0 2px 8px rgba(0,0,0,0.1); border: 1px solid #e9ecef;';
-    
-    const orderDate = new Date(order.createdAt).toLocaleDateString('en-US', {
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric'
-    });
-    
-    let sellersHTML = '';
-    Object.entries(order.sellers || {}).forEach(([sellerId, sellerData]) => {
-        const statusColor = getStatusColor(sellerData.status);
-        const statusText = getStatusText(sellerData.status);
-        
-        sellersHTML += `
-            <div style="background: #f8f9fa; padding: 1.5rem; border-radius: 8px; margin: 1rem 0; border-left: 4px solid ${statusColor};">
-                <div style="display: flex; justify-content: between; align-items: center; margin-bottom: 1rem;">
-                    <h4 style="color: #333; margin: 0;">${sellerData.sellerName}</h4>
-                    <span style="background: ${statusColor}; color: white; padding: 0.3rem 0.8rem; border-radius: 20px; font-size: 0.85rem; font-weight: 500;">${statusText}</span>
-                </div>
-                <p style="color: #666; font-size: 0.9rem; margin-bottom: 1rem;"><strong>Order #:</strong> ${sellerData.orderNumber}</p>
-                
-                <div style="margin-bottom: 1rem;">
-                    ${sellerData.items.map(item => `
-                        <div style="display: flex; justify-content: space-between; padding: 0.5rem 0; border-bottom: 1px solid #e9ecef;">
-                            <span>${item.productName} (x${item.quantity})</span>
-                            <span>$${item.subtotal.toFixed(2)}</span>
-                        </div>
-                    `).join('')}
-                </div>
-                
-                <div style="text-align: right;">
-                    <strong>Subtotal: $${sellerData.subtotal.toFixed(2)}</strong>
-                </div>
-            </div>
-        `;
-    });
-    
-    card.innerHTML = `
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
-            <h3 style="color: #333; margin: 0;">Order ${order.orderId}</h3>
-            <span style="color: #666; font-size: 0.9rem;">${orderDate}</span>
-        </div>
-        
-        <div style="margin-bottom: 1.5rem;">
-            <p style="color: #666; margin: 0;"><strong>Delivery Location:</strong> ${order.shippingAddress.deliveryLocation}</p>
-            <p style="color: #666; margin: 0.5rem 0 0 0;"><strong>Total Amount:</strong> $${order.totalAmount.toFixed(2)}</p>
-        </div>
-        
-        ${sellersHTML}
-        
-        <div style="text-align: center; margin-top: 2rem;">
-            <button onclick="emailOrderDetails('${order.orderId}')" class="btn" style="background: #007185;">Email Order Details</button>
-        </div>
-    `;
-    
-    return card;
-}
-
 // Seller Orders Functions  
 function loadSellerOrders() {
     if (!currentUser) return;
@@ -2627,11 +2326,6 @@ function closeLogin() {
     document.getElementById('loginModal').style.display = 'none';
 }
 
-// Replace your existing handleLogin function with this:
-function handleLogin(event) {
-    event.preventDefault();
-    // This function is now handled by handleEmailAuth
-}
 
 // Add Firebase Auth State Observer
 auth.onAuthStateChanged((user) => {
@@ -2837,52 +2531,6 @@ if (stock === 0) {
     showCartNotification(product.name);
     return false;
   }
-
-function submitReview(productId) {
-    const name = document.getElementById(`reviewName-${productId}`).value;
-    const text = document.getElementById(`reviewText-${productId}`).value;
-    const rating = window[`selectedRating-${productId}`] || 5;
-
-    if (!name || !text) {
-        alert('Please fill in all fields');
-        return;
-    }
-
-    const newReview = {
-        name: name,
-        rating: rating,
-        comment: text,
-        date: new Date().toISOString()
-    };
-
-    db.collection('products').doc(productId).update({
-        reviews: firebase.firestore.FieldValue.arrayUnion(newReview)
-    }).then(() => {
-        alert('Review submitted successfully!');
-        // Clear form
-        document.getElementById(`reviewName-${productId}`).value = '';
-        document.getElementById(`reviewText-${productId}`).value = '';
-    });
-}
-
-// Keep all other existing functions (toggleMenu, setRating, updateCartCount, showCart, etc.)
-function toggleMenu() {
-    const sidebar = document.getElementById('sidebar');
-    sidebar.classList.toggle('open');
-}
-
-function toggleReviews(productId) {
-    const reviewsSection = document.getElementById(`reviews-${productId}`);
-    reviewsSection.classList.toggle('active');
-}
-
-function setRating(productId, rating) {
-    const stars = document.querySelectorAll(`#stars-${productId} .star`);
-    stars.forEach((star, index) => {
-        star.classList.toggle('active', index < rating);
-    });
-    window[`selectedRating-${productId}`] = rating;
-}
 
 function updateCartCount() {
     const count = cart.reduce((total, item) => total + item.quantity, 0);
@@ -3253,12 +2901,6 @@ function showShippingForm() {
     return grouped;
     }
 
-function checkout() {
-    const total = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-    alert(`Checkout total: $${total.toFixed(2)}\n\nPayPal integration would be implemented with your actual client ID.`);
-    cart = [];
-    updateCartCount();
-}
 
 function searchProducts() {
     const searchInput = document.querySelector('.search-bar');
@@ -3282,47 +2924,6 @@ function searchProducts() {
     }
 }
 
-function showSection(section) {
-    if (section === 'home') {
-        loadProductsFromFirebase();
-    }
-    toggleMenu();
-}
-
-function showRequestForm() {
-    const modal = document.createElement('div');
-    modal.className = 'modal';
-    modal.style.display = 'block';
-    modal.innerHTML = `
-        <div class="modal-content">
-            <span class="close" onclick="this.parentElement.parentElement.remove()">&times;</span>
-            <h2 style="color: #ffd700; margin-bottom: 1rem;">Request a Product</h2>
-            <form onsubmit="handleProductRequest(event)">
-                <div class="form-group">
-                    <label>Product Name:</label>
-                    <input type="text" required>
-                </div>
-                <div class="form-group">
-                    <label>Description:</label>
-                    <textarea rows="3" required></textarea>
-                </div>
-                <div class="form-group">
-                    <label>Your Email:</label>
-                    <input type="email" required>
-                </div>
-                <button type="submit" class="btn" style="width: 100%;">Submit Request</button>
-            </form>
-        </div>
-    `;
-    document.body.appendChild(modal);
-    toggleMenu();
-}
-
-function handleProductRequest(event) {
-    event.preventDefault();
-    alert('Product request submitted! We\'ll get back to you soon.');
-    event.target.closest('.modal').remove();
-}
 
 window.onclick = function(event) {
     const modal = document.getElementById('loginModal');
