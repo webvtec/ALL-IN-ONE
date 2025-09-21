@@ -1776,6 +1776,18 @@ body {
                         </div>
                     </div>
 
+
+                    <div class="form-row">
+    <div class="form-field">
+        <label>Stock Quantity</label>
+        <input type="number" id="dashboardProductStock" min="0" value="10" required placeholder="Available quantity">
+    </div>
+    <div class="form-field">
+        <label>Low Stock Alert</label>
+        <input type="number" id="dashboardLowStockAlert" min="0" value="5" required placeholder="Alert when stock reaches this number">
+    </div>
+                    </div>
+
                     <div class="form-row" id="clothingSizeRow" style="display: none;">
                         <div class="form-field">
                             <label>Available Sizes</label>
@@ -2253,19 +2265,17 @@ function showUserProfile() {
                 buttonsDiv.style.cssText = 'display: flex; flex-direction: column; gap: 0.8rem; margin-top: 1rem;';
                 
                 if (doc.exists) {
-                    // User is a seller - show seller dashboard button
-                    buttonsDiv.innerHTML = `
-                        <button onclick="closeLogin(); showSellerDashboard();" class="btn" style="width: 100%;">Seller Dashboard</button>
-                        <button onclick="closeLogin(); showCustomerOrders();" class="btn" style="width: 100%; background: #28a745;">My Orders</button>
-                        <button onclick="signOut()" class="btn" style="width: 100%;">Sign Out</button>
-                    `;
-                } else {
-                    // User is not a seller
-                    buttonsDiv.innerHTML = `
-                        <button onclick="closeLogin(); showCustomerOrders();" class="btn" style="width: 100%; background: #28a745;">My Orders</button>
-                        <button onclick="closeLogin(); showSellerSignup();" class="btn" style="width: 100%; background: #007185;">Become a Seller</button>
-                        <button onclick="signOut()" class="btn" style="width: 100%;">Sign Out</button>
-                    `;
+    // User is a seller - only show seller dashboard
+    buttonsDiv.innerHTML = `
+        <button onclick="closeLogin(); showSellerDashboard();" class="btn" style="width: 100%;">Seller Dashboard</button>
+        <button onclick="signOut()" class="btn" style="width: 100%;">Sign Out</button>
+    `;
+} else {
+    // User is not a seller
+    buttonsDiv.innerHTML = `
+        <button onclick="closeLogin(); showSellerSignup();" class="btn" style="width: 100%; background: #007185;">Become a Seller</button>
+        <button onclick="signOut()" class="btn" style="width: 100%;">Sign Out</button>
+    `;
                 }
                 
                 // Replace the sign out button
@@ -2710,31 +2720,35 @@ function createProductCard(product) {
     }
 
     // Stock information
-    const stock = product.stock || 0;
+    const stock = product.stock !== undefined ? product.stock : null;
     const lowStockAlert = product.lowStockAlert || 5;
     let stockHTML = '';
     let stockStatus = '';
     
-    if (stock <= 0) {
-        stockHTML = '<p class="stock-info out-of-stock" style="color: #ff4757; font-weight: bold; font-size: 0.8rem; margin: 0.3rem 0;">OUT OF STOCK</p>';
-        stockStatus = 'out-of-stock';
-    } else if (stock <= lowStockAlert) {
-        stockHTML = `<p class="stock-info low-stock" style="color: #ff8c00; font-weight: bold; font-size: 0.8rem; margin: 0.3rem 0;">ONLY ${stock} LEFT!</p>`;
-        stockStatus = 'low-stock';
-    } else if (stock < 20) {
-        stockHTML = `<p class="stock-info normal-stock" style="color: #28a745; font-size: 0.8rem; margin: 0.3rem 0;">${stock} available</p>`;
-        stockStatus = 'normal-stock';
-    } else {
-        stockHTML = '<p class="stock-info in-stock" style="color: #28a745; font-size: 0.8rem; margin: 0.3rem 0;">In Stock</p>';
-        stockStatus = 'in-stock';
+    if (stock === null) {
+    // For products without stock tracking, show as available
+    stockHTML = '<p class="stock-info in-stock" style="color: #28a745; font-size: 0.8rem; margin: 0.3rem 0;">In Stock</p>';
+    stockStatus = 'in-stock';
+} else if (stock <= 0) {
+    stockHTML = '<p class="stock-info out-of-stock" style="color: #ff4757; font-weight: bold; font-size: 0.8rem; margin: 0.3rem 0;">OUT OF STOCK</p>';
+    stockStatus = 'out-of-stock';
+} else if (stock <= lowStockAlert) {
+    stockHTML = `<p class="stock-info low-stock" style="color: #ff8c00; font-weight: bold; font-size: 0.8rem; margin: 0.3rem 0;">ONLY ${stock} LEFT!</p>`;
+    stockStatus = 'low-stock';
+} else if (stock < 20) {
+    stockHTML = `<p class="stock-info normal-stock" style="color: #28a745; font-size: 0.8rem; margin: 0.3rem 0;">${stock} available</p>`;
+    stockStatus = 'normal-stock';
+} else {
+    stockHTML = '<p class="stock-info in-stock" style="color: #28a745; font-size: 0.8rem; margin: 0.3rem 0;">In Stock</p>';
+    stockStatus = 'in-stock';
     }
     
     // Button text and state based on stock
     let buttonHTML = '';
-    if (stock <= 0) {
-        buttonHTML = '<button class="add-to-cart out-of-stock" disabled style="background: #ccc; cursor: not-allowed;">Out of Stock</button>';
-    } else {
-        buttonHTML = `<button class="add-to-cart ${stockStatus}" data-product-id="${product.id}">Add to cart</button>`;
+    if (stock === 0) {
+    buttonHTML = '<button class="add-to-cart out-of-stock" disabled style="background: #ccc; cursor: not-allowed;">Out of Stock</button>';
+} else {
+    buttonHTML = `<button class="add-to-cart ${stockStatus}" data-product-id="${product.id}">Add to cart</button>`;
     }
     
     card.innerHTML = `
@@ -2794,8 +2808,8 @@ function createProductCard(product) {
     const product = products.find(p => p.id === productId);
     if (!product) return false;
     
-    // Check stock availability
-    if (product.stock <= 0) {
+    // Check stock availability - only if stock tracking is enabled
+    if (product.stock !== undefined && product.stock <= 0) {
         alert('This product is out of stock');
         return false;
     }
@@ -2803,7 +2817,8 @@ function createProductCard(product) {
     const existingItem = cart.find(item => item.id === productId);
     const currentQuantity = existingItem ? existingItem.quantity : 0;
     
-    if (currentQuantity >= product.stock) {
+    // Only check stock limits if stock tracking is enabled
+    if (product.stock !== undefined && currentQuantity >= product.stock) {
         alert(`Only ${product.stock} items available in stock`);
         return false;
     }
@@ -4121,7 +4136,8 @@ function editDashboardProduct(productId) {
                 }
                 
                 document.getElementById('editKnutsfordDelivery').value = product.knutsfordDelivery || '';
-                document.getElementById('editTaraDelivery').value = product.taraDelivery || '';
+                document.getElementById('editProductStock').value = product.stock || 0;
+                document.getElementById('editLowStockAlert').value = product.lowStockAlert || 5;
                 
                 // Show modal
                 document.getElementById('editProductModal').style.display = 'block';
@@ -4164,7 +4180,8 @@ function handleEditProduct(event) {
         image: images[0], // First image as main
         images: images, // All images
         knutsfordDelivery: document.getElementById('editKnutsfordDelivery').value,
-        taraDelivery: document.getElementById('editTaraDelivery').value,
+        stock: parseInt(document.getElementById('editProductStock').value) || 0,
+        lowStockAlert: parseInt(document.getElementById('editLowStockAlert').value) || 5,
         updatedAt: new Date().toISOString()
     };
     
