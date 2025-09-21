@@ -2636,13 +2636,14 @@ async function completeOrder(event) {
     const mainOrderId = generateMainOrderId();
     
     // Collect shipping information
-    const shippingAddress = {
-        name: document.getElementById('shippingName').value,
-        phone: document.getElementById('shippingPhone').value,
-        address: document.getElementById('shippingAddress').value,
-        parish: document.getElementById('shippingParish').value,
-        deliveryLocation: deliveryLocation.toUpperCase()
-    };
+const shippingAddress = {
+    name: document.getElementById('shippingName').value,
+    email: document.getElementById('shippingEmail').value,
+    phone: document.getElementById('shippingPhone').value,
+    address: document.getElementById('shippingAddress').value,
+    parish: document.getElementById('shippingParish').value,
+    deliveryLocation: deliveryLocation.toUpperCase()
+};
     
     // Create order data structure
     const orderData = {
@@ -2732,6 +2733,10 @@ function showShippingForm() {
                     <input type="text" id="shippingName" required>
                 </div>
                 <div class="form-group">
+                    <label>Email:</label>
+                    <input type="email" id="shippingEmail" value="${currentUser.email || ''}" required>
+                </div>
+                <div class="form-group">
                     <label>Phone Number:</label>
                     <input type="tel" id="shippingPhone" required>
                 </div>
@@ -2787,7 +2792,6 @@ function showShippingForm() {
     `;
     document.body.appendChild(modal);
 }
-
     function removeFromCart(productId) {
     const index = cart.findIndex(item => item.id === productId);
     if (index !== -1) {
