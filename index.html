@@ -1683,12 +1683,29 @@ body {
     <div style="max-width: 1200px; margin: 0 auto; padding: 2rem;">
         <!-- Navigation Tabs -->
         <div class="dashboard-content-wrapper" style="margin-bottom: 2rem;">
-            <div class="dashboard-tabs">
-                <button class="dashboard-tab active" onclick="showDashboardTab('overview', event)">📊 Overview</button>
-                <button class="dashboard-tab" onclick="showDashboardTab('my-products', event)">📦 My Products</button>
-                <button class="dashboard-tab" onclick="showDashboardTab('add-product', event)">➕ Add Product</button>
-            </div>
+            <!-- Replace the existing dashboard-tabs div with this: -->
+<div class="dashboard-tabs">
+    <button class="dashboard-tab active" onclick="showDashboardTab('overview', event)">📊 Overview</button>
+    <button class="dashboard-tab" onclick="showDashboardTab('orders', event)">📋 Orders</button>
+    <button class="dashboard-tab" onclick="showDashboardTab('my-products', event)">📦 My Products</button>
+    <button class="dashboard-tab" onclick="showDashboardTab('add-product', event)">➕ Add Product</button>
+</div>
         </div>
+
+
+        <!-- Orders Tab -->
+<div id="orders-tab" class="dashboard-content" style="display: none;">
+    <div class="dashboard-content-wrapper">
+        <div style="padding: 2rem; border-bottom: 1px solid #e9ecef;">
+            <h3 style="color: #333; margin: 0; font-size: 1.4rem; font-weight: 600;">Order Management</h3>
+            <p style="color: #666; margin: 0.5rem 0 0 0;">Manage customer orders and update their status.</p>
+        </div>
+        
+        <div id="sellerOrdersList" style="padding: 2rem;">
+            <!-- Orders will be loaded here -->
+        </div>
+    </div>
+</div>
 
         <!-- Overview Tab -->
         <div id="overview-tab" class="dashboard-content">
@@ -1827,6 +1844,27 @@ body {
                 </div>
             </div>
         </div>
+    </div>
+</div>
+
+
+    <!-- Customer Orders Page -->
+<div id="customerOrdersPage" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100vh; background: #f8f9fa; z-index: 2000; overflow-y: auto;">
+    <header style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 1.5rem 0; position: sticky; top: 0; z-index: 100;">
+        <div style="max-width: 1200px; margin: 0 auto; padding: 0 2rem;">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <button onclick="closeCustomerOrders()" style="background: rgba(255,255,255,0.2); color: white; border: 1px solid rgba(255,255,255,0.3); padding: 0.6rem 1.2rem; border-radius: 20px; cursor: pointer; font-size: 0.85rem; transition: all 0.3s ease; backdrop-filter: blur(10px);">← Back to Store</button>
+                <div style="text-align: center;">
+                    <h1 style="color: white; margin: 0; font-size: 1.8rem; font-weight: 500;">My Orders</h1>
+                    <p style="color: rgba(255,255,255,0.9); margin: 0.3rem 0 0 0; font-size: 0.9rem;">Track your purchases</p>
+                </div>
+                <div style="width: 140px;"></div>
+            </div>
+        </div>
+    </header>
+
+    <div id="customerOrdersList" style="max-width: 1000px; margin: 0 auto; padding: 2rem;">
+        <!-- Customer orders will be loaded here -->
     </div>
 </div>
 
@@ -2190,7 +2228,7 @@ function showUserProfile() {
                     document.getElementById('userPhoto').style.display = 'none';
                 }
                 
-                // Update userInfo section to include seller dashboard if applicable
+                // Update userInfo section
                 const userInfoDiv = document.getElementById('userInfo');
                 const existingButtons = userInfoDiv.querySelector('.profile-buttons');
                 if (existingButtons) existingButtons.remove();
@@ -2203,12 +2241,14 @@ function showUserProfile() {
                     // User is a seller - show seller dashboard button
                     buttonsDiv.innerHTML = `
                         <button onclick="closeLogin(); showSellerDashboard();" class="btn" style="width: 100%;">Seller Dashboard</button>
+                        <button onclick="closeLogin(); showCustomerOrders();" class="btn" style="width: 100%; background: #28a745;">My Orders</button>
                         <button onclick="signOut()" class="btn" style="width: 100%;">Sign Out</button>
                     `;
                 } else {
-                    // User is not a seller - show option to become seller
+                    // User is not a seller
                     buttonsDiv.innerHTML = `
-                        <button onclick="closeLogin(); showSellerSignup();" class="btn" style="width: 100%; background: #28a745;">Become a Seller</button>
+                        <button onclick="closeLogin(); showCustomerOrders();" class="btn" style="width: 100%; background: #28a745;">My Orders</button>
+                        <button onclick="closeLogin(); showSellerSignup();" class="btn" style="width: 100%; background: #007185;">Become a Seller</button>
                         <button onclick="signOut()" class="btn" style="width: 100%;">Sign Out</button>
                     `;
                 }
@@ -2226,9 +2266,314 @@ function showUserProfile() {
             })
             .catch((error) => {
                 console.error('Error checking seller status:', error);
-                // Fallback to basic profile
                 showBasicProfile();
             });
+    }
+}
+
+
+
+// Customer Orders Functions
+function showCustomerOrders() {
+    if (!currentUser) {
+        alert('Please sign in to view your orders');
+        return;
+    }
+    
+    document.getElementById('customerOrdersPage').style.display = 'block';
+    document.body.style.overflow = 'hidden';
+    loadCustomerOrders();
+}
+
+function closeCustomerOrders() {
+    document.getElementById('customerOrdersPage').style.display = 'none';
+    document.body.style.overflow = 'auto';
+}
+
+function loadCustomerOrders() {
+    const ordersList = document.getElementById('customerOrdersList');
+    ordersList.innerHTML = '<div style="text-align: center; padding: 2rem;">Loading orders...</div>';
+    
+    db.collection('orders')
+        .where('buyerId', '==', currentUser.uid)
+        .orderBy('createdAt', 'desc')
+        .onSnapshot((snapshot) => {
+            ordersList.innerHTML = '';
+            
+            if (snapshot.empty) {
+                ordersList.innerHTML = '<div style="text-align: center; color: #666; padding: 3rem;">No orders found. Start shopping!</div>';
+                return;
+            }
+            
+            snapshot.forEach((doc) => {
+                const order = doc.data();
+                const orderElement = createCustomerOrderCard(order);
+                ordersList.appendChild(orderElement);
+            });
+        }, (error) => {
+            console.error('Error loading orders:', error);
+            ordersList.innerHTML = '<div style="text-align: center; color: #ff4757; padding: 2rem;">Error loading orders. Please try again.</div>';
+        });
+}
+
+function createCustomerOrderCard(order) {
+    const card = document.createElement('div');
+    card.style.cssText = 'background: white; border-radius: 12px; padding: 2rem; margin-bottom: 2rem; box-shadow: 0 2px 8px rgba(0,0,0,0.1); border: 1px solid #e9ecef;';
+    
+    const orderDate = new Date(order.createdAt).toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+    });
+    
+    let sellersHTML = '';
+    Object.entries(order.sellers || {}).forEach(([sellerId, sellerData]) => {
+        const statusColor = getStatusColor(sellerData.status);
+        const statusText = getStatusText(sellerData.status);
+        
+        sellersHTML += `
+            <div style="background: #f8f9fa; padding: 1.5rem; border-radius: 8px; margin: 1rem 0; border-left: 4px solid ${statusColor};">
+                <div style="display: flex; justify-content: between; align-items: center; margin-bottom: 1rem;">
+                    <h4 style="color: #333; margin: 0;">${sellerData.sellerName}</h4>
+                    <span style="background: ${statusColor}; color: white; padding: 0.3rem 0.8rem; border-radius: 20px; font-size: 0.85rem; font-weight: 500;">${statusText}</span>
+                </div>
+                <p style="color: #666; font-size: 0.9rem; margin-bottom: 1rem;"><strong>Order #:</strong> ${sellerData.orderNumber}</p>
+                
+                <div style="margin-bottom: 1rem;">
+                    ${sellerData.items.map(item => `
+                        <div style="display: flex; justify-content: space-between; padding: 0.5rem 0; border-bottom: 1px solid #e9ecef;">
+                            <span>${item.productName} (x${item.quantity})</span>
+                            <span>$${item.subtotal.toFixed(2)}</span>
+                        </div>
+                    `).join('')}
+                </div>
+                
+                <div style="text-align: right;">
+                    <strong>Subtotal: $${sellerData.subtotal.toFixed(2)}</strong>
+                </div>
+            </div>
+        `;
+    });
+    
+    card.innerHTML = `
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+            <h3 style="color: #333; margin: 0;">Order ${order.orderId}</h3>
+            <span style="color: #666; font-size: 0.9rem;">${orderDate}</span>
+        </div>
+        
+        <div style="margin-bottom: 1.5rem;">
+            <p style="color: #666; margin: 0;"><strong>Delivery Location:</strong> ${order.shippingAddress.deliveryLocation}</p>
+            <p style="color: #666; margin: 0.5rem 0 0 0;"><strong>Total Amount:</strong> $${order.totalAmount.toFixed(2)}</p>
+        </div>
+        
+        ${sellersHTML}
+        
+        <div style="text-align: center; margin-top: 2rem;">
+            <button onclick="emailOrderDetails('${order.orderId}')" class="btn" style="background: #007185;">Email Order Details</button>
+        </div>
+    `;
+    
+    return card;
+}
+
+// Seller Orders Functions  
+function loadSellerOrders() {
+    if (!currentUser) return;
+    
+    const ordersList = document.getElementById('sellerOrdersList');
+    ordersList.innerHTML = '<div style="text-align: center; padding: 2rem;">Loading orders...</div>';
+    
+    db.collection('sellerOrders')
+        .where('sellerId', '==', currentUser.uid)
+        .orderBy('createdAt', 'desc')
+        .onSnapshot((snapshot) => {
+            ordersList.innerHTML = '';
+            
+            if (snapshot.empty) {
+                ordersList.innerHTML = '<div style="text-align: center; color: #666; padding: 3rem;">No orders yet. Your products will appear here when customers place orders.</div>';
+                return;
+            }
+            
+            snapshot.forEach((doc) => {
+                const order = doc.data();
+                const orderElement = createSellerOrderCard(order);
+                ordersList.appendChild(orderElement);
+            });
+        }, (error) => {
+            console.error('Error loading seller orders:', error);
+            ordersList.innerHTML = '<div style="text-align: center; color: #ff4757; padding: 2rem;">Error loading orders. Please try again.</div>';
+        });
+}
+
+function createSellerOrderCard(order) {
+    const card = document.createElement('div');
+    card.style.cssText = 'background: white; border-radius: 12px; padding: 2rem; margin-bottom: 2rem; box-shadow: 0 2px 8px rgba(0,0,0,0.1); border: 1px solid #e9ecef;';
+    
+    const orderDate = new Date(order.createdAt).toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'long', 
+        day: 'numeric'
+    });
+    
+    const statusColor = getStatusColor(order.status);
+    const statusText = getStatusText(order.status);
+    
+    card.innerHTML = `
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+            <h3 style="color: #333; margin: 0;">Order #${order.orderNumber}</h3>
+            <span style="color: #666; font-size: 0.9rem;">${orderDate}</span>
+        </div>
+        
+        <div style="background: #f8f9fa; padding: 1.5rem; border-radius: 8px; margin-bottom: 1.5rem;">
+            <h4 style="color: #333; margin-bottom: 1rem;">Customer Information</h4>
+            <p style="color: #666; margin: 0;"><strong>Email:</strong> ${order.buyerEmail}</p>
+            <p style="color: #666; margin: 0.5rem 0 0 0;"><strong>Delivery:</strong> ${order.shippingAddress?.deliveryLocation || 'Not specified'}</p>
+        </div>
+        
+        <div style="margin-bottom: 1.5rem;">
+            <h4 style="color: #333; margin-bottom: 1rem;">Items Ordered</h4>
+            ${order.items.map(item => `
+                <div style="display: flex; justify-content: space-between; padding: 0.8rem 0; border-bottom: 1px solid #e9ecef;">
+                    <div>
+                        <strong>${item.productName}</strong>
+                        <span style="color: #666; margin-left: 10px;">Qty: ${item.quantity}</span>
+                    </div>
+                    <span>$${item.subtotal.toFixed(2)}</span>
+                </div>
+            `).join('')}
+            
+            <div style="text-align: right; margin-top: 1rem; padding-top: 1rem; border-top: 2px solid #007185;">
+                <h4 style="color: #007185; margin: 0;">Total: $${order.subtotal.toFixed(2)}</h4>
+            </div>
+        </div>
+        
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+            <div style="display: flex; align-items: center; gap: 1rem;">
+                <span style="font-weight: 600;">Status:</span>
+                <select onchange="updateOrderStatus('${order.orderNumber}', this.value)" style="padding: 0.5rem; border: 2px solid ${statusColor}; border-radius: 6px; background: white; color: #333;">
+                    <option value="pending" ${order.status === 'pending' ? 'selected' : ''}>Pending</option>
+                    <option value="processing" ${order.status === 'processing' ? 'selected' : ''}>Processing</option>
+                    <option value="shipped" ${order.status === 'shipped' ? 'selected' : ''}>Shipped</option>
+                    <option value="delivered" ${order.status === 'delivered' ? 'selected' : ''}>Delivered</option>
+                </select>
+            </div>
+            
+            <span style="background: ${statusColor}; color: white; padding: 0.5rem 1rem; border-radius: 20px; font-weight: 600;">${statusText}</span>
+        </div>
+    `;
+    
+    return card;
+}
+
+function updateOrderStatus(orderNumber, newStatus) {
+    // Update in sellerOrders collection
+    db.collection('sellerOrders')
+        .where('orderNumber', '==', orderNumber)
+        .get()
+        .then((snapshot) => {
+            if (!snapshot.empty) {
+                const doc = snapshot.docs[0];
+                const orderData = doc.data();
+                
+                // Update seller order
+                doc.ref.update({
+                    status: newStatus,
+                    updatedAt: new Date().toISOString()
+                });
+                
+                // Update main order
+                const mainOrderRef = db.collection('orders').doc(orderData.mainOrderId);
+                mainOrderRef.get().then((orderDoc) => {
+                    if (orderDoc.exists) {
+                        const order = orderDoc.data();
+                        const updatedSellers = { ...order.sellers };
+                        
+                        // Find and update the seller's status
+                        Object.keys(updatedSellers).forEach(sellerId => {
+                            if (updatedSellers[sellerId].orderNumber === orderNumber) {
+                                updatedSellers[sellerId].status = newStatus;
+                            }
+                        });
+                        
+                        mainOrderRef.update({
+                            sellers: updatedSellers,
+                            updatedAt: new Date().toISOString()
+                        });
+                        
+                        // Send email notification
+                        sendStatusUpdateEmail(orderData.buyerEmail, orderNumber, newStatus, orderData.sellerName);
+                    }
+                });
+            }
+        })
+        .catch((error) => {
+            console.error('Error updating order status:', error);
+            alert('Error updating order status. Please try again.');
+        });
+}
+
+// Utility Functions
+function getStatusColor(status) {
+    const colors = {
+        'pending': '#ffc107',
+        'processing': '#007185', 
+        'shipped': '#6610f2',
+        'delivered': '#28a745'
+    };
+    return colors[status] || '#6c757d';
+}
+
+function getStatusText(status) {
+    const texts = {
+        'pending': 'Pending',
+        'processing': 'Processing',
+        'shipped': 'Shipped', 
+        'delivered': 'Delivered'
+    };
+    return texts[status] || 'Unknown';
+}
+
+// Email Functions (Basic implementation - you'd integrate with EmailJS or similar)
+function sendStatusUpdateEmail(customerEmail, orderNumber, status, sellerName) {
+    console.log(`Email notification: Order ${orderNumber} from ${sellerName} is now ${status} for ${customerEmail}`);
+    // Here you would integrate with your email service
+}
+
+function emailOrderDetails(orderId) {
+    console.log(`Emailing order details for ${orderId}`);
+    alert('Order details have been sent to your email address.');
+    // Here you would integrate with your email service
+}
+
+// Update the existing showDashboardTab function to handle orders tab
+function showDashboardTab(tabName, event) {
+    // Hide all tabs
+    document.querySelectorAll('.dashboard-content').forEach(tab => {
+        tab.style.display = 'none';
+    });
+    
+    // Remove active class from all buttons
+    document.querySelectorAll('.dashboard-tab').forEach(btn => {
+        btn.classList.remove('active');
+        btn.style.color = '#666';
+        btn.style.borderBottomColor = 'transparent';
+    });
+    
+    // Show selected tab
+    document.getElementById(tabName + '-tab').style.display = 'block';
+    
+    // Activate clicked button
+    if (event && event.target) {
+        event.target.classList.add('active');
+        event.target.style.color = '#007185';
+        event.target.style.borderBottomColor = '#007185';
+    }
+    
+    // Load tab-specific content
+    if (tabName === 'my-products') {
+        loadDashboardProducts();
+    } else if (tabName === 'orders') {
+        loadSellerOrders();
     }
 }
 
@@ -2349,11 +2694,39 @@ function createProductCard(product) {
         }
     }
 
+    // Stock information
+    const stock = product.stock || 0;
+    const lowStockAlert = product.lowStockAlert || 5;
+    let stockHTML = '';
+    let stockStatus = '';
     
+    if (stock <= 0) {
+        stockHTML = '<p class="stock-info out-of-stock" style="color: #ff4757; font-weight: bold; font-size: 0.8rem; margin: 0.3rem 0;">OUT OF STOCK</p>';
+        stockStatus = 'out-of-stock';
+    } else if (stock <= lowStockAlert) {
+        stockHTML = `<p class="stock-info low-stock" style="color: #ff8c00; font-weight: bold; font-size: 0.8rem; margin: 0.3rem 0;">ONLY ${stock} LEFT!</p>`;
+        stockStatus = 'low-stock';
+    } else if (stock < 20) {
+        stockHTML = `<p class="stock-info normal-stock" style="color: #28a745; font-size: 0.8rem; margin: 0.3rem 0;">${stock} available</p>`;
+        stockStatus = 'normal-stock';
+    } else {
+        stockHTML = '<p class="stock-info in-stock" style="color: #28a745; font-size: 0.8rem; margin: 0.3rem 0;">In Stock</p>';
+        stockStatus = 'in-stock';
+    }
+    
+    // Button text and state based on stock
+    let buttonHTML = '';
+    if (stock <= 0) {
+        buttonHTML = '<button class="add-to-cart out-of-stock" disabled style="background: #ccc; cursor: not-allowed;">Out of Stock</button>';
+    } else {
+        buttonHTML = `<button class="add-to-cart ${stockStatus}" data-product-id="${product.id}">Add to cart</button>`;
+    }
     
     card.innerHTML = `
     <div class="product-image">
         <img src="${product.image || 'https://via.placeholder.com/200x250?text=No+Image'}" alt="${product.name || 'Product'}" onerror="this.src='https://via.placeholder.com/200x250?text=No+Image'">
+        ${stock <= 0 ? '<div class="out-of-stock-overlay" style="position: absolute; top: 10px; right: 10px; background: #ff4757; color: white; padding: 0.3rem 0.6rem; border-radius: 15px; font-size: 0.7rem; font-weight: bold;">OUT OF STOCK</div>' : ''}
+        ${stock > 0 && stock <= lowStockAlert ? '<div class="low-stock-overlay" style="position: absolute; top: 10px; right: 10px; background: #ff8c00; color: white; padding: 0.3rem 0.6rem; border-radius: 15px; font-size: 0.7rem; font-weight: bold;">LOW STOCK</div>' : ''}
     </div>
     <div class="product-details">
         <div class="product-header">
@@ -2361,16 +2734,24 @@ function createProductCard(product) {
             <p class="product-description">${truncatedDescription}</p>
             <div class="stars">${starsHTML} <span class="review-count">(${reviewCount})</span></div>
             ${deliveryHTML ? `<div class="delivery-info">${deliveryHTML}</div>` : ''}
-            ${sellerInfo ? `<p class="seller-info" style="margin-bottom: 1.5rem;">${sellerInfo}</p>` : ''}
+            ${sellerInfo ? `<p class="seller-info" style="margin-bottom: 1rem;">${sellerInfo}</p>` : ''}
+            ${stockHTML}
             ${product.category === 'clothing' && product.sizes && product.sizes.length > 0 ? 
-            `<p style="color: #666; font-size: 0.8rem; margin: 0.2rem 0 1.5rem 0;">Sizes: ${product.sizes.join(', ')}</p>` : ''}
+            `<p style="color: #666; font-size: 0.8rem; margin: 0.2rem 0 1rem 0;">Sizes: ${product.sizes.join(', ')}</p>` : ''}
             <div class="product-price" style="margin-bottom: 0.5rem;">$${product.price || '0.00'}</div>
-<div style="text-align: center; margin-bottom: 0;">
-    <button class="add-to-cart" data-product-id="${product.id}">Add to cart</button>
-</div>
+            <div style="text-align: center; margin-bottom: 0;">
+                ${buttonHTML}
+            </div>
         </div>
     </div>
 `;
+    
+    // Add opacity overlay for out of stock products
+    if (stock <= 0) {
+        card.style.opacity = '0.7';
+        card.style.position = 'relative';
+    }
+    
     // Add click event to the entire card first
     card.addEventListener('click', function(e) {
         // Check if click is NOT on add-to-cart button or its children
@@ -2379,29 +2760,42 @@ function createProductCard(product) {
         }
     });
     
-    // Then add click event to the button with event stopping
-    const addToCartBtn = card.querySelector('.add-to-cart');
-    addToCartBtn.addEventListener('click', function(e) {
-        e.stopPropagation();
-        e.preventDefault();
-        addToCart(product.id);
-        return false;
-    });
+    // Then add click event to the button with event stopping (only if not out of stock)
+    const addToCartBtn = card.querySelector('.add-to-cart:not([disabled])');
+    if (addToCartBtn) {
+        addToCartBtn.addEventListener('click', function(e) {
+            e.stopPropagation();
+            e.preventDefault();
+            addToCart(product.id);
+            return false;
+        });
+    }
     
     return card;
 }
     
 // Also add this function to handle button clicks properly:
-function addToCart(productId) {
+  function addToCart(productId) {
     const product = products.find(p => p.id === productId);
     if (!product) return false;
     
+    // Check stock availability
+    if (product.stock <= 0) {
+        alert('This product is out of stock');
+        return false;
+    }
+    
     const existingItem = cart.find(item => item.id === productId);
+    const currentQuantity = existingItem ? existingItem.quantity : 0;
+    
+    if (currentQuantity >= product.stock) {
+        alert(`Only ${product.stock} items available in stock`);
+        return false;
+    }
     
     if (existingItem) {
         existingItem.quantity += 1;
     } else {
-        // Make sure all necessary seller info is included
         cart.push({ 
             ...product, 
             quantity: 1,
@@ -2413,7 +2807,7 @@ function addToCart(productId) {
     updateCartCount();
     showCartNotification(product.name);
     return false;
-}
+  }
 
 function submitReview(productId) {
     const name = document.getElementById(`reviewName-${productId}`).value;
@@ -3459,6 +3853,20 @@ function handleDashboardAddProduct(event) {
     const knutsfordDelivery = document.getElementById('dashboardKnutsfordDelivery').value;
     const taraDelivery = document.getElementById('dashboardTaraDelivery').value;
     
+    // Get stock values
+    const stock = parseInt(document.getElementById('dashboardProductStock').value) || 0;
+    const lowStockAlert = parseInt(document.getElementById('dashboardLowStockAlert').value) || 5;
+    
+    if (stock < 0) {
+        alert('Stock quantity cannot be negative');
+        return;
+    }
+    
+    if (lowStockAlert < 0) {
+        alert('Low stock alert cannot be negative');
+        return;
+    }
+    
     const productData = {
         name: document.getElementById('dashboardProductName').value,
         description: document.getElementById('dashboardProductDescription').value,
@@ -3469,10 +3877,14 @@ function handleDashboardAddProduct(event) {
         sizes: sizes, // Available sizes for clothing
         knutsfordDelivery: knutsfordDelivery,
         taraDelivery: taraDelivery,
+        stock: stock, // Available quantity
+        lowStockAlert: lowStockAlert, // Alert threshold
+        originalStock: stock, // Track original stock for analytics
         sellerId: currentUser.uid,
         sellerBusinessName: '',
         reviews: [],
-        createdAt: new Date().toISOString()
+        createdAt: new Date().toISOString(),
+        isActive: stock > 0 // Automatically set active status based on stock
     };
     
     // Get seller's business name
@@ -3487,13 +3899,26 @@ function handleDashboardAddProduct(event) {
                 throw new Error('Seller profile not found');
             }
         })
-        .then(() => {
-            alert('Product added successfully!');
+        .then((docRef) => {
+            // Check if stock is below alert threshold
+            if (stock <= lowStockAlert && stock > 0) {
+                console.log(`Low stock alert: Product ${productData.name} has ${stock} items remaining`);
+                // You could send a notification here
+            }
+            
+            alert(`Product added successfully! ${stock > 0 ? `${stock} items in stock.` : 'Product is out of stock.'}`);
             document.getElementById('dashboardAddProductForm').reset();
+            
             // Reset size checkboxes
             document.querySelectorAll('#clothingSizeRow input[type="checkbox"]').forEach(cb => cb.checked = false);
+            
             // Hide size row
             document.getElementById('clothingSizeRow').style.display = 'none';
+            
+            // Reset stock fields to default values
+            document.getElementById('dashboardProductStock').value = '10';
+            document.getElementById('dashboardLowStockAlert').value = '5';
+            
             showDashboardTab('my-products');
         })
         .catch((error) => {
