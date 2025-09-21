@@ -2754,9 +2754,9 @@ function createProductCard(product) {
     card.innerHTML = `
     <div class="product-image">
         <img src="${product.image || 'https://via.placeholder.com/200x250?text=No+Image'}" alt="${product.name || 'Product'}" onerror="this.src='https://via.placeholder.com/200x250?text=No+Image'">
-        ${stock <= 0 ? '<div class="out-of-stock-overlay" style="position: absolute; top: 10px; right: 10px; background: #ff4757; color: white; padding: 0.3rem 0.6rem; border-radius: 15px; font-size: 0.7rem; font-weight: bold;">OUT OF STOCK</div>' : ''}
-        ${stock > 0 && stock <= lowStockAlert ? '<div class="low-stock-overlay" style="position: absolute; top: 10px; right: 10px; background: #ff8c00; color: white; padding: 0.3rem 0.6rem; border-radius: 15px; font-size: 0.7rem; font-weight: bold;">LOW STOCK</div>' : ''}
-    </div>
+        ${stock === 0 ? '<div class="out-of-stock-overlay" style="position: absolute; top: 10px; right: 10px; background: #ff4757; color: white; padding: 0.3rem 0.6rem; border-radius: 15px; font-size: 0.7rem; font-weight: bold;">OUT OF STOCK</div>' : ''}
+        ${stock !== null && stock > 0 && stock <= lowStockAlert ? '<div class="low-stock-overlay" style="position: absolute; top: 10px; right: 10px; background: #ff8c00; color: white; padding: 0.3rem 0.6rem; border-radius: 15px; font-size: 0.7rem; font-weight: bold;">LOW STOCK</div>' : ''}
+           </div>
     <div class="product-details">
         <div class="product-header">
             <h3 class="product-title">${product.name || 'Untitled Product'}</h3>
@@ -2776,10 +2776,10 @@ function createProductCard(product) {
 `;
     
     // Add opacity overlay for out of stock products
-    if (stock <= 0) {
-        card.style.opacity = '0.7';
-        card.style.position = 'relative';
-    }
+if (stock === 0) {
+    card.style.opacity = '0.7';
+    card.style.position = 'relative';
+}
     
     // Add click event to the entire card first
     card.addEventListener('click', function(e) {
