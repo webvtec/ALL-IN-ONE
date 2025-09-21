@@ -1953,6 +1953,19 @@ googleProvider.addScope('profile');
 // ================================
 // INITIALIZATION & EVENT LISTENERS
 // ================================
+
+
+    let currentUser = null;
+let isSignUpMode = false;
+let cart = [];
+let products = [];
+let currentCategory = 'all';
+let currentPhotoIndex = 0;
+let currentProductId = null;
+
+
+
+    
 document.addEventListener('DOMContentLoaded', function() {
     console.log('DOM loaded');
     console.log('Firebase available:', typeof firebase !== 'undefined');
@@ -2028,6 +2041,11 @@ document.addEventListener('click', function(event) {
     if (sidebar && menuToggle && !sidebar.contains(event.target) && !menuToggle.contains(event.target)) {
         sidebar.classList.remove('open');
     }
+});
+
+auth.onAuthStateChanged((user) => {
+    currentUser = user;
+    updateAuthUI();
 });
 
 // ================================
