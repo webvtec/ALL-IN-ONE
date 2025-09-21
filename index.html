@@ -2383,18 +2383,24 @@ function createProductCard(product) {
 // Also add this function to handle button clicks properly:
 function addToCart(productId) {
     const product = products.find(p => p.id === productId);
+    if (!product) return false;
+    
     const existingItem = cart.find(item => item.id === productId);
     
     if (existingItem) {
         existingItem.quantity += 1;
     } else {
-        cart.push({ ...product, quantity: 1 });
+        // Make sure all necessary seller info is included
+        cart.push({ 
+            ...product, 
+            quantity: 1,
+            sellerId: product.sellerId,
+            sellerBusinessName: product.sellerBusinessName || 'Unknown Seller'
+        });
     }
     
     updateCartCount();
     showCartNotification(product.name);
-    
-    // Prevent any further event bubbling
     return false;
 }
 
@@ -2480,34 +2486,120 @@ function showCart() {
         return;
     }
     
-    let cartHTML = '<h3>Your Cart:</h3>';
-    let total = 0;
+    const groupedCart = groupCartBySeller();
+    let cartHTML = '<h3 style="color: #ffd700; margin-bottom: 1.5rem;">Your Cart</h3>';
+    let grandTotal = 0;
     
-    cart.forEach(item => {
-        const itemTotal = item.price * item.quantity;
-        total += itemTotal;
+    // Display items grouped by seller
+    Object.entries(groupedCart).forEach(([sellerId, sellerGroup]) => {
         cartHTML += `
-            <div style="display: flex; justify-content: space-between; padding: 0.5rem 0; border-bottom: 1px solid #ccc;">
-                <span>${item.name} x${item.quantity}</span>
-                <span>$${itemTotal.toFixed(2)}</span>
+            <div style="background: rgba(255, 255, 255, 0.05); padding: 1rem; border-radius: 8px; margin-bottom: 1rem; border-left: 3px solid #ffd700;">
+                <h4 style="color: #ffd700; margin-bottom: 0.5rem;">From: ${sellerGroup.sellerName}</h4>
+        `;
+        
+        sellerGroup.items.forEach(item => {
+            const itemTotal = item.price * item.quantity;
+            cartHTML += `
+                <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.5rem 0; border-bottom: 1px solid rgba(255,255,255,0.1);">
+                    <div>
+                        <span style="font-weight: bold;">${item.name}</span>
+                        <span style="color: #ccc; margin-left: 10px;">x${item.quantity}</span>
+                    </div>
+                    <div style="display: flex; gap: 10px; align-items: center;">
+                        <span>$${itemTotal.toFixed(2)}</span>
+                        <button onclick="removeFromCart('${item.id}')" style="background: #ff4757; color: white; border: none; padding: 0.2rem 0.5rem; border-radius: 3px; cursor: pointer; font-size: 0.7rem;">Remove</button>
+                    </div>
+                </div>
+            `;
+        });
+        
+        cartHTML += `
+                <div style="text-align: right; margin-top: 0.5rem;">
+                    <strong style="color: #ffd700;">Subtotal: $${sellerGroup.subtotal.toFixed(2)}</strong>
+                </div>
             </div>
         `;
+        
+        grandTotal += sellerGroup.subtotal;
     });
     
-    cartHTML += `<br><strong>Total: $${total.toFixed(2)}</strong>`;
-    cartHTML += `<br><br><button onclick="checkout()" class="btn">Checkout with PayPal</button>`;
+    cartHTML += `
+        <div style="background: rgba(255, 215, 0, 0.1); padding: 1rem; border-radius: 8px; margin: 1rem 0; text-align: center;">
+            <h3 style="color: #ffd700; margin: 0;">Total: $${grandTotal.toFixed(2)}</h3>
+            <p style="color: #ccc; font-size: 0.8rem; margin: 0.5rem 0 0 0;">
+                Items from ${Object.keys(groupedCart).length} seller(s)
+            </p>
+        </div>
+        <button onclick="proceedToCheckout()" class="btn" style="width: 100%; margin-top: 1rem;">Proceed to Checkout</button>
+    `;
     
     const modal = document.createElement('div');
     modal.className = 'modal';
     modal.style.display = 'block';
     modal.innerHTML = `
-        <div class="modal-content">
+        <div class="modal-content" style="max-width: 600px; max-height: 80vh; overflow-y: auto;">
             <span class="close" onclick="this.parentElement.parentElement.remove()">&times;</span>
             ${cartHTML}
         </div>
     `;
     document.body.appendChild(modal);
 }
+
+
+
+function proceedToCheckout() {
+    if (!currentUser) {
+        alert('Please sign in to proceed with checkout');
+        return;
+    }
+    
+    const groupedCart = groupCartBySeller();
+    const totalAmount = Object.values(groupedCart).reduce((sum, group) => sum + group.subtotal, 0);
+    
+    // For now, just show the checkout summary
+    alert(`Checkout Summary:\n\nSellers: ${Object.keys(groupedCart).length}\nTotal Items: ${cart.length}\nTotal Amount: $${totalAmount.toFixed(2)}\n\nPayPal integration coming soon!`);
+    
+    console.log('Grouped cart for checkout:', groupedCart);
+}
+
+
+    function removeFromCart(productId) {
+    const index = cart.findIndex(item => item.id === productId);
+    if (index !== -1) {
+        cart.splice(index, 1);
+        updateCartCount();
+        
+        // Refresh cart display
+        const modal = document.querySelector('.modal');
+        if (modal) {
+            modal.remove();
+            showCart();
+        }
+    }
+    }
+
+
+    function groupCartBySeller() {
+    const grouped = {};
+    
+    cart.forEach(item => {
+        const sellerId = item.sellerId;
+        const sellerName = item.sellerBusinessName || 'Unknown Seller';
+        
+        if (!grouped[sellerId]) {
+            grouped[sellerId] = {
+                sellerName: sellerName,
+                items: [],
+                subtotal: 0
+            };
+        }
+        
+        grouped[sellerId].items.push(item);
+        grouped[sellerId].subtotal += item.price * item.quantity;
+    });
+    
+    return grouped;
+    }
 
 function checkout() {
     const total = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
