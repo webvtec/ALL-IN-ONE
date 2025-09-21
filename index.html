@@ -1950,6 +1950,42 @@ const googleProvider = new firebase.auth.GoogleAuthProvider();
 googleProvider.addScope('email');
 googleProvider.addScope('profile');
 
+
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('DOM loaded');
+    console.log('Firebase available:', typeof firebase !== 'undefined');
+    
+    // Initialize Firebase Auth Observer first
+    auth.onAuthStateChanged((user) => {
+        currentUser = user;
+        updateAuthUI();
+        if (user) {
+            console.log('User is signed in:', user);
+        } else {
+            console.log('User is signed out');
+        }
+    });
+    
+    loadProductsFromFirebase();
+    updateCartCount();
+    
+    // Add category change listener
+    setTimeout(() => {
+        const categorySelect = document.getElementById('dashboardProductCategory');
+        if (categorySelect) {
+            categorySelect.addEventListener('change', function() {
+                const sizeRow = document.getElementById('clothingSizeRow');
+                if (sizeRow) {
+                    if (this.value === 'clothing') {
+                        sizeRow.style.display = 'block';
+                    } else {
+                        sizeRow.style.display = 'none';
+                    }
+                }
+            });
+        }
+    }, 1000);
+});
 // ================================
 // GLOBAL VARIABLES
 // ================================
@@ -3030,37 +3066,6 @@ function populateFormFields(location) {
                 <label>Email:</label>
                 <input type="email" id="shippingEmail" value="${currentUser?.email || ''}" required>
             </div>
-            <div class="form-group">
-                <label>Select Knutsford Pickup Location:</label>
-                <select id="knutsfordPickupLocation" required style="width: 100%; padding: 0.7rem; border: none; border-radius: 8px; background: rgba(255, 255, 255, 0.1); color: white; border: 1px solid rgba(255, 215, 0, 0.3);">
-                    <option value="">Choose your pickup location</option>
-                    <option value="10 Harbour Circle, Montego Bay">10 Harbour Circle, Montego Bay (Knutsford)</option>
-                    <option value="18 Dominica Drive, New Kingston">18 Dominica Drive, New Kingston (Knutsford)</option>
-                    <option value="Lot 12, Drax Hall, St. Ann">Lot 12, Drax Hall, St. Ann (Knutsford)</option>
-                    <option value="1222 Providence Drive, Montego Bay">1222 Providence Drive, Montego Bay (Knutsford)</option>
-                    <option value="1310 Providence Drive, Ironshore, Montego Bay">1310 Providence Drive, Ironshore, Montego Bay (Knutsford)</option>
-                    <option value="Negril, Westmoreland">Negril, Westmoreland (Knutsford)</option>
-                    <option value="Lucea, Hanover">Lucea, Hanover (Knutsford)</option>
-                    <option value="Montego Bay Airport, St. James">Montego Bay Airport, St. James (Knutsford)</option>
-                    <option value="Falmouth, Trelawny">Falmouth, Trelawny (Knutsford)</option>
-                    <option value="Angels (Spanish Town), St. Catherine">Angels (Spanish Town), St. Catherine (Knutsford)</option>
-                    <option value="New Kingston, Kingston">New Kingston, Kingston (Knutsford)</option>
-                    <option value="Gutters, St. Elizabeth">Gutters, St. Elizabeth (Knutsford)</option>
-                    <option value="Luana, St. Elizabeth">Luana, St. Elizabeth (Knutsford)</option>
-                    <option value="Mandeville, Manchester">Mandeville, Manchester (Knutsford)</option>
-                    <option value="Savanna-la-mar, Westmoreland">Savanna-la-mar, Westmoreland (Knutsford)</option>
-                    <option value="May Pen, Clarendon">May Pen, Clarendon (Knutsford)</option>
-                    <option value="Port Antonio, Portland">Port Antonio, Portland (Knutsford)</option>
-                    <option value="Port Maria, St. Mary">Port Maria, St. Mary (Knutsford)</option>
-                    <option value="Annotto Bay, St. Mary">Annotto Bay, St. Mary (Knutsford)</option>
-                    <option value="Montego Bay (Pier 1), St. James">Montego Bay (Pier 1), St. James (Knutsford)</option>
-                    <option value="Ocho Rios, St. Ann">Ocho Rios, St. Ann (Knutsford)</option>
-                    <option value="Washington Boulevard, Kingston">Washington Boulevard, Kingston (Knutsford)</option>
-                    <option value="Harbour View, St. Andrew">Harbour View, St. Andrew (Knutsford)</option>
-                    <option value="Portmore, St. Catherine">Portmore, St. Catherine (Knutsford)</option>
-                </select>
-                <p style="color: #ccc; font-size: 0.8rem; margin: 0.5rem 0 0 0;">Your order will be ready for pickup at the selected Knutsford location</p>
-            </div>
         `;
     } else if (location === 'tara') {
         formContainer.innerHTML = `
@@ -3103,7 +3108,7 @@ function populateFormFields(location) {
         `;
     }
 }
-
+    
 async function completeOrder(event) {
     event.preventDefault();
     
@@ -4100,6 +4105,100 @@ function getStatusText(status) {
     return texts[status] || 'Unknown';
 }
 
+
+// Add these missing functions:
+
+function showCustomerOrders() {
+    if (!currentUser) {
+        alert('Please sign in to view your orders');
+        return;
+    }
+    
+    document.getElementById('customerOrdersPage').style.display = 'block';
+    document.body.style.overflow = 'hidden';
+    loadCustomerOrders();
+}
+
+function closeCustomerOrders() {
+    document.getElementById('customerOrdersPage').style.display = 'none';
+    document.body.style.overflow = 'auto';
+}
+
+function loadCustomerOrders() {
+    if (!currentUser) return;
+    
+    const ordersList = document.getElementById('customerOrdersList');
+    ordersList.innerHTML = '<div style="text-align: center; padding: 2rem;">Loading your orders...</div>';
+    
+    db.collection('orders')
+        .where('buyerId', '==', currentUser.uid)
+        .orderBy('createdAt', 'desc')
+        .onSnapshot((snapshot) => {
+            ordersList.innerHTML = '';
+            
+            if (snapshot.empty) {
+                ordersList.innerHTML = '<div style="text-align: center; color: #666; padding: 3rem;">No orders yet. Start shopping to see your orders here!</div>';
+                return;
+            }
+            
+            snapshot.forEach((doc) => {
+                const order = { id: doc.id, ...doc.data() };
+                const orderElement = createCustomerOrderCard(order);
+                ordersList.appendChild(orderElement);
+            });
+        });
+}
+
+function createCustomerOrderCard(order) {
+    const card = document.createElement('div');
+    card.style.cssText = 'background: white; border-radius: 12px; padding: 2rem; margin-bottom: 2rem; box-shadow: 0 2px 8px rgba(0,0,0,0.1); border: 1px solid #e9ecef;';
+    
+    const orderDate = new Date(order.createdAt).toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'long', 
+        day: 'numeric'
+    });
+    
+    let sellersHTML = '';
+    Object.entries(order.sellers || {}).forEach(([sellerId, sellerData]) => {
+        const statusColor = getStatusColor(sellerData.status);
+        const statusText = getStatusText(sellerData.status);
+        
+        sellersHTML += `
+            <div style="background: #f8f9fa; padding: 1.5rem; border-radius: 8px; margin-bottom: 1rem; border-left: 3px solid ${statusColor};">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                    <h4 style="color: #333; margin: 0;">From: ${sellerData.sellerName}</h4>
+                    <span style="background: ${statusColor}; color: white; padding: 0.3rem 0.8rem; border-radius: 15px; font-size: 0.8rem; font-weight: 600;">${statusText}</span>
+                </div>
+                
+                ${sellerData.items.map(item => `
+                    <div style="display: flex; justify-content: space-between; padding: 0.5rem 0; border-bottom: 1px solid #e9ecef;">
+                        <div>
+                            <strong>${item.productName}</strong>
+                            <span style="color: #666; margin-left: 10px;">x${item.quantity}</span>
+                        </div>
+                        <span>$${item.subtotal.toFixed(2)}</span>
+                    </div>
+                `).join('')}
+            </div>
+        `;
+    });
+    
+    card.innerHTML = `
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+            <h3 style="color: #333; margin: 0;">Order #${order.orderId}</h3>
+            <span style="color: #666; font-size: 0.9rem;">${orderDate}</span>
+        </div>
+        
+        ${sellersHTML}
+        
+        <div style="background: rgba(255, 215, 0, 0.1); padding: 1rem; border-radius: 8px; margin-top: 1rem; text-align: center;">
+            <h4 style="color: #007185; margin: 0;">Total: $${order.totalAmount.toFixed(2)}</h4>
+        </div>
+    `;
+    
+    return card;
+    }
 // ================================
 // PAYPAL SETUP FUNCTIONS
 // ================================
