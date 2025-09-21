@@ -1950,57 +1950,6 @@ const googleProvider = new firebase.auth.GoogleAuthProvider();
 googleProvider.addScope('email');
 googleProvider.addScope('profile');
 
-
-document.addEventListener('DOMContentLoaded', function() {
-    console.log('DOM loaded');
-    console.log('Firebase available:', typeof firebase !== 'undefined');
-    
-    // Initialize Firebase Auth Observer first
-    auth.onAuthStateChanged((user) => {
-        currentUser = user;
-        updateAuthUI();
-        if (user) {
-            console.log('User is signed in:', user);
-        } else {
-            console.log('User is signed out');
-        }
-    });
-    
-    loadProductsFromFirebase();
-    updateCartCount();
-    
-    // Add category change listener
-    setTimeout(() => {
-        const categorySelect = document.getElementById('dashboardProductCategory');
-        if (categorySelect) {
-            categorySelect.addEventListener('change', function() {
-                const sizeRow = document.getElementById('clothingSizeRow');
-                if (sizeRow) {
-                    if (this.value === 'clothing') {
-                        sizeRow.style.display = 'block';
-                    } else {
-                        sizeRow.style.display = 'none';
-                    }
-                }
-            });
-        }
-    }, 1000);
-});
-// ================================
-// GLOBAL VARIABLES
-// ================================
-let cart = [];
-let products = [];
-let currentUser = null;
-let isSignUpMode = false;
-let currentCategory = 'all';
-let currentPhotoIndex = 0;
-let isPointerDown = false;
-let startX = 0;
-let currentX = 0;
-let startTime = 0;
-let currentProductId = null;
-
 // ================================
 // INITIALIZATION & EVENT LISTENERS
 // ================================
@@ -2031,16 +1980,6 @@ document.addEventListener('DOMContentLoaded', function() {
     }, 1000);
 });
 
-// Firebase Auth State Observer
-auth.onAuthStateChanged((user) => {
-    currentUser = user;
-    updateAuthUI();
-    if (user) {
-        console.log('User is signed in:', user);
-    } else {
-        console.log('User is signed out');
-    }
-});
 
 // Window click event handler for modals
 window.onclick = function(event) {
@@ -4294,16 +4233,6 @@ function updateFinancialOverview(sellerData) {
     // Implementation depends on your specific financial tracking needs
     console.log('Updating financial overview for seller:', sellerData.businessName);
 }
-
-// ================================
-// PHOTO GALLERY FUNCTIONS
-// ================================
-let currentPhotoIndex = 0;
-let isPointerDown = false;
-let startX = 0;
-let currentX = 0;
-let startTime = 0;
-let currentProductId = null;
 
 function initializePhotoGallery(productId) {
     currentProductId = productId;
