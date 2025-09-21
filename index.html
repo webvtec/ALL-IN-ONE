@@ -2228,7 +2228,12 @@ function updateOrderStatus(orderNumber, newStatus) {
                 // Update seller order
                 doc.ref.update({
                     status: newStatus,
-                    updatedAt: new Date().toISOString()
+                    updatedAt: new Date().toISOString(),
+                    statusHistory: firebase.firestore.FieldValue.arrayUnion({
+                        status: newStatus,
+                        timestamp: new Date().toISOString(),
+                        updatedBy: currentUser.uid
+                    })
                 });
                 
                 // Update main order
@@ -2250,8 +2255,8 @@ function updateOrderStatus(orderNumber, newStatus) {
                             updatedAt: new Date().toISOString()
                         });
                         
-                        // Send email notification
-                        sendStatusUpdateEmail(orderData.buyerEmail, orderNumber, newStatus, orderData.sellerName);
+                        // Trigger email notification via Firebase function
+                        triggerStatusUpdateEmail(orderData, newStatus);
                     }
                 });
             }
@@ -2260,6 +2265,18 @@ function updateOrderStatus(orderNumber, newStatus) {
             console.error('Error updating order status:', error);
             alert('Error updating order status. Please try again.');
         });
+}
+
+function triggerStatusUpdateEmail(orderData, newStatus) {
+    // Add document to trigger email function
+    db.collection('emailTriggers').add({
+        type: 'status_update',
+        orderNumber: orderData.orderNumber,
+        buyerEmail: orderData.buyerEmail,
+        sellerName: orderData.sellerName,
+        newStatus: newStatus,
+        timestamp: new Date().toISOString()
+    });
 }
 
 // Utility Functions
@@ -2814,12 +2831,13 @@ async function saveOrderToFirestore(orderData) {
 
 
 
+// Update completeOrder function to include PayPal
 async function completeOrder(event) {
     event.preventDefault();
     
     const deliveryLocation = document.getElementById('deliveryLocation').value;
     if (!deliveryLocation) {
-        alert('Please select a delivery location (Knutsford or Tara)');
+        alert('Please select a delivery location');
         return;
     }
     
@@ -2827,9 +2845,8 @@ async function completeOrder(event) {
     const totalAmount = Object.values(groupedCart).reduce((sum, group) => sum + group.subtotal, 0);
     const mainOrderId = generateMainOrderId();
     
-    // Collect shipping information based on delivery location
+    // Collect shipping information
     let shippingAddress;
-    
     if (deliveryLocation === 'knutsford') {
         const pickupLocation = document.getElementById('knutsfordPickupLocation').value;
         if (!pickupLocation) {
@@ -2845,26 +2862,26 @@ async function completeOrder(event) {
             deliveryLocation: deliveryLocation.toUpperCase(),
             deliveryType: 'pickup'
         };
-    } else if (deliveryLocation === 'tara') {
-    shippingAddress = {
-        name: document.getElementById('shippingName').value,
-        email: document.getElementById('shippingEmail').value,
-        phone: document.getElementById('shippingPhone').value,
-        address: document.getElementById('shippingAddress').value,
-        parish: document.getElementById('shippingParish').value,
-        deliveryLocation: deliveryLocation.toUpperCase(),
-        deliveryType: 'home_delivery'
-    };
+    } else {
+        shippingAddress = {
+            name: document.getElementById('shippingName').value,
+            email: document.getElementById('shippingEmail').value,
+            phone: document.getElementById('shippingPhone').value,
+            address: document.getElementById('shippingAddress').value,
+            parish: document.getElementById('shippingParish').value,
+            deliveryLocation: deliveryLocation.toUpperCase(),
+            deliveryType: 'home_delivery'
+        };
     }
     
-    // Create order data structure
+    // Create order data
     const orderData = {
         orderId: mainOrderId,
         buyerId: currentUser.uid,
         buyerEmail: currentUser.email,
         totalAmount: totalAmount,
         currency: 'JMD',
-        status: 'pending',
+        status: 'pending_payment',
         createdAt: new Date().toISOString(),
         shippingAddress: shippingAddress,
         sellers: {}
@@ -2885,39 +2902,58 @@ async function completeOrder(event) {
                 subtotal: item.price * item.quantity
             })),
             subtotal: sellerGroup.subtotal,
-            status: 'pending',
+            status: 'pending_payment',
             deliveryLocation: deliveryLocation.toUpperCase(),
             deliveryType: shippingAddress.deliveryType
         };
     });
     
-    // Save order to Firestore
-    const saved = await saveOrderToFirestore(orderData);
+    // Show payment modal
+    showPaymentModal(orderData);
+}
+
+function showPaymentModal(orderData) {
+    const modal = document.createElement('div');
+    modal.className = 'modal';
+    modal.style.display = 'block';
+    modal.innerHTML = `
+        <div class="modal-content" style="max-width: 500px;">
+            <span class="close" onclick="this.parentElement.parentElement.remove()">&times;</span>
+            <h2 style="color: #ffd700; margin-bottom: 1rem;">Complete Payment</h2>
+            
+            <div style="background: rgba(255, 215, 0, 0.1); padding: 1rem; border-radius: 8px; margin: 1rem 0;">
+                <h3 style="color: #ffd700; margin: 0 0 0.5rem 0;">Order Summary</h3>
+                <p style="color: #ccc; margin: 0;">Total Amount: <strong>JMD $${orderData.totalAmount.toFixed(2)}</strong></p>
+                <p style="color: #ccc; margin: 0.5rem 0 0 0; font-size: 0.9rem;">
+                    Delivery: ${orderData.shippingAddress.deliveryLocation}
+                </p>
+            </div>
+            
+            <div id="paypal-button-container"></div>
+            
+            <p style="color: #ccc; font-size: 0.8rem; text-align: center; margin-top: 1rem;">
+                Secure payment powered by PayPal
+            </p>
+        </div>
+    `;
+    document.body.appendChild(modal);
     
-    if (saved) {
-        // Clear cart
-        cart = [];
-        updateCartCount();
-        
-        // Close modal
-        document.querySelector('.modal').remove();
-        
-        // Show success message with order details
-        let orderNumbers = Object.values(orderData.sellers).map(seller => seller.orderNumber).join(', ');
-        let deliveryDetails = '';
-        
-        if (deliveryLocation === 'knutsford') {
-            deliveryDetails = `Pickup Location: ${shippingAddress.pickupLocation}`;
-        } else {
-            deliveryDetails = `Delivery Address: ${shippingAddress.address}, ${shippingAddress.parish}`;
+    // Initialize PayPal
+    processPayPalPayment(
+        orderData,
+        (details) => {
+            // Success
+            modal.remove();
+            cart = [];
+            updateCartCount();
+            alert(`Payment successful! Order #${orderData.orderId} has been placed.`);
+        },
+        (error) => {
+            // Error
+            console.error('Payment error:', error);
+            alert('Payment failed. Please try again.');
         }
-        
-        alert(`Order placed successfully!\n\nMain Order ID: ${mainOrderId}\nSeller Order Numbers: ${orderNumbers}\n${deliveryDetails}\n\nTotal: JMD $${totalAmount.toFixed(2)}`);
-        
-        console.log('Order saved:', orderData);
-    } else {
-        alert('Error placing order. Please try again.');
-    }
+    );
 }
     
 function proceedToCheckout() {
@@ -3349,11 +3385,9 @@ function completeGoogleSellerRegistration(formData) {
 }
 
 function completeSellerRegistration(user, formData) {
-    // Update user profile
     return user.updateProfile({
         displayName: `${formData.firstName} ${formData.lastName}`
     }).then(() => {
-        // Save seller data to Firestore
         return db.collection('sellers').doc(user.uid).set({
             uid: user.uid,
             firstName: formData.firstName,
@@ -3366,17 +3400,25 @@ function completeSellerRegistration(user, formData) {
             monthlyFee: 25,
             joinedDate: new Date().toISOString(),
             isSeller: true,
-            products: []
+            products: [],
+            // PayPal payment information
+            paypalEmail: '',
+            paypalVerified: false,
+            paymentSetupComplete: false,
+            // Financial tracking
+            totalSales: 0,
+            pendingPayouts: 0,
+            availableBalance: 0,
+            lastPayoutDate: null,
+            salesHistory: [],
+            payoutHistory: []
         });
     }).then(() => {
         currentUser = user;
         updateAuthUI();
         closeSellerSignup();
-        alert('Seller account created successfully! Welcome to WEBVTEC marketplace.');
+        alert('Seller account created successfully! Please complete your PayPal setup in your dashboard.');
         setTimeout(() => showSellerDashboard(), 1000);
-    }).catch((error) => {
-        console.error('Seller registration error:', error);
-        alert('Error completing seller registration: ' + error.message);
     });
 }
 
@@ -3457,24 +3499,28 @@ function formatDate(dateString) {
 // Show seller dashboard as full page
 function showSellerDashboard() {
     document.getElementById('sellerDashboardPage').style.display = 'block';
-    document.body.style.overflow = 'hidden'; // Prevent background scroll
+    document.body.style.overflow = 'hidden';
     
-    // Load seller info
     if (currentUser) {
         db.collection('sellers').doc(currentUser.uid).get()
             .then((doc) => {
                 if (doc.exists) {
                     const sellerData = doc.data();
                     document.getElementById('sellerWelcome').textContent = `Welcome, ${sellerData.businessName}!`;
+                    
+                    // Check if PayPal setup is complete
+                    if (!sellerData.paymentSetupComplete) {
+                        showPayPalSetupNotification();
+                    }
+                    
+                    updateFinancialOverview(sellerData);
                 }
             });
     }
     
-    // Load overview data
     loadDashboardOverview();
     loadDashboardProducts();
 }
-
 function closeSellerDashboardPage() {
     document.getElementById('sellerDashboardPage').style.display = 'none';
     document.body.style.overflow = 'auto'; // Restore scroll
@@ -4144,7 +4190,192 @@ function updatePhotoDisplay(productId) {
     });
 }
 
+
+function processPayPalPayment(orderData, onSuccess, onError) {
+    paypal.Buttons({
+        createOrder: function(data, actions) {
+            return actions.order.create({
+                purchase_units: [{
+                    amount: {
+                        value: orderData.totalAmount.toFixed(2),
+                        currency_code: 'USD'
+                    },
+                    description: `WEBVTEC Order #${orderData.orderId}`
+                }]
+            });
+        },
+        onApprove: function(data, actions) {
+            return actions.order.capture().then(function(details) {
+                // Process successful payment
+                handleSuccessfulPayment(details, orderData);
+                onSuccess(details);
+            });
+        },
+        onError: function(err) {
+            console.error('PayPal payment error:', err);
+            onError(err);
+        }
+    }).render('#paypal-button-container');
+}
+
+function handleSuccessfulPayment(paymentDetails, orderData) {
+    // Update order with payment information
+    const paymentData = {
+        paymentId: paymentDetails.id,
+        paymentStatus: 'completed',
+        paymentMethod: 'paypal',
+        paymentDate: new Date().toISOString(),
+        paymentDetails: paymentDetails
+    };
+    
+    // Update order in Firestore
+    db.collection('orders').doc(orderData.orderId).update({
+        payment: paymentData,
+        status: 'paid'
+    });
+    
+    // Process cash splitting
+    processCashSplitting(orderData, paymentDetails);
+}  
+
+function processCashSplitting(orderData, paymentDetails) {
+    const platformFeeRate = 0.05; // 5% platform fee
+    const paypalFeeRate = 0.029; // PayPal fee ~2.9%
+    
+    Object.entries(orderData.sellers).forEach(([sellerId, sellerData]) => {
+        const grossAmount = sellerData.subtotal;
+        const platformFee = grossAmount * platformFeeRate;
+        const paypalFee = grossAmount * paypalFeeRate;
+        const netAmount = grossAmount - platformFee - paypalFee;
         
+        // Update seller's balance
+        db.collection('sellers').doc(sellerId).get().then(doc => {
+            if (doc.exists) {
+                const seller = doc.data();
+                const newBalance = (seller.availableBalance || 0) + netAmount;
+                
+                // Update seller balance and sales history
+                db.collection('sellers').doc(sellerId).update({
+                    availableBalance: newBalance,
+                    totalSales: (seller.totalSales || 0) + grossAmount,
+                    salesHistory: firebase.firestore.FieldValue.arrayUnion({
+                        orderId: orderData.orderId,
+                        orderNumber: sellerData.orderNumber,
+                        grossAmount: grossAmount,
+                        platformFee: platformFee,
+                        paypalFee: paypalFee,
+                        netAmount: netAmount,
+                        date: new Date().toISOString(),
+                        status: 'completed'
+                    })
+                });
+                
+                // Send earnings notification
+                sendEarningsNotification(seller, sellerData.orderNumber, netAmount);
+            }
+        });
+    });
+}
+
+function sendEarningsNotification(seller, orderNumber, earnings) {
+    // This would trigger a Firebase function to send email
+    db.collection('emailTriggers').add({
+        type: 'earnings_notification',
+        to: seller.email,
+        sellerName: seller.businessName,
+        orderNumber: orderNumber,
+        earnings: earnings,
+        timestamp: new Date().toISOString()
+    });
+}
+
+
+function showPayPalSetupNotification() {
+    const notification = document.createElement('div');
+    notification.style.cssText = `
+        background: #ff9800;
+        color: white;
+        padding: 1rem;
+        text-align: center;
+        border-radius: 8px;
+        margin: 1rem 0;
+        cursor: pointer;
+    `;
+    notification.innerHTML = `
+        <strong>⚠️ PayPal Setup Required</strong><br>
+        Complete your PayPal setup to receive payments
+    `;
+    notification.onclick = () => showPayPalSetup();
+    
+    const dashboard = document.querySelector('#sellerDashboardPage .dashboard-content-wrapper');
+    dashboard.insertBefore(notification, dashboard.firstChild);
+}
+
+function showPayPalSetup() {
+    const modal = document.createElement('div');
+    modal.className = 'modal';
+    modal.style.display = 'block';
+    modal.innerHTML = `
+        <div class="modal-content" style="max-width: 500px;">
+            <span class="close" onclick="this.parentElement.parentElement.remove()">&times;</span>
+            <h2 style="color: #ffd700; margin-bottom: 1rem;">PayPal Setup</h2>
+            
+            <form id="paypalSetupForm" onsubmit="handlePayPalSetup(event)">
+                <div class="form-group">
+                    <label>PayPal Email Address:</label>
+                    <input type="email" id="paypalEmail" required placeholder="Enter your PayPal email">
+                    <small style="color: #ccc; display: block; margin-top: 0.3rem;">
+                        This is where you'll receive payments from sales
+                    </small>
+                </div>
+                
+                <div class="form-group">
+                    <label>Confirm PayPal Email:</label>
+                    <input type="email" id="confirmPaypalEmail" required placeholder="Confirm your PayPal email">
+                </div>
+                
+                <div style="background: rgba(255, 215, 0, 0.1); padding: 1rem; border-radius: 8px; margin: 1rem 0; border: 1px solid rgba(255, 215, 0, 0.3);">
+                    <h4 style="color: #ffd700; margin: 0 0 0.5rem 0;">Payment Terms:</h4>
+                    <ul style="color: #ccc; margin: 0; padding-left: 1.5rem; font-size: 0.9rem;">
+                        <li>5% platform fee on all sales</li>
+                        <li>PayPal processing fees apply</li>
+                        <li>Payments processed within 24-48 hours</li>
+                        <li>Minimum payout: $20</li>
+                    </ul>
+                </div>
+                
+                <button type="submit" class="btn" style="width: 100%;">Setup PayPal Account</button>
+            </form>
+        </div>
+    `;
+    document.body.appendChild(modal);
+}
+
+function handlePayPalSetup(event) {
+    event.preventDefault();
+    
+    const paypalEmail = document.getElementById('paypalEmail').value;
+    const confirmEmail = document.getElementById('confirmPaypalEmail').value;
+    
+    if (paypalEmail !== confirmEmail) {
+        alert('PayPal email addresses do not match');
+        return;
+    }
+    
+    // Update seller with PayPal information
+    db.collection('sellers').doc(currentUser.uid).update({
+        paypalEmail: paypalEmail,
+        paymentSetupComplete: true,
+        paypalSetupDate: new Date().toISOString()
+    }).then(() => {
+        alert('PayPal setup completed successfully!');
+        document.querySelector('.modal').remove();
+        location.reload(); // Refresh dashboard
+    }).catch((error) => {
+        console.error('PayPal setup error:', error);
+        alert('Error setting up PayPal. Please try again.');
+    });
+}
 </script>
 </body>
 </html>
