@@ -2778,10 +2778,6 @@ function populateFormFields(location) {
                     <option value="St. Catherine">St. Catherine</option>
                 </select>
             </div>
-            <div class="form-group">
-                <label>Special Delivery Instructions (Optional):</label>
-                <textarea id="deliveryInstructions" rows="3" placeholder="Any special instructions for the delivery driver..." style="width: 100%; padding: 0.7rem; border: none; border-radius: 8px; background: rgba(255, 255, 255, 0.1); color: white; border: 1px solid rgba(255, 215, 0, 0.3); resize: vertical;"></textarea>
-            </div>
         `;
     }
 }
@@ -2849,16 +2845,15 @@ async function completeOrder(event) {
             deliveryType: 'pickup'
         };
     } else if (deliveryLocation === 'tara') {
-        shippingAddress = {
-            name: document.getElementById('shippingName').value,
-            email: document.getElementById('shippingEmail').value,
-            phone: document.getElementById('shippingPhone').value,
-            address: document.getElementById('shippingAddress').value,
-            parish: document.getElementById('shippingParish').value,
-            deliveryInstructions: document.getElementById('deliveryInstructions')?.value || '',
-            deliveryLocation: deliveryLocation.toUpperCase(),
-            deliveryType: 'home_delivery'
-        };
+    shippingAddress = {
+        name: document.getElementById('shippingName').value,
+        email: document.getElementById('shippingEmail').value,
+        phone: document.getElementById('shippingPhone').value,
+        address: document.getElementById('shippingAddress').value,
+        parish: document.getElementById('shippingParish').value,
+        deliveryLocation: deliveryLocation.toUpperCase(),
+        deliveryType: 'home_delivery'
+    };
     }
     
     // Create order data structure
