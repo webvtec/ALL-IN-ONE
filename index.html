@@ -2846,7 +2846,7 @@ function showCart() {
                         <span style="color: #ccc; margin-left: 10px;">x${item.quantity}</span>
                     </div>
                     <div style="display: flex; gap: 10px; align-items: center;">
-                        <span>JMD ${itemTotal.toFixed(2)}</span>
+                        <span>JMD $${itemTotal.toFixed(2)}</span>
                         <button onclick="removeFromCart('${item.id}')" style="background: #ff4757; color: white; border: none; padding: 0.2rem 0.5rem; border-radius: 3px; cursor: pointer; font-size: 0.7rem;">Remove</button>
                     </div>
                 </div>
@@ -2855,7 +2855,7 @@ function showCart() {
         
         cartHTML += `
                 <div style="text-align: right; margin-top: 0.5rem;">
-                    <strong style="color: #ffd700;">Subtotal: JMD ${sellerGroup.subtotal.toFixed(2)}</strong>
+                    <strong style="color: #ffd700;">Subtotal: JMD $${sellerGroup.subtotal.toFixed(2)}</strong>
                 </div>
             </div>
         `;
@@ -2863,11 +2863,13 @@ function showCart() {
         grandTotal += sellerGroup.subtotal;
     });
     
+    const usdTotal = convertJMDToUSD(grandTotal);
+    
     cartHTML += `
         <div style="background: rgba(255, 215, 0, 0.1); padding: 1rem; border-radius: 8px; margin: 1rem 0; text-align: center;">
-            <h3 style="color: #ffd700; margin: 0;">Total: JMD ${grandTotal.toFixed(2)}</h3>
+            <h3 style="color: #ffd700; margin: 0;">Total: JMD $${grandTotal.toFixed(2)}</h3>
             <p style="color: #ccc; font-size: 0.8rem; margin: 0.5rem 0 0 0;">
-                Items from ${Object.keys(groupedCart).length} seller(s)
+                PayPal will charge: USD $${usdTotal} (${Object.keys(groupedCart).length} seller(s))
             </p>
         </div>
         <button onclick="proceedToCheckout()" class="btn" style="width: 100%; margin-top: 1rem;">Proceed to Checkout</button>
@@ -2884,7 +2886,7 @@ function showCart() {
     `;
     document.body.appendChild(modal);
 }
-
+    
 function removeFromCart(productId) {
     const index = cart.findIndex(item => item.id === productId);
     if (index !== -1) {
@@ -2943,6 +2945,7 @@ function proceedToCheckout() {
 function showShippingForm() {
     const groupedCart = groupCartBySeller();
     const totalAmount = Object.values(groupedCart).reduce((sum, group) => sum + group.subtotal, 0);
+    const usdAmount = convertJMDToUSD(totalAmount);
     
     const modal = document.createElement('div');
     modal.className = 'modal';
@@ -2977,7 +2980,9 @@ function showShippingForm() {
                     <div style="background: rgba(255, 215, 0, 0.1); padding: 1rem; border-radius: 8px; margin: 1rem 0;">
                         <h3 style="color: #ffd700; margin: 0 0 0.5rem 0;">Order Summary</h3>
                         <p style="color: #ccc; margin: 0;">Items from ${Object.keys(groupedCart).length} seller(s)</p>
-                        <h4 style="color: #ffd700; margin: 0.5rem 0 0 0;">Total: JMD ${totalAmount.toFixed(2)}</h4>
+                        <h4 style="color: #ffd700; margin: 0.5rem 0 0 0;">Total: JMD $${totalAmount.toFixed(2)}</h4>
+                        <p style="color: #ccc; font-size: 0.8rem; margin: 0.3rem 0 0 0;">PayPal will charge: USD $${usdAmount}</p>
+                        <p style="color: #999; font-size: 0.75rem; margin: 0.2rem 0 0 0;">Exchange rate: 1 JMD = ${JMD_TO_USD_RATE} USD</p>
                     </div>
                     
                     <button type="submit" class="btn" style="width: 100%;">Complete Order</button>
@@ -3116,16 +3121,19 @@ async function completeOrder(event) {
     
     // Create order data
     const orderData = {
-        orderId: mainOrderId,
-        buyerId: currentUser.uid,
-        buyerEmail: currentUser.email,
-        totalAmount: totalAmount,
-        currency: 'JMD',
-        status: 'pending_payment',
-        createdAt: new Date().toISOString(),
-        shippingAddress: shippingAddress,
-        sellers: {}
-    };
+    orderId: mainOrderId,
+    buyerId: currentUser.uid,
+    buyerEmail: currentUser.email,
+    totalAmount: totalAmount, // JMD amount
+    totalAmountUSD: parseFloat(convertJMDToUSD(totalAmount)), // USD amount for PayPal
+    currency: 'JMD',
+    paymentCurrency: 'USD',
+    exchangeRate: JMD_TO_USD_RATE,
+    status: 'pending_payment',
+    createdAt: new Date().toISOString(),
+    shippingAddress: shippingAddress,
+    sellers: {}
+};
     
     // Process each seller's items
     Object.entries(groupedCart).forEach(([sellerId, sellerGroup]) => {
@@ -3237,21 +3245,28 @@ function showPaymentModal(orderData) {
 }
 
 function processPayPalPayment(orderData, onSuccess, onError) {
+    // Convert JMD total to USD for PayPal
+    const usdAmount = convertJMDToUSD(orderData.totalAmount);
+    
     paypal.Buttons({
         createOrder: function(data, actions) {
             return actions.order.create({
                 purchase_units: [{
                     amount: {
-                        value: orderData.totalAmount.toFixed(2),
+                        value: usdAmount,
                         currency_code: 'USD'
                     },
-                    description: `WEBVTEC Order #${orderData.orderId}`
+                    description: `WEBVTEC Order #${orderData.orderId} (JMD $${orderData.totalAmount.toFixed(2)})`
                 }]
             });
         },
         onApprove: function(data, actions) {
             return actions.order.capture().then(function(details) {
-                // Process successful payment
+                // Store both JMD and USD amounts
+                details.jmdAmount = orderData.totalAmount;
+                details.usdAmount = parseFloat(usdAmount);
+                details.exchangeRate = JMD_TO_USD_RATE;
+                
                 handleSuccessfulPayment(details, orderData);
                 onSuccess(details);
             });
@@ -4294,6 +4309,30 @@ function handlePayPalSetup(event) {
         console.error('PayPal setup error:', error);
         alert('Error setting up PayPal. Please try again.');
     });
+}
+
+
+// Add this near the top of your script section
+const JMD_TO_USD_RATE = 0.0065; // Approximate rate - you should get real-time rates
+
+function convertJMDToUSD(jmdAmount) {
+    return (jmdAmount * JMD_TO_USD_RATE).toFixed(2);
+}
+
+function convertUSDToJMD(usdAmount) {
+    return (usdAmount / JMD_TO_USD_RATE).toFixed(2);
+}
+
+// Get real-time exchange rate (optional enhancement)
+async function getCurrentExchangeRate() {
+    try {
+        const response = await fetch('https://api.exchangerate-api.com/v4/latest/JMD');
+        const data = await response.json();
+        return data.rates.USD;
+    } catch (error) {
+        console.error('Could not fetch exchange rate, using default');
+        return JMD_TO_USD_RATE;
+    }
 }
 
 function updateFinancialOverview(sellerData) {
