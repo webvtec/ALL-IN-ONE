@@ -2628,14 +2628,22 @@ function showProductDetail(product) {
             </div>
 
             <!-- Categories Section -->
-            <div class="categories-section" style="padding: 0.2rem 5px; margin-bottom: 0.25rem;">
-                <div class="categories-scroll" style="display: flex; gap: 0.8rem; overflow-x: auto; padding: 0.3rem 0; scrollbar-width: none; -ms-overflow-style: none;">
-                    <button class="category-btn active" onclick="filterByCategory('all')" style="background: #333; color: #ffd700; border: none; padding: 0.6rem 1.2rem; border-radius: 20px; white-space: nowrap; cursor: pointer; font-weight: bold; min-width: 70px; font-size: 0.85rem; text-align: center; display: flex; align-items: center; justify-content: center;">All</button>
-                    <button class="category-btn" onclick="filterByCategory('jewelry')" style="background: #ffd700; color: #333; border: none; padding: 0.6rem 1.2rem; border-radius: 20px; white-space: nowrap; cursor: pointer; font-weight: bold; min-width: 80px; font-size: 0.85rem; text-align: center; display: flex; align-items: center; justify-content: center;">Jewelry</button>
-                    <button class="category-btn" onclick="filterByCategory('health')" style="background: #ffd700; color: #333; border: none; padding: 0.6rem 1.2rem; border-radius: 20px; white-space: nowrap; cursor: pointer; font-weight: bold; min-width: 70px; font-size: 0.85rem; text-align: center; display: flex; align-items: center; justify-content: center;">Health</button>
-                    <button class="category-btn" onclick="filterByCategory('music')" style="background: #ffd700; color: #333; border: none; padding: 0.6rem 1.2rem; border-radius: 20px; white-space: nowrap; cursor: pointer; font-weight: bold; min-width: 70px; font-size: 0.85rem; text-align: center; display: flex; align-items: center; justify-content: center;">Music</button>
-                </div>
-            </div>
+<div class="categories-section" style="padding: 0.2rem 5px; margin-bottom: 0.25rem;">
+    <div class="categories-scroll" style="display: flex; gap: 0.8rem; overflow-x: auto; padding: 0.3rem 0; scrollbar-width: none; -ms-overflow-style: none;">
+        <button class="category-btn ${currentCategory === 'all' ? 'active' : ''}" onclick="closeProductDetail(); filterByCategory('all')" style="background: ${currentCategory === 'all' ? '#333' : '#ffd700'}; color: ${currentCategory === 'all' ? '#ffd700' : '#333'}; border: none; padding: 0.6rem 1.2rem; border-radius: 20px; white-space: nowrap; cursor: pointer; font-weight: bold; min-width: 70px; font-size: 0.85rem; text-align: center; display: flex; align-items: center; justify-content: center;">All</button>
+        <button class="category-btn ${currentCategory === 'electronics' ? 'active' : ''}" onclick="closeProductDetail(); filterByCategory('electronics')" style="background: ${currentCategory === 'electronics' ? '#333' : '#ffd700'}; color: ${currentCategory === 'electronics' ? '#ffd700' : '#333'}; border: none; padding: 0.6rem 1.2rem; border-radius: 20px; white-space: nowrap; cursor: pointer; font-weight: bold; min-width: 90px; font-size: 0.85rem; text-align: center; display: flex; align-items: center; justify-content: center;">Electronics</button>
+        <button class="category-btn ${currentCategory === 'clothing' ? 'active' : ''}" onclick="closeProductDetail(); filterByCategory('clothing')" style="background: ${currentCategory === 'clothing' ? '#333' : '#ffd700'}; color: ${currentCategory === 'clothing' ? '#ffd700' : '#333'}; border: none; padding: 0.6rem 1.2rem; border-radius: 20px; white-space: nowrap; cursor: pointer; font-weight: bold; min-width: 80px; font-size: 0.85rem; text-align: center; display: flex; align-items: center; justify-content: center;">Clothing</button>
+        <button class="category-btn ${currentCategory === 'home' ? 'active' : ''}" onclick="closeProductDetail(); filterByCategory('home')" style="background: ${currentCategory === 'home' ? '#333' : '#ffd700'}; color: ${currentCategory === 'home' ? '#ffd700' : '#333'}; border: none; padding: 0.6rem 1.2rem; border-radius: 20px; white-space: nowrap; cursor: pointer; font-weight: bold; min-width: 70px; font-size: 0.85rem; text-align: center; display: flex; align-items: center; justify-content: center;">Home</button>
+        <button class="category-btn ${currentCategory === 'beauty' ? 'active' : ''}" onclick="closeProductDetail(); filterByCategory('beauty')" style="background: ${currentCategory === 'beauty' ? '#333' : '#ffd700'}; color: ${currentCategory === 'beauty' ? '#ffd700' : '#333'}; border: none; padding: 0.6rem 1.2rem; border-radius: 20px; white-space: nowrap; cursor: pointer; font-weight: bold; min-width: 70px; font-size: 0.85rem; text-align: center; display: flex; align-items: center; justify-content: center;">Beauty</button>
+        <button class="category-btn ${currentCategory === 'sports' ? 'active' : ''}" onclick="closeProductDetail(); filterByCategory('sports')" style="background: ${currentCategory === 'sports' ? '#333' : '#ffd700'}; color: ${currentCategory === 'sports' ? '#ffd700' : '#333'}; border: none; padding: 0.6rem 1.2rem; border-radius: 20px; white-space: nowrap; cursor: pointer; font-weight: bold; min-width: 70px; font-size: 0.85rem; text-align: center; display: flex; align-items: center; justify-content: center;">Sports</button>
+        <button class="category-btn ${currentCategory === 'books' ? 'active' : ''}" onclick="closeProductDetail(); filterByCategory('books')" style="background: ${currentCategory === 'books' ? '#333' : '#ffd700'}; color: ${currentCategory === 'books' ? '#ffd700' : '#333'}; border: none; padding: 0.6rem 1.2rem; border-radius: 20px; white-space: nowrap; cursor: pointer; font-weight: bold; min-width: 70px; font-size: 0.85rem; text-align: center; display: flex; align-items: center; justify-content: center;">Books</button>
+        <button class="category-btn ${currentCategory === 'toys' ? 'active' : ''}" onclick="closeProductDetail(); filterByCategory('toys')" style="background: ${currentCategory === 'toys' ? '#333' : '#ffd700'}; color: ${currentCategory === 'toys' ? '#ffd700' : '#333'}; border: none; padding: 0.6rem 1.2rem; border-radius: 20px; white-space: nowrap; cursor: pointer; font-weight: bold; min-width: 70px; font-size: 0.85rem; text-align: center; display: flex; align-items: center; justify-content: center;">Toys</button>
+        <button class="category-btn ${currentCategory === 'automotive' ? 'active' : ''}" onclick="closeProductDetail(); filterByCategory('automotive')" style="background: ${currentCategory === 'automotive' ? '#333' : '#ffd700'}; color: ${currentCategory === 'automotive' ? '#ffd700' : '#333'}; border: none; padding: 0.6rem 1.2rem; border-radius: 20px; white-space: nowrap; cursor: pointer; font-weight: bold; min-width: 95px; font-size: 0.85rem; text-align: center; display: flex; align-items: center; justify-content: center;">Automotive</button>
+        <button class="category-btn ${currentCategory === 'jewelry' ? 'active' : ''}" onclick="closeProductDetail(); filterByCategory('jewelry')" style="background: ${currentCategory === 'jewelry' ? '#333' : '#ffd700'}; color: ${currentCategory === 'jewelry' ? '#ffd700' : '#333'}; border: none; padding: 0.6rem 1.2rem; border-radius: 20px; white-space: nowrap; cursor: pointer; font-weight: bold; min-width: 80px; font-size: 0.85rem; text-align: center; display: flex; align-items: center; justify-content: center;">Jewelry</button>
+        <button class="category-btn ${currentCategory === 'health' ? 'active' : ''}" onclick="closeProductDetail(); filterByCategory('health')" style="background: ${currentCategory === 'health' ? '#333' : '#ffd700'}; color: ${currentCategory === 'health' ? '#ffd700' : '#333'}; border: none; padding: 0.6rem 1.2rem; border-radius: 20px; white-space: nowrap; cursor: pointer; font-weight: bold; min-width: 70px; font-size: 0.85rem; text-align: center; display: flex; align-items: center; justify-content: center;">Health</button>
+        <button class="category-btn ${currentCategory === 'music' ? 'active' : ''}" onclick="closeProductDetail(); filterByCategory('music')" style="background: ${currentCategory === 'music' ? '#333' : '#ffd700'}; color: ${currentCategory === 'music' ? '#ffd700' : '#333'}; border: none; padding: 0.6rem 1.2rem; border-radius: 20px; white-space: nowrap; cursor: pointer; font-weight: bold; min-width: 70px; font-size: 0.85rem; text-align: center; display: flex; align-items: center; justify-content: center;">Music</button>
+    </div>
+</div>
 
             <!-- Search Container - Center -->
             <div class="search-container">
@@ -4495,19 +4503,27 @@ function createCustomerOrderCard(order) {
 
 
 function formatPrice(price) {
-    return new Intl.NumberFormat('en-US', {
-        style: 'currency',
-        currency: 'USD',
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2
-    }).format(price).replace('$', '');
+    const num = parseFloat(price) || 0;
+    const dollars = Math.floor(num);
+    const cents = Math.round((num - dollars) * 100);
+    
+    // Format dollars with commas
+    const formattedDollars = new Intl.NumberFormat('en-US').format(dollars);
+    
+    // Return with superscript cents
+    return `${formattedDollars}<sup style="font-size: 0.6em; vertical-align: top;">${cents.toString().padStart(2, '0')}</sup>`;
 }
 
 function formatJMDPrice(price) {
-    return new Intl.NumberFormat('en-US', {
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2
-    }).format(price);
+    const num = parseFloat(price) || 0;
+    const dollars = Math.floor(num);
+    const cents = Math.round((num - dollars) * 100);
+    
+    // Format dollars with commas
+    const formattedDollars = new Intl.NumberFormat('en-US').format(dollars);
+    
+    // Return with superscript cents
+    return `${formattedDollars}<sup style="font-size: 0.6em; vertical-align: top;">${cents.toString().padStart(2, '0')}</sup>`;
 }
 // ================================
 // PAYPAL SETUP FUNCTIONS
