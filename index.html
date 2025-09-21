@@ -2480,7 +2480,7 @@ function createProductCard(product) {
                 ${stockHTML}
                 ${product.category === 'clothing' && product.sizes && product.sizes.length > 0 ? 
                 `<p style="color: #666; font-size: 0.8rem; margin: 0.2rem 0 1rem 0;">Sizes: ${product.sizes.join(', ')}</p>` : ''}
-                <div class="product-price" style="margin-bottom: 0.5rem;">$${product.price || '0.00'}</div>
+                <div class="product-price" style="margin-bottom: 0.5rem;">$${formatPrice(product.price || 0)}</div>
                 <div style="text-align: center; margin-bottom: 0;">
                     ${buttonHTML}
                 </div>
@@ -2669,7 +2669,7 @@ function showProductDetail(product) {
             </div>
             
             <div style="display: flex; justify-content: space-between; align-items: center; margin: 1rem 0;">
-                <div class="detail-price" style="margin: 0;">${product.price}</div>
+                <div class="detail-price" style="margin: 0;">$${formatPrice(product.price || 0)}</div>
             </div>
             
             <div class="detail-actions">
@@ -2855,7 +2855,7 @@ function showCart() {
                         <span style="color: #ccc; margin-left: 10px;">x${item.quantity}</span>
                     </div>
                     <div style="display: flex; gap: 10px; align-items: center;">
-                        <span>JMD $${itemTotal.toFixed(2)}</span>
+                        <span>JMD $${formatJMDPrice(itemTotal)}</span>
                         <button onclick="removeFromCart('${item.id}')" style="background: #ff4757; color: white; border: none; padding: 0.2rem 0.5rem; border-radius: 3px; cursor: pointer; font-size: 0.7rem;">Remove</button>
                     </div>
                 </div>
@@ -2864,7 +2864,7 @@ function showCart() {
         
         cartHTML += `
                 <div style="text-align: right; margin-top: 0.5rem;">
-                    <strong style="color: #ffd700;">Subtotal: JMD $${sellerGroup.subtotal.toFixed(2)}</strong>
+                    <strong style="color: #ffd700;">Subtotal: JMD $${formatJMDPrice(sellerGroup.subtotal)}</strong>
                 </div>
             </div>
         `;
@@ -2876,9 +2876,9 @@ function showCart() {
     
     cartHTML += `
         <div style="background: rgba(255, 215, 0, 0.1); padding: 1rem; border-radius: 8px; margin: 1rem 0; text-align: center;">
-            <h3 style="color: #ffd700; margin: 0;">Total: JMD $${grandTotal.toFixed(2)}</h3>
+            <h3 style="color: #ffd700; margin: 0;">Total: JMD $${formatJMDPrice(grandTotal)}</h3>
             <p style="color: #ccc; font-size: 0.8rem; margin: 0.5rem 0 0 0;">
-                PayPal will charge: USD $${usdTotal} (${Object.keys(groupedCart).length} seller(s))
+                PayPal will charge: USD $${formatPrice(parseFloat(usdTotal))} (${Object.keys(groupedCart).length} seller(s))
             </p>
         </div>
         <button onclick="proceedToCheckout()" class="btn" style="width: 100%; margin-top: 1rem;">Proceed to Checkout</button>
@@ -2989,8 +2989,8 @@ function showShippingForm() {
                     <div style="background: rgba(255, 215, 0, 0.1); padding: 1rem; border-radius: 8px; margin: 1rem 0;">
                         <h3 style="color: #ffd700; margin: 0 0 0.5rem 0;">Order Summary</h3>
                         <p style="color: #ccc; margin: 0;">Items from ${Object.keys(groupedCart).length} seller(s)</p>
-                        <h4 style="color: #ffd700; margin: 0.5rem 0 0 0;">Total: JMD $${totalAmount.toFixed(2)}</h4>
-                        <p style="color: #ccc; font-size: 0.8rem; margin: 0.3rem 0 0 0;">PayPal will charge: USD $${usdAmount}</p>
+                        <h4 style="color: #ffd700; margin: 0.5rem 0 0 0;">Total: JMD $${formatJMDPrice(totalAmount)}</h4>
+                        <p style="color: #ccc; font-size: 0.8rem; margin: 0.3rem 0 0 0;">PayPal will charge: USD $${formatPrice(parseFloat(usdAmount))}</p>
                         <p style="color: #999; font-size: 0.75rem; margin: 0.2rem 0 0 0;">Exchange rate: 1 JMD = ${JMD_TO_USD_RATE} USD</p>
                     </div>
                     
@@ -3002,6 +3002,7 @@ function showShippingForm() {
     document.body.appendChild(modal);
 }
 
+    
 function selectDeliveryLocation(location) {
     // Update hidden input
     document.getElementById('deliveryLocation').value = location;
@@ -3042,6 +3043,17 @@ function populateFormFields(location) {
             <div class="form-group">
                 <label>Email:</label>
                 <input type="email" id="shippingEmail" value="${currentUser?.email || ''}" required>
+            </div>
+            <div class="form-group">
+                <label>Knutsford Pickup Location:</label>
+                <select id="knutsfordPickupLocation" required>
+                    <option value="">Select Pickup Location</option>
+                    <option value="Knutsford Boulevard Main Gate">Knutsford Boulevard Main Gate</option>
+                    <option value="Knutsford Express Terminal">Knutsford Express Terminal</option>
+                    <option value="Knutsford Shopping Center">Knutsford Shopping Center</option>
+                    <option value="Knutsford University Campus">Knutsford University Campus</option>
+                    <option value="Knutsford Community Center">Knutsford Community Center</option>
+                </select>
             </div>
         `;
     } else if (location === 'tara') {
@@ -3085,6 +3097,7 @@ function populateFormFields(location) {
         `;
     }
 }
+
     
 async function completeOrder(event) {
     event.preventDefault();
@@ -4479,6 +4492,23 @@ function createCustomerOrderCard(order) {
     
     return card;
     }
+
+
+function formatPrice(price) {
+    return new Intl.NumberFormat('en-US', {
+        style: 'currency',
+        currency: 'USD',
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+    }).format(price).replace('$', '');
+}
+
+function formatJMDPrice(price) {
+    return new Intl.NumberFormat('en-US', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+    }).format(price);
+}
 // ================================
 // PAYPAL SETUP FUNCTIONS
 // ================================
