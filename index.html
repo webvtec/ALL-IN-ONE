@@ -1293,3 +1293,1328 @@ async function saveOrderToFirestore(orderData) {
         console.error('Error saving order:', error);
         return false;
     }
+}
+
+function showPaymentModal(orderData) {
+    const modal = document.createElement('div');
+    modal.className = 'modal';
+    modal.style.display = 'block';
+    modal.innerHTML = `
+        <div class="modal-content" style="max-width: 500px;">
+            <span class="close" onclick="this.parentElement.parentElement.remove()">&times;</span>
+            <h2 style="color: #ffd700; margin-bottom: 1rem;">Complete Payment</h2>
+            
+            <div style="background: rgba(255, 215, 0, 0.1); padding: 1rem; border-radius: 8px; margin: 1rem 0;">
+                <h3 style="color: #ffd700; margin: 0 0 0.5rem 0;">Order Summary</h3>
+                <p style="color: #ccc; margin: 0;">Total Amount: <strong>JMD $${orderData.totalAmount.toFixed(2)}</strong></p>
+                <p style="color: #ccc; margin: 0.5rem 0 0 0; font-size: 0.9rem;">
+                    Delivery: ${orderData.shippingAddress.deliveryLocation}
+                </p>
+            </div>
+            
+            <div id="paypal-button-container"></div>
+            
+            <p style="color: #ccc; font-size: 0.8rem; text-align: center; margin-top: 1rem;">
+                Secure payment powered by PayPal
+            </p>
+        </div>
+    `;
+    document.body.appendChild(modal);
+    
+    // Initialize PayPal
+    processPayPalPayment(
+        orderData,
+        (details) => {
+            // Success
+            modal.remove();
+            cart = [];
+            updateCartCount();
+            alert(`Payment successful! Order #${orderData.orderId} has been placed.`);
+        },
+        (error) => {
+            // Error
+            console.error('Payment error:', error);
+            alert('Payment failed. Please try again.');
+        }
+    );
+}
+
+function processPayPalPayment(orderData, onSuccess, onError) {
+    paypal.Buttons({
+        createOrder: function(data, actions) {
+            return actions.order.create({
+                purchase_units: [{
+                    amount: {
+                        value: orderData.totalAmount.toFixed(2),
+                        currency_code: 'USD'
+                    },
+                    description: `WEBVTEC Order #${orderData.orderId}`
+                }]
+            });
+        },
+        onApprove: function(data, actions) {
+            return actions.order.capture().then(function(details) {
+                // Process successful payment
+                handleSuccessfulPayment(details, orderData);
+                onSuccess(details);
+            });
+        },
+        onError: function(err) {
+            console.error('PayPal payment error:', err);
+            onError(err);
+        }
+    }).render('#paypal-button-container');
+}
+
+function handleSuccessfulPayment(paymentDetails, orderData) {
+    // Update order with payment information
+    const paymentData = {
+        paymentId: paymentDetails.id,
+        paymentStatus: 'completed',
+        paymentMethod: 'paypal',
+        paymentDate: new Date().toISOString(),
+        paymentDetails: paymentDetails
+    };
+    
+    // Update order in Firestore
+    db.collection('orders').doc(orderData.orderId).update({
+        payment: paymentData,
+        status: 'paid'
+    });
+    
+    // Process cash splitting
+    processCashSplitting(orderData, paymentDetails);
+}
+
+function processCashSplitting(orderData, paymentDetails) {
+    const platformFeeRate = 0.05; // 5% platform fee
+    const paypalFeeRate = 0.029; // PayPal fee ~2.9%
+    
+    Object.entries(orderData.sellers).forEach(([sellerId, sellerData]) => {
+        const grossAmount = sellerData.subtotal;
+        const platformFee = grossAmount * platformFeeRate;
+        const paypalFee = grossAmount * paypalFeeRate;
+        const netAmount = grossAmount - platformFee - paypalFee;
+        
+        // Update seller's balance
+        db.collection('sellers').doc(sellerId).get().then(doc => {
+            if (doc.exists) {
+                const seller = doc.data();
+                const newBalance = (seller.availableBalance || 0) + netAmount;
+                
+                // Update seller balance and sales history
+                db.collection('sellers').doc(sellerId).update({
+                    availableBalance: newBalance,
+                    totalSales: (seller.totalSales || 0) + grossAmount,
+                    salesHistory: firebase.firestore.FieldValue.arrayUnion({
+                        orderId: orderData.orderId,
+                        orderNumber: sellerData.orderNumber,
+                        grossAmount: grossAmount,
+                        platformFee: platformFee,
+                        paypalFee: paypalFee,
+                        netAmount: netAmount,
+                        date: new Date().toISOString(),
+                        status: 'completed'
+                    })
+                });
+                
+                // Send earnings notification
+                sendEarningsNotification(seller, sellerData.orderNumber, netAmount);
+            }
+        });
+    });
+}
+
+function sendEarningsNotification(seller, orderNumber, earnings) {
+    // This would trigger a Firebase function to send email
+    db.collection('emailTriggers').add({
+        type: 'earnings_notification',
+        to: seller.email,
+        sellerName: seller.businessName,
+        orderNumber: orderNumber,
+        earnings: earnings,
+        timestamp: new Date().toISOString()
+    });
+}
+
+// ================================
+// SELLER MANAGEMENT FUNCTIONS
+// ================================
+function showSellerSignup() {
+    document.getElementById('sellerModal').style.display = 'block';
+    populateDatePickers();
+}
+
+function closeSellerSignup() {
+    document.getElementById('sellerModal').style.display = 'none';
+}
+
+function signUpSellerWithGoogle() {
+    auth.signInWithPopup(googleProvider)
+        .then((result) => {
+            const user = result.user;
+            // Check if user already exists as seller
+            return db.collection('sellers').doc(user.uid).get()
+                .then((doc) => {
+                    if (!doc.exists) {
+                        // New seller - collect additional info
+                        collectSellerInfo(user);
+                    } else {
+                        // Already a seller
+                        currentUser = user;
+                        updateAuthUI();
+                        closeSellerSignup();
+                        alert('Welcome back! You are already registered as a seller.');
+                        showSellerDashboard();
+                    }
+                });
+        })
+        .catch((error) => {
+            console.error('Google seller sign-up error:', error);
+            alert('Error with Google sign-up: ' + error.message);
+        });
+}
+
+function collectSellerInfo(user) {
+    // Pre-fill form with Google data
+    const names = (user.displayName || '').split(' ');
+    document.getElementById('sellerFirstName').value = names[0] || '';
+    document.getElementById('sellerLastName').value = names.slice(1).join(' ') || '';
+    document.getElementById('sellerEmail').value = user.email || '';
+    
+    // Hide Google button, show message
+    const googleBtn = document.querySelector('#sellerModal .google-btn');
+    if (googleBtn) {
+        googleBtn.style.display = 'none';
+    }
+    
+    // Add notice
+    const form = document.getElementById('sellerSignupForm');
+    const notice = document.createElement('div');
+    notice.style.cssText = 'background: rgba(40, 167, 69, 0.1); padding: 0.8rem; border-radius: 6px; margin-bottom: 1rem; border: 1px solid rgba(40, 167, 69, 0.3);';
+    notice.innerHTML = '<p style="color: #28a745; font-size: 0.85rem; margin: 0;">Google account connected! Please complete the seller information below.</p>';
+    form.insertBefore(notice, form.firstChild);
+    
+    // Store user temporarily
+    window.pendingSellerUser = user;
+}
+
+function handleSellerSignup(event) {
+    event.preventDefault();
+    
+    // Get date of birth
+    const month = document.getElementById('sellerMonth').value;
+    const day = document.getElementById('sellerDay').value;
+    const year = document.getElementById('sellerYear').value;
+    
+    if (!month || !day || !year) {
+        alert('Please select your complete date of birth');
+        return;
+    }
+    
+    const dateOfBirth = `${year}-${month}-${day}`;
+    
+    const formData = {
+        firstName: document.getElementById('sellerFirstName').value,
+        lastName: document.getElementById('sellerLastName').value,
+        dateOfBirth: dateOfBirth,
+        email: document.getElementById('sellerEmail').value,
+        password: document.getElementById('sellerPassword').value,
+        phone: document.getElementById('sellerPhone').value,
+        businessName: document.getElementById('sellerBusiness').value
+    };
+    
+    // Check if this is a Google sign-up completion
+    if (window.pendingSellerUser) {
+        // Complete Google seller registration
+        completeGoogleSellerRegistration(formData);
+    } else {
+        // Regular email/password registration
+        createEmailSellerAccount(formData);
+    }
+}
+
+function createEmailSellerAccount(formData) {
+    auth.createUserWithEmailAndPassword(formData.email, formData.password)
+        .then((result) => {
+            const user = result.user;
+            return completeSellerRegistration(user, formData);
+        })
+        .catch((error) => {
+            console.error('Email seller signup error:', error);
+            alert('Error creating seller account: ' + error.message);
+        });
+}
+
+function completeGoogleSellerRegistration(formData) {
+    const user = window.pendingSellerUser;
+    completeSellerRegistration(user, formData)
+        .then(() => {
+            delete window.pendingSellerUser;
+        });
+}
+
+function completeSellerRegistration(user, formData) {
+    return user.updateProfile({
+        displayName: `${formData.firstName} ${formData.lastName}`
+    }).then(() => {
+        return db.collection('sellers').doc(user.uid).set({
+            uid: user.uid,
+            firstName: formData.firstName,
+            lastName: formData.lastName,
+            dateOfBirth: formData.dateOfBirth,
+            email: formData.email,
+            phone: formData.phone,
+            businessName: formData.businessName,
+            subscriptionStatus: 'active',
+            monthlyFee: 25,
+            joinedDate: new Date().toISOString(),
+            isSeller: true,
+            products: [],
+            // PayPal payment information
+            paypalEmail: '',
+            paypalVerified: false,
+            paymentSetupComplete: false,
+            // Financial tracking
+            totalSales: 0,
+            pendingPayouts: 0,
+            availableBalance: 0,
+            lastPayoutDate: null,
+            salesHistory: [],
+            payoutHistory: []
+        });
+    }).then(() => {
+        currentUser = user;
+        updateAuthUI();
+        closeSellerSignup();
+        alert('Seller account created successfully! Please complete your PayPal setup in your dashboard.');
+        setTimeout(() => showSellerDashboard(), 1000);
+    });
+}
+
+function populateDatePickers() {
+    const daySelect = document.getElementById('sellerDay');
+    const yearSelect = document.getElementById('sellerYear');
+    
+    // Populate days
+    for (let i = 1; i <= 31; i++) {
+        const option = document.createElement('option');
+        option.value = i.toString().padStart(2, '0');
+        option.textContent = i;
+        daySelect.appendChild(option);
+    }
+    
+    // Populate years (from 1950 to current year - 13 for minimum age)
+    const currentYear = new Date().getFullYear();
+    const minYear = currentYear - 13;
+    for (let i = minYear; i >= 1950; i--) {
+        const option = document.createElement('option');
+        option.value = i;
+        option.textContent = i;
+        yearSelect.appendChild(option);
+    }
+}
+
+function handleSellerButton() {
+    if (!currentUser) {
+        showSellerSignup();
+        return;
+    }
+    
+    // Check if user is already a seller
+    db.collection('sellers').doc(currentUser.uid).get()
+        .then((doc) => {
+            if (doc.exists) {
+                showSellerDashboard();
+            } else {
+                showSellerSignup();
+            }
+        })
+        .catch((error) => {
+            console.error('Error checking seller status:', error);
+            showSellerSignup();
+        });
+}
+
+function updateSellerButton() {
+    const sellerBtn = document.getElementById('dynamicSellerBtn');
+    const btnText = document.getElementById('sellerBtnText');
+    
+    if (currentUser) {
+        db.collection('sellers').doc(currentUser.uid).get()
+            .then((doc) => {
+                if (doc.exists) {
+                    btnText.textContent = 'SELLER DASHBOARD';
+                } else {
+                    btnText.textContent = 'SELL ON WEB VTEC';
+                }
+            })
+            .catch(() => {
+                btnText.textContent = 'SELL ON WEB VTEC';
+            });
+    } else {
+        btnText.textContent = 'SELL ON WEB VTEC';
+    }
+}
+
+// ================================
+// SELLER DASHBOARD FUNCTIONS
+// ================================
+function showSellerDashboard() {
+    document.getElementById('sellerDashboardPage').style.display = 'block';
+    document.body.style.overflow = 'hidden';
+    
+    if (currentUser) {
+        db.collection('sellers').doc(currentUser.uid).get()
+            .then((doc) => {
+                if (doc.exists) {
+                    const sellerData = doc.data();
+                    document.getElementById('sellerWelcome').textContent = `Welcome, ${sellerData.businessName}!`;
+                    
+                    // Check if PayPal setup is complete
+                    if (!sellerData.paymentSetupComplete) {
+                        showPayPalSetupNotification();
+                    }
+                    
+                    updateFinancialOverview(sellerData);
+                }
+            });
+    }
+    
+    loadDashboardOverview();
+    loadDashboardProducts();
+}
+
+function closeSellerDashboardPage() {
+    document.getElementById('sellerDashboardPage').style.display = 'none';
+    document.body.style.overflow = 'auto';
+}
+
+function showDashboardTab(tabName, event) {
+    // Hide all tabs
+    document.querySelectorAll('.dashboard-content').forEach(tab => {
+        tab.style.display = 'none';
+    });
+    
+    // Remove active class from all buttons
+    document.querySelectorAll('.dashboard-tab').forEach(btn => {
+        btn.classList.remove('active');
+        btn.style.color = '#666';
+        btn.style.borderBottomColor = 'transparent';
+    });
+    
+    // Show selected tab
+    document.getElementById(tabName + '-tab').style.display = 'block';
+    
+    // Activate clicked button
+    if (event && event.target) {
+        event.target.classList.add('active');
+        event.target.style.color = '#007185';
+        event.target.style.borderBottomColor = '#007185';
+    }
+    
+    // Load tab-specific content
+    if (tabName === 'my-products') {
+        loadDashboardProducts();
+    } else if (tabName === 'orders') {
+        loadSellerOrders();
+    }
+}
+
+function loadDashboardOverview() {
+    if (!currentUser) return;
+    
+    db.collection('products')
+        .where('sellerId', '==', currentUser.uid)
+        .onSnapshot((snapshot) => {
+            document.getElementById('totalProducts').textContent = snapshot.size;
+        });
+}
+
+function loadDashboardProducts() {
+    if (!currentUser) return;
+    
+    db.collection('products')
+        .where('sellerId', '==', currentUser.uid)
+        .onSnapshot((snapshot) => {
+            const productsList = document.getElementById('dashboardProductsList');
+            productsList.innerHTML = '';
+            
+            if (snapshot.empty) {
+                productsList.innerHTML = '<p style="color: #666; text-align: center; padding: 2rem;">No products added yet. Add your first product!</p>';
+                return;
+            }
+            
+            snapshot.forEach((doc) => {
+                const product = { id: doc.id, ...doc.data() };
+                const productElement = createDashboardProductCard(product);
+                productsList.appendChild(productElement);
+            });
+        });
+}
+
+function createDashboardProductCard(product) {
+    const card = document.createElement('div');
+    card.className = 'dashboard-product-card';
+    
+    let deliveryInfo = [];
+    if (product.knutsfordDelivery) deliveryInfo.push(`Knutsford: ${product.knutsfordDelivery} days`);
+    if (product.taraDelivery) deliveryInfo.push(`Tara: ${product.taraDelivery} days`);
+    const deliveryDisplay = deliveryInfo.length > 0 ? deliveryInfo.join(' | ') : 'Not set';
+    
+    card.innerHTML = `
+        <img src="${product.image}" alt="${product.name}" class="product-image-dash">
+        <div class="product-info-dash">
+            <h4 class="product-title-dash">${product.name}</h4>
+            <p style="color: #666; margin: 0.5rem 0; font-size: 0.9rem; line-height: 1.4;">${product.description}</p>
+            <div class="product-meta">
+                <span><strong>$${product.price}</strong></span>
+                <span>Category: ${product.category}</span>
+                <span>Delivery: ${deliveryDisplay}</span>
+            </div>
+        </div>
+        <div class="product-actions">
+            <button class="btn-edit" onclick="editDashboardProduct('${product.id}')">Edit</button>
+            <button class="btn-delete" onclick="deleteDashboardProduct('${product.id}')">Delete</button>
+        </div>
+    `;
+    
+    return card;
+}
+
+function handleDashboardAddProduct(event) {
+    event.preventDefault();
+    
+    if (!currentUser) {
+        alert('You must be signed in to add products');
+        return;
+    }
+    
+    // Collect all image URLs
+    const images = [];
+    for (let i = 1; i <= 5; i++) {
+        const imageUrl = document.getElementById(`dashboardProductImage${i}`)?.value;
+        if (imageUrl && imageUrl.trim()) {
+            images.push(imageUrl.trim());
+        }
+    }
+    
+    if (images.length === 0) {
+        alert('Please provide at least one product image');
+        return;
+    }
+    
+    // Collect sizes for clothing
+    let sizes = [];
+    if (document.getElementById('dashboardProductCategory').value === 'clothing') {
+        const sizeCheckboxes = document.querySelectorAll('#clothingSizeRow input[type="checkbox"]:checked');
+        sizes = Array.from(sizeCheckboxes).map(cb => cb.value);
+    }
+    
+    const knutsfordDelivery = document.getElementById('dashboardKnutsfordDelivery').value;
+    const taraDelivery = document.getElementById('dashboardTaraDelivery').value;
+    
+    // Get stock values
+    const stock = parseInt(document.getElementById('dashboardProductStock').value) || 0;
+    const lowStockAlert = parseInt(document.getElementById('dashboardLowStockAlert').value) || 5;
+    
+    if (stock < 0) {
+        alert('Stock quantity cannot be negative');
+        return;
+    }
+    
+    if (lowStockAlert < 0) {
+        alert('Low stock alert cannot be negative');
+        return;
+    }
+    
+    const productData = {
+        name: document.getElementById('dashboardProductName').value,
+        description: document.getElementById('dashboardProductDescription').value,
+        price: parseFloat(document.getElementById('dashboardProductPrice').value),
+        category: document.getElementById('dashboardProductCategory').value,
+        image: images[0], // First image as main image
+        images: images, // All images for gallery
+        sizes: sizes, // Available sizes for clothing
+        knutsfordDelivery: knutsfordDelivery,
+        taraDelivery: taraDelivery,
+        stock: stock, // Available quantity
+        lowStockAlert: lowStockAlert, // Alert threshold
+        originalStock: stock, // Track original stock for analytics
+        sellerId: currentUser.uid,
+        sellerBusinessName: '',
+        reviews: [],
+        createdAt: new Date().toISOString(),
+        isActive: stock > 0 // Automatically set active status based on stock
+    };
+    
+    // Get seller's business name
+    db.collection('sellers').doc(currentUser.uid).get()
+        .then((doc) => {
+            if (doc.exists) {
+                productData.sellerBusinessName = doc.data().businessName;
+                
+                // Add product to Firestore
+                return db.collection('products').add(productData);
+            } else {
+                throw new Error('Seller profile not found');
+            }
+        })
+        .then((docRef) => {
+            // Check if stock is below alert threshold
+            if (stock <= lowStockAlert && stock > 0) {
+                console.log(`Low stock alert: Product ${productData.name} has ${stock} items remaining`);
+                // You could send a notification here
+            }
+            
+            alert(`Product added successfully! ${stock > 0 ? `${stock} items in stock.` : 'Product is out of stock.'}`);
+            document.getElementById('dashboardAddProductForm').reset();
+            
+            // Reset size checkboxes
+            document.querySelectorAll('#clothingSizeRow input[type="checkbox"]').forEach(cb => cb.checked = false);
+            
+            // Hide size row
+            document.getElementById('clothingSizeRow').style.display = 'none';
+            
+            // Reset stock fields to default values
+            document.getElementById('dashboardProductStock').value = '10';
+            document.getElementById('dashboardLowStockAlert').value = '5';
+            
+            showDashboardTab('my-products');
+        })
+        .catch((error) => {
+            console.error('Error adding product:', error);
+            alert('Error adding product: ' + error.message);
+        });
+}
+
+function editDashboardProduct(productId) {
+    // Get product data
+    db.collection('products').doc(productId).get()
+        .then((doc) => {
+            if (doc.exists) {
+                const product = doc.data();
+                
+                // Populate edit form
+                document.getElementById('editProductId').value = productId;
+                document.getElementById('editProductName').value = product.name;
+                document.getElementById('editProductPrice').value = product.price;
+                document.getElementById('editProductDescription').value = product.description;
+                document.getElementById('editProductCategory').value = product.category;
+                
+                // Populate all image fields
+                const images = product.images || [product.image];
+                for (let i = 1; i <= 5; i++) {
+                    const imageField = document.getElementById(`editProductImage${i}`);
+                    if (imageField) {
+                        imageField.value = images[i-1] || '';
+                    }
+                }
+                
+                document.getElementById('editKnutsfordDelivery').value = product.knutsfordDelivery || '';
+                document.getElementById('editTaraDelivery').value = product.taraDelivery || '';
+                
+                // Only populate stock fields if they exist in the form
+                const stockField = document.getElementById('editProductStock');
+                const alertField = document.getElementById('editLowStockAlert');
+                if (stockField) {
+                    stockField.value = product.stock || 0;
+                }
+                if (alertField) {
+                    alertField.value = product.lowStockAlert || 5;
+                }
+                
+                // Show modal
+                document.getElementById('editProductModal').style.display = 'block';
+            }
+        })
+        .catch((error) => {
+            console.error('Error loading product:', error);
+            alert('Error loading product details');
+        });
+}
+
+function closeEditProduct() {
+    document.getElementById('editProductModal').style.display = 'none';
+}
+
+function handleEditProduct(event) {
+    event.preventDefault();
+    
+    const productId = document.getElementById('editProductId').value;
+    
+    // Collect all image URLs
+    const images = [];
+    for (let i = 1; i <= 5; i++) {
+        const imageUrl = document.getElementById(`editProductImage${i}`)?.value;
+        if (imageUrl && imageUrl.trim()) {
+            images.push(imageUrl.trim());
+        }
+    }
+    
+    if (images.length === 0) {
+        alert('Please provide at least one product image');
+        return;
+    }
+    
+    const updatedProduct = {
+        name: document.getElementById('editProductName').value,
+        description: document.getElementById('editProductDescription').value,
+        price: parseFloat(document.getElementById('editProductPrice').value),
+        category: document.getElementById('editProductCategory').value,
+        image: images[0], // First image as main
+        images: images, // All images
+        knutsfordDelivery: document.getElementById('editKnutsfordDelivery').value,
+        taraDelivery: document.getElementById('editTaraDelivery').value,
+        stock: parseInt(document.getElementById('editProductStock').value) || 0,
+        lowStockAlert: parseInt(document.getElementById('editLowStockAlert').value) || 5,
+        updatedAt: new Date().toISOString()
+    };
+    
+    // Update product in Firestore
+    db.collection('products').doc(productId).update(updatedProduct)
+        .then(() => {
+            alert('Product updated successfully!');
+            closeEditProduct();
+        })
+        .catch((error) => {
+            console.error('Error updating product:', error);
+            alert('Error updating product: ' + error.message);
+        });
+}
+
+function deleteDashboardProduct(productId) {
+    if (confirm('Are you sure you want to delete this product?')) {
+        db.collection('products').doc(productId).delete()
+            .then(() => {
+                alert('Product deleted successfully!');
+            })
+            .catch((error) => {
+                console.error('Error deleting product:', error);
+                alert('Error deleting product: ' + error.message);
+            });
+    }
+}
+
+// ================================
+// SELLER ORDERS FUNCTIONS
+// ================================
+function loadSellerOrders() {
+    if (!currentUser) return;
+    
+    const ordersList = document.getElementById('sellerOrdersList');
+    ordersList.innerHTML = '<div style="text-align: center; padding: 2rem;">Loading orders...</div>';
+    
+    db.collection('sellerOrders')
+        .where('sellerId', '==', currentUser.uid)
+        .orderBy('createdAt', 'desc')
+        .onSnapshot((snapshot) => {
+            ordersList.innerHTML = '';
+            
+            if (snapshot.empty) {
+                ordersList.innerHTML = '<div style="text-align: center; color: #666; padding: 3rem;">No orders yet. Your products will appear here when customers place orders.</div>';
+                return;
+            }
+            
+            snapshot.forEach((doc) => {
+                const order = doc.data();
+                const orderElement = createSellerOrderCard(order);
+                ordersList.appendChild(orderElement);
+            });
+        }, (error) => {
+            console.error('Error loading seller orders:', error);
+            ordersList.innerHTML = '<div style="text-align: center; color: #ff4757; padding: 2rem;">Error loading orders. Please try again.</div>';
+        });
+}
+
+function createSellerOrderCard(order) {
+    const card = document.createElement('div');
+    card.style.cssText = 'background: white; border-radius: 12px; padding: 2rem; margin-bottom: 2rem; box-shadow: 0 2px 8px rgba(0,0,0,0.1); border: 1px solid #e9ecef;';
+    
+    const orderDate = new Date(order.createdAt).toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'long', 
+        day: 'numeric'
+    });
+    
+    const statusColor = getStatusColor(order.status);
+    const statusText = getStatusText(order.status);
+    
+    card.innerHTML = `
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+            <h3 style="color: #333; margin: 0;">Order #${order.orderNumber}</h3>
+            <span style="color: #666; font-size: 0.9rem;">${orderDate}</span>
+        </div>
+        
+        <div style="background: #f8f9fa; padding: 1.5rem; border-radius: 8px; margin-bottom: 1.5rem;">
+            <h4 style="color: #333; margin-bottom: 1rem;">Customer Information</h4>
+            <p style="color: #666; margin: 0;"><strong>Email:</strong> ${order.buyerEmail}</p>
+            <p style="color: #666; margin: 0.5rem 0 0 0;"><strong>Delivery:</strong> ${order.shippingAddress?.deliveryLocation || 'Not specified'}</p>
+        </div>
+        
+        <div style="margin-bottom: 1.5rem;">
+            <h4 style="color: #333; margin-bottom: 1rem;">Items Ordered</h4>
+            ${order.items.map(item => `
+                <div style="display: flex; justify-content: space-between; padding: 0.8rem 0; border-bottom: 1px solid #e9ecef;">
+                    <div>
+                        <strong>${item.productName}</strong>
+                        <span style="color: #666; margin-left: 10px;">Qty: ${item.quantity}</span>
+                    </div>
+                    <span>${item.subtotal.toFixed(2)}</span>
+                </div>
+            `).join('')}
+            
+            <div style="text-align: right; margin-top: 1rem; padding-top: 1rem; border-top: 2px solid #007185;">
+                <h4 style="color: #007185; margin: 0;">Total: ${order.subtotal.toFixed(2)}</h4>
+            </div>
+        </div>
+        
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+            <div style="display: flex; align-items: center; gap: 1rem;">
+                <span style="font-weight: 600;">Status:</span>
+                <select onchange="updateOrderStatus('${order.orderNumber}', this.value)" style="padding: 0.5rem; border: 2px solid ${statusColor}; border-radius: 6px; background: white; color: #333;">
+                    <option value="pending" ${order.status === 'pending' ? 'selected' : ''}>Pending</option>
+                    <option value="processing" ${order.status === 'processing' ? 'selected' : ''}>Processing</option>
+                    <option value="shipped" ${order.status === 'shipped' ? 'selected' : ''}>Shipped</option>
+                    <option value="delivered" ${order.status === 'delivered' ? 'selected' : ''}>Delivered</option>
+                </select>
+            </div>
+            
+            <span style="background: ${statusColor}; color: white; padding: 0.5rem 1rem; border-radius: 20px; font-weight: 600;">${statusText}</span>
+        </div>
+    `;
+    
+    return card;
+}
+
+function updateOrderStatus(orderNumber, newStatus) {
+    // Update in sellerOrders collection
+    db.collection('sellerOrders')
+        .where('orderNumber', '==', orderNumber)
+        .get()
+        .then((snapshot) => {
+            if (!snapshot.empty) {
+                const doc = snapshot.docs[0];
+                const orderData = doc.data();
+                
+                // Update seller order
+                doc.ref.update({
+                    status: newStatus,
+                    updatedAt: new Date().toISOString(),
+                    statusHistory: firebase.firestore.FieldValue.arrayUnion({
+                        status: newStatus,
+                        timestamp: new Date().toISOString(),
+                        updatedBy: currentUser.uid
+                    })
+                });
+                
+                // Update main order
+                const mainOrderRef = db.collection('orders').doc(orderData.mainOrderId);
+                mainOrderRef.get().then((orderDoc) => {
+                    if (orderDoc.exists) {
+                        const order = orderDoc.data();
+                        const updatedSellers = { ...order.sellers };
+                        
+                        // Find and update the seller's status
+                        Object.keys(updatedSellers).forEach(sellerId => {
+                            if (updatedSellers[sellerId].orderNumber === orderNumber) {
+                                updatedSellers[sellerId].status = newStatus;
+                            }
+                        });
+                        
+                        mainOrderRef.update({
+                            sellers: updatedSellers,
+                            updatedAt: new Date().toISOString()
+                        });
+                        
+                        // Trigger email notification via Firebase function
+                        triggerStatusUpdateEmail(orderData, newStatus);
+                    }
+                });
+            }
+        })
+        .catch((error) => {
+            console.error('Error updating order status:', error);
+            alert('Error updating order status. Please try again.');
+        });
+}
+
+function triggerStatusUpdateEmail(orderData, newStatus) {
+    // Add document to trigger email function
+    db.collection('emailTriggers').add({
+        type: 'status_update',
+        orderNumber: orderData.orderNumber,
+        buyerEmail: orderData.buyerEmail,
+        sellerName: orderData.sellerName,
+        newStatus: newStatus,
+        timestamp: new Date().toISOString()
+    });
+}
+
+function getStatusColor(status) {
+    const colors = {
+        'pending': '#ffc107',
+        'processing': '#007185', 
+        'shipped': '#6610f2',
+        'delivered': '#28a745'
+    };
+    return colors[status] || '#6c757d';
+}
+
+function getStatusText(status) {
+    const texts = {
+        'pending': 'Pending',
+        'processing': 'Processing',
+        'shipped': 'Shipped', 
+        'delivered': 'Delivered'
+    };
+    return texts[status] || 'Unknown';
+}
+
+// ================================
+// PAYPAL SETUP FUNCTIONS
+// ================================
+function showPayPalSetupNotification() {
+    const notification = document.createElement('div');
+    notification.style.cssText = `
+        background: #ff9800;
+        color: white;
+        padding: 1rem;
+        text-align: center;
+        border-radius: 8px;
+        margin: 1rem 0;
+        cursor: pointer;
+    `;
+    notification.innerHTML = `
+        <strong>⚠️ PayPal Setup Required</strong><br>
+        Complete your PayPal setup to receive payments
+    `;
+    notification.onclick = () => showPayPalSetup();
+    
+    const dashboard = document.querySelector('#sellerDashboardPage .dashboard-content-wrapper');
+    dashboard.insertBefore(notification, dashboard.firstChild);
+}
+
+function showPayPalSetup() {
+    const modal = document.createElement('div');
+    modal.className = 'modal';
+    modal.style.display = 'block';
+    modal.innerHTML = `
+        <div class="modal-content" style="max-width: 500px;">
+            <span class="close" onclick="this.parentElement.parentElement.remove()">&times;</span>
+            <h2 style="color: #ffd700; margin-bottom: 1rem;">PayPal Setup</h2>
+            
+            <form id="paypalSetupForm" onsubmit="handlePayPalSetup(event)">
+                <div class="form-group">
+                    <label>PayPal Email Address:</label>
+                    <input type="email" id="paypalEmail" required placeholder="Enter your PayPal email">
+                    <small style="color: #ccc; display: block; margin-top: 0.3rem;">
+                        This is where you'll receive payments from sales
+                    </small>
+                </div>
+                
+                <div class="form-group">
+                    <label>Confirm PayPal Email:</label>
+                    <input type="email" id="confirmPaypalEmail" required placeholder="Confirm your PayPal email">
+                </div>
+                
+                <div style="background: rgba(255, 215, 0, 0.1); padding: 1rem; border-radius: 8px; margin: 1rem 0; border: 1px solid rgba(255, 215, 0, 0.3);">
+                    <h4 style="color: #ffd700; margin: 0 0 0.5rem 0;">Payment Terms:</h4>
+                    <ul style="color: #ccc; margin: 0; padding-left: 1.5rem; font-size: 0.9rem;">
+                        <li>5% platform fee on all sales</li>
+                        <li>PayPal processing fees apply</li>
+                        <li>Payments processed within 24-48 hours</li>
+                        <li>Minimum payout: $20</li>
+                    </ul>
+                </div>
+                
+                <button type="submit" class="btn" style="width: 100%;">Setup PayPal Account</button>
+            </form>
+        </div>
+    `;
+    document.body.appendChild(modal);
+}
+
+function handlePayPalSetup(event) {
+    event.preventDefault();
+    
+    const paypalEmail = document.getElementById('paypalEmail').value;
+    const confirmEmail = document.getElementById('confirmPaypalEmail').value;
+    
+    if (paypalEmail !== confirmEmail) {
+        alert('PayPal email addresses do not match');
+        return;
+    }
+    
+    // Update seller with PayPal information
+    db.collection('sellers').doc(currentUser.uid).update({
+        paypalEmail: paypalEmail,
+        paymentSetupComplete: true,
+        paypalSetupDate: new Date().toISOString()
+    }).then(() => {
+        alert('PayPal setup completed successfully!');
+        document.querySelector('.modal').remove();
+        location.reload(); // Refresh dashboard
+    }).catch((error) => {
+        console.error('PayPal setup error:', error);
+        alert('Error setting up PayPal. Please try again.');
+    });
+}
+
+function updateFinancialOverview(sellerData) {
+    // This function would be called to update financial overview
+    // Implementation depends on your specific financial tracking needs
+    console.log('Updating financial overview for seller:', sellerData.businessName);
+}
+
+// ================================
+// PHOTO GALLERY FUNCTIONS
+// ================================
+let currentPhotoIndex = 0;
+let isPointerDown = false;
+let startX = 0;
+let currentX = 0;
+let startTime = 0;
+let currentProductId = null;
+
+function initializePhotoGallery(productId) {
+    currentProductId = productId;
+    currentPhotoIndex = 0;
+    
+    const container = document.getElementById(`photoContainer-${productId}`);
+    if (!container) {
+        return;
+    }
+    
+    let touchStartX = 0;
+    let touchStartY = 0;
+    let touchStartTime = 0;
+    let isScrolling = null;
+    
+    container.addEventListener('touchstart', (e) => {
+        touchStartX = e.touches[0].clientX;
+        touchStartY = e.touches[0].clientY;
+        touchStartTime = Date.now();
+        isScrolling = null;
+    }, { passive: true });
+    
+    container.addEventListener('touchmove', (e) => {
+        if (!touchStartX || !touchStartY) return;
+        
+        const touchX = e.touches[0].clientX;
+        const touchY = e.touches[0].clientY;
+        const deltaX = touchStartX - touchX;
+        const deltaY = touchStartY - touchY;
+        
+        // Determine scroll direction on first move
+        if (isScrolling === null) {
+            isScrolling = Math.abs(deltaX) < Math.abs(deltaY) ? 'vertical' : 'horizontal';
+        }
+        
+        // Only prevent default for clear horizontal swipes
+        if (isScrolling === 'horizontal' && Math.abs(deltaX) > 20) {
+            e.preventDefault();
+        }
+    }, { passive: false });
+    
+    container.addEventListener('touchend', (e) => {
+        if (!e.changedTouches[0]) return;
+        
+        const touchEndX = e.changedTouches[0].clientX;
+        const deltaX = touchEndX - touchStartX;
+        const deltaTime = Date.now() - touchStartTime;
+        
+        // Only trigger photo change for clear horizontal swipes
+        if (isScrolling === 'horizontal' && Math.abs(deltaX) > 50 && deltaTime < 500) {
+            if (deltaX > 50) {
+                changePhoto(currentProductId, -1);
+            } else if (deltaX < -50) {
+                changePhoto(currentProductId, 1);
+            }
+        }
+        
+        // Reset values
+        touchStartX = 0;
+        touchStartY = 0;
+        isScrolling = null;
+    }, { passive: true });
+    
+    // Mouse events for desktop
+    container.addEventListener('mousedown', handlePointerStart);
+    container.addEventListener('mousemove', handlePointerMove);
+    container.addEventListener('mouseup', handlePointerEnd);
+    container.addEventListener('mouseleave', handlePointerEnd);
+    
+    container.addEventListener('dragstart', e => e.preventDefault());
+}
+
+function handlePointerStart(e) {
+    isPointerDown = true;
+    startTime = Date.now();
+    const container = e.currentTarget;
+    
+    if (e.type === 'mousedown') {
+        startX = e.clientX;
+        container.style.cursor = 'grabbing';
+    } else if (e.type === 'touchstart') {
+        startX = e.touches[0].clientX;
+    }
+    
+    currentX = startX;
+    container.classList.add('dragging');
+}
+
+function handlePointerMove(e) {
+    if (!isPointerDown) return;
+    
+    const container = e.currentTarget;
+    
+    if (e.type === 'mousemove') {
+        currentX = e.clientX;
+    } else if (e.type === 'touchmove') {
+        currentX = e.touches[0].clientX;
+        
+        // Only prevent default for horizontal swipes, allow vertical scrolling
+        const deltaX = Math.abs(currentX - startX);
+        const deltaY = Math.abs(e.touches[0].clientY - (e.touches[0].clientY || 0));
+        
+        // If horizontal movement is greater than vertical, prevent default (horizontal swipe)
+        if (deltaX > deltaY) {
+            e.preventDefault();
+        }
+    }
+    
+    const deltaX = currentX - startX;
+    const baseTransform = -currentPhotoIndex * 20;
+    const dragPercent = (deltaX / container.offsetWidth) * 20;
+    
+    container.style.transform = `translateX(${baseTransform + dragPercent}%)`;
+}
+
+function handlePointerEnd(e) {
+    if (!isPointerDown) return;
+    
+    isPointerDown = false;
+    const container = e.currentTarget;
+    const deltaX = currentX - startX;
+    const deltaTime = Date.now() - startTime;
+    const velocity = Math.abs(deltaX) / deltaTime;
+    
+    container.style.cursor = 'grab';
+    container.classList.remove('dragging');
+    
+    // Determine if swipe was significant enough
+    const threshold = 50; // Minimum pixels to trigger swipe
+    const shouldSwipe = Math.abs(deltaX) > threshold || velocity > 0.3;
+    
+    if (shouldSwipe) {
+        if (deltaX > 0) {
+            changePhoto(currentProductId, -1);
+        } else {
+            changePhoto(currentProductId, 1);
+        }
+    } else {
+        updatePhotoDisplay(currentProductId);
+    }
+}
+
+function changePhoto(productId, direction) {
+    const product = products.find(p => p.id === productId);
+    const images = (product.images || [product.image]).filter(img => img);
+    
+    currentPhotoIndex += direction;
+    if (currentPhotoIndex >= images.length) currentPhotoIndex = 0;
+    if (currentPhotoIndex < 0) currentPhotoIndex = images.length - 1;
+    
+    updatePhotoDisplay(productId);
+}
+
+function goToPhoto(productId, index) {
+    currentPhotoIndex = index;
+    updatePhotoDisplay(productId);
+}
+
+function updatePhotoDisplay(productId) {
+    const container = document.getElementById(`photoContainer-${productId}`);
+    const dots = document.querySelectorAll('.photo-dot');
+    
+    if (container) {
+        const newTransform = `translateX(-${currentPhotoIndex * 20}%)`;
+        container.style.transform = newTransform;
+        
+        // Re-enable transition
+        container.style.transition = 'transform 0.3s ease';
+        setTimeout(() => {
+            container.style.transition = '';
+        }, 300);
+    }
+    
+    dots.forEach((dot, i) => {
+        dot.classList.toggle('active', i === currentPhotoIndex);
+    });
+}
+
+// ================================
+// UTILITY FUNCTIONS
+// ================================
+function calculateDeliveryDates(deliveryDays) {
+    try {
+        if (!deliveryDays || typeof deliveryDays !== 'string') {
+            return null;
+        }
+        
+        const parts = deliveryDays.split('-');
+        if (parts.length !== 2) {
+            return null;
+        }
+        
+        const minDays = parseInt(parts[0]);
+        const maxDays = parseInt(parts[1]);
+        
+        if (isNaN(minDays) || isNaN(maxDays)) {
+            return null;
+        }
+        
+        const today = new Date();
+        
+        const startDate = new Date(today);
+        startDate.setDate(today.getDate() + minDays);
+        
+        const endDate = new Date(today);
+        endDate.setDate(today.getDate() + maxDays);
+        
+        return {
+            start: startDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+            end: endDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+        };
+    } catch (error) {
+        console.error('Error calculating delivery dates:', error);
+        return null;
+    }
+}
+
+function formatDate(dateString) {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+}
+
+function sendStatusUpdateEmail(customerEmail, orderNumber, status, sellerName) {
+    console.log(`Email notification: Order ${orderNumber} from ${sellerName} is now ${status} for ${customerEmail}`);
+    // Here you would integrate with your email service
+}
+
+function emailOrderDetails(orderId) {
+    console.log(`Emailing order details for ${orderId}`);
+    alert('Order details have been sent to your email address.');
+    // Here you would integrate with your email service
+}
+
+// ================================
+// CUSTOMER ORDERS FUNCTIONS
+// ================================
+function showCustomerOrders() {
+    if (!currentUser) {
+        alert('Please sign in to view your orders');
+        return;
+    }
+    
+    document.getElementById('customerOrdersPage').style.display = 'block';
+    document.body.style.overflow = 'hidden';
+    loadCustomerOrders();
+}
+
+function closeCustomerOrders() {
+    document.getElementById('customerOrdersPage').style.display = 'none';
+    document.body.style.overflow = 'auto';
+}
+
+function loadCustomerOrders() {
+    if (!currentUser) return;
+    
+    const ordersList = document.getElementById('customerOrdersList');
+    ordersList.innerHTML = '<div style="text-align: center; padding: 2rem;">Loading your orders...</div>';
+    
+    db.collection('orders')
+        .where('buyerId', '==', currentUser.uid)
+        .orderBy('createdAt', 'desc')
+        .onSnapshot((snapshot) => {
+            ordersList.innerHTML = '';
+            
+            if (snapshot.empty) {
+                ordersList.innerHTML = '<div style="text-align: center; color: #666; padding: 3rem;">No orders yet. Start shopping to see your orders here!</div>';
+                return;
+            }
+            
+            snapshot.forEach((doc) => {
+                const order = { id: doc.id, ...doc.data() };
+                const orderElement = createCustomerOrderCard(order);
+                ordersList.appendChild(orderElement);
+            });
+        }, (error) => {
+            console.error('Error loading customer orders:', error);
+            ordersList.innerHTML = '<div style="text-align: center; color: #ff4757; padding: 2rem;">Error loading orders. Please try again.</div>';
+        });
+}
+
+function createCustomerOrderCard(order) {
+    const card = document.createElement('div');
+    card.style.cssText = 'background: white; border-radius: 12px; padding: 2rem; margin-bottom: 2rem; box-shadow: 0 2px 8px rgba(0,0,0,0.1); border: 1px solid #e9ecef;';
+    
+    const orderDate = new Date(order.createdAt).toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'long', 
+        day: 'numeric'
+    });
+    
+    let sellersHTML = '';
+    Object.entries(order.sellers).forEach(([sellerId, sellerData]) => {
+        const statusColor = getStatusColor(sellerData.status);
+        const statusText = getStatusText(sellerData.status);
+        
+        sellersHTML += `
+            <div style="background: #f8f9fa; padding: 1.5rem; border-radius: 8px; margin-bottom: 1rem; border-left: 3px solid ${statusColor};">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                    <h4 style="color: #333; margin: 0;">From: ${sellerData.sellerName}</h4>
+                    <span style="background: ${statusColor}; color: white; padding: 0.3rem 0.8rem; border-radius: 15px; font-size: 0.8rem; font-weight: 600;">${statusText}</span>
+                </div>
+                
+                ${sellerData.items.map(item => `
+                    <div style="display: flex; justify-content: space-between; padding: 0.5rem 0; border-bottom: 1px solid #e9ecef;">
+                        <div>
+                            <strong>${item.productName}</strong>
+                            <span style="color: #666; margin-left: 10px;">x${item.quantity}</span>
+                        </div>
+                        <span>${item.subtotal.toFixed(2)}</span>
+                    </div>
+                `).join('')}
+                
+                <div style="text-align: right; margin-top: 0.5rem;">
+                    <strong style="color: #007185;">Subtotal: ${sellerData.subtotal.toFixed(2)}</strong>
+                </div>
+            </div>
+        `;
+    });
+    
+    card.innerHTML = `
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+            <h3 style="color: #333; margin: 0;">Order #${order.orderId}</h3>
+            <span style="color: #666; font-size: 0.9rem;">${orderDate}</span>
+        </div>
+        
+        ${sellersHTML}
+        
+        <div style="background: rgba(255, 215, 0, 0.1); padding: 1rem; border-radius: 8px; margin-top: 1rem; text-align: center;">
+            <h4 style="color: #007185; margin: 0;">Total: ${order.totalAmount.toFixed(2)}</h4>
+            <p style="color: #666; font-size: 0.8rem; margin: 0.5rem 0 0 0;">
+                Delivery: ${order.shippingAddress?.deliveryLocation || 'Not specified'}
+            </p>
+        </div>
+        
+        <div style="text-align: center; margin-top: 1rem;">
+            <button onclick="emailOrderDetails('${order.orderId}')" style="background: #007185; color: white; border: none; padding: 0.5rem 1rem; border-radius: 6px; cursor: pointer; font-size: 0.85rem;">Email Order Details</button>
+        </div>
+    `;
+    
+    return card;
+}
+</script>
