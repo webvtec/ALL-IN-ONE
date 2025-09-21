@@ -3436,9 +3436,21 @@ function handleSellerSignup(event) {
         businessName: document.getElementById('sellerBusiness').value
     };
     
+    // Validate required fields
+    if (!formData.firstName || !formData.lastName || !formData.email || 
+        !formData.password || !formData.phone || !formData.businessName) {
+        alert('Please fill in all required fields');
+        return;
+    }
+    
+    if (formData.password.length < 6) {
+        alert('Password must be at least 6 characters long');
+        return;
+    }
+    
     // Show payment modal for seller subscription
     showSellerPaymentModal(formData);
-}
+    }
 
 
 function showSellerPaymentModal(formData) {
@@ -3494,6 +3506,53 @@ function showSellerPaymentModal(formData) {
     processSellerSubscriptionPayment(formData, modal);
 }
 
+function processSellerSubscriptionPayment(formData, modal) {
+    const monthlyFeeJMD = 2300;
+    const subscriptionAmount = convertJMDToUSD(monthlyFeeJMD);
+    
+    // Check if PayPal is loaded
+    if (typeof paypal === 'undefined') {
+        alert('PayPal is not loaded. Please refresh the page and try again.');
+        return;
+    }
+    
+    paypal.Buttons({
+        createOrder: function(data, actions) {
+            return actions.order.create({
+                purchase_units: [{
+                    amount: {
+                        value: subscriptionAmount,
+                        currency_code: 'USD'
+                    },
+                    description: `WEBVTEC Premium Seller Subscription - ${formData.businessName} (Monthly: JMD $${monthlyFeeJMD})`
+                }],
+                application_context: {
+                    shipping_preference: 'NO_SHIPPING'
+                }
+            });
+        },
+        onApprove: function(data, actions) {
+            return actions.order.capture().then(function(details) {
+                console.log('Payment successful:', details);
+                handleSellerSubscriptionSuccess(details, formData, modal);
+            });
+        },
+        onError: function(err) {
+            console.error('Seller subscription payment error:', err);
+            alert('Payment failed. Please try again or contact support.');
+        },
+        onCancel: function(data) {
+            console.log('Seller subscription payment cancelled');
+            alert('Payment cancelled. You can complete your subscription anytime.');
+        },
+        style: {
+            color: 'blue',
+            shape: 'rect',
+            label: 'paypal',
+            height: 40
+        }
+    }).render('#seller-paypal-button-container');
+}
 
 function processSellerSubscriptionPayment(formData, modal) {
     const monthlyFeeJMD = 2300;
@@ -3711,6 +3770,17 @@ function completeGoogleSellerRegistration(formData) {
         .then(() => {
             delete window.pendingSellerUser;
         });
+}
+
+function debugSellerPayment() {
+    console.log('PayPal loaded:', typeof paypal !== 'undefined');
+    console.log('Firebase loaded:', typeof firebase !== 'undefined');
+    console.log('Exchange rate:', JMD_TO_USD_RATE);
+    console.log('Test conversion JMD 2300 to USD:', convertJMDToUSD(2300));
+    
+    if (typeof paypal === 'undefined') {
+        console.error('PayPal SDK not loaded - check your Client ID');
+    }
 }
 
 function completeSellerRegistration(user, formData) {
