@@ -1574,7 +1574,7 @@ body {
             
             <div style="background: rgba(255, 215, 0, 0.1); padding: 0.8rem; border-radius: 6px; margin: 1rem 0; border: 1px solid rgba(255, 215, 0, 0.3);">
                 <p style="color: #ffd700; font-size: 0.8rem; margin: 0;">
-                    By signing up as a seller, you agree to pay a monthly subscription fee of $25. This will be charged to your account monthly.
+                    By signing up as a seller, you agree to pay a monthly subscription fee of $2,300 (JMD).
                 </p>
             </div>
 
@@ -3436,16 +3436,263 @@ function handleSellerSignup(event) {
         businessName: document.getElementById('sellerBusiness').value
     };
     
+    // Show payment modal for seller subscription
+    showSellerPaymentModal(formData);
+}
+
+
+function showSellerPaymentModal(formData) {
+    const monthlyFeeJMD = 2300;
+    const monthlyFeeUSD = convertJMDToUSD(monthlyFeeJMD);
+    
+    const modal = document.createElement('div');
+    modal.className = 'modal';
+    modal.style.display = 'block';
+    modal.innerHTML = `
+        <div class="modal-content" style="max-width: 500px;">
+            <span class="close" onclick="this.parentElement.parentElement.remove()">&times;</span>
+            <h2 style="color: #ffd700; margin-bottom: 1rem;">Seller Subscription Payment</h2>
+            
+            <div style="background: rgba(255, 215, 0, 0.1); padding: 1rem; border-radius: 8px; margin: 1rem 0;">
+                <h3 style="color: #ffd700; margin: 0 0 0.5rem 0;">Premium Seller Subscription</h3>
+                <p style="color: #ccc; margin: 0;">Business: ${formData.businessName}</p>
+                <h4 style="color: #ffd700; margin: 0.5rem 0 0 0;">Monthly Fee: JMD $2,300.00</h4>
+                <p style="color: #ccc; font-size: 0.8rem; margin: 0.3rem 0 0 0;">PayPal will charge: USD $${monthlyFeeUSD}</p>
+                <p style="color: #999; font-size: 0.75rem; margin: 0.2rem 0 0 0;">Exchange rate: 1 JMD = ${JMD_TO_USD_RATE} USD</p>
+            </div>
+            
+            <div style="background: rgba(255, 215, 0, 0.05); padding: 1rem; border-radius: 8px; margin: 1rem 0; border: 1px solid rgba(255, 215, 0, 0.2);">
+                <h4 style="color: #ffd700; margin: 0 0 0.5rem 0;">Premium Benefits:</h4>
+                <ul style="color: #ccc; margin: 0; padding-left: 1.5rem; font-size: 0.9rem;">
+                    <li>Unlimited product listings</li>
+                    <li>Advanced order management dashboard</li>
+                    <li>Customer communication tools</li>
+                    <li>Detailed sales analytics & reporting</li>
+                    <li>Priority customer support</li>
+                    <li>Marketing tools and promotions</li>
+                    <li>Bulk inventory management</li>
+                    <li>Custom store branding</li>
+                </ul>
+            </div>
+            
+            <div style="background: rgba(255, 99, 71, 0.1); padding: 0.8rem; border-radius: 6px; margin: 1rem 0; border: 1px solid rgba(255, 99, 71, 0.3);">
+                <p style="color: #ff6347; font-size: 0.85rem; margin: 0;">
+                    <strong>Important:</strong> This is a monthly recurring subscription. You will be charged JMD $2,300 every month. Cancel anytime from your seller dashboard.
+                </p>
+            </div>
+            
+            <div id="seller-paypal-button-container"></div>
+            
+            <p style="color: #ccc; font-size: 0.8rem; text-align: center; margin-top: 1rem;">
+                Secure payment powered by PayPal • Cancel anytime from dashboard
+            </p>
+        </div>
+    `;
+    document.body.appendChild(modal);
+    
+    // Initialize PayPal for seller subscription
+    processSellerSubscriptionPayment(formData, modal);
+}
+
+
+function processSellerSubscriptionPayment(formData, modal) {
+    const monthlyFeeJMD = 2300;
+    const subscriptionAmount = convertJMDToUSD(monthlyFeeJMD);
+    
+    paypal.Buttons({
+        createOrder: function(data, actions) {
+            return actions.order.create({
+                purchase_units: [{
+                    amount: {
+                        value: subscriptionAmount,
+                        currency_code: 'USD'
+                    },
+                    description: `WEBVTEC Premium Seller Subscription - ${formData.businessName}`
+                }]
+            });
+        },
+        onApprove: function(data, actions) {
+            return actions.order.capture().then(function(details) {
+                // Payment successful, now create seller account
+                handleSellerSubscriptionSuccess(details, formData, modal);
+            });
+        },
+        onError: function(err) {
+            console.error('Seller subscription payment error:', err);
+            alert('Payment failed. Please try again or contact support.');
+        },
+        onCancel: function(data) {
+            console.log('Seller subscription payment cancelled');
+            alert('Payment cancelled. You can complete your subscription anytime.');
+        }
+    }).render('#seller-paypal-button-container');
+}
+
+
+
+function handleSellerSubscriptionSuccess(paymentDetails, formData, modal) {
     // Check if this is a Google sign-up completion
     if (window.pendingSellerUser) {
-        // Complete Google seller registration
-        completeGoogleSellerRegistration(formData);
+        // Complete Google seller registration with payment
+        completeGoogleSellerRegistrationWithPayment(formData, paymentDetails, modal);
     } else {
-        // Regular email/password registration
-        createEmailSellerAccount(formData);
+        // Regular email/password registration with payment
+        createEmailSellerAccountWithPayment(formData, paymentDetails, modal);
     }
 }
 
+function createEmailSellerAccountWithPayment(formData, paymentDetails, modal) {
+    auth.createUserWithEmailAndPassword(formData.email, formData.password)
+        .then((result) => {
+            const user = result.user;
+            return completeSellerRegistrationWithPayment(user, formData, paymentDetails);
+        })
+        .then(() => {
+            modal.remove();
+            alert('Premium seller account created successfully! Your subscription is now active.');
+            setTimeout(() => showSellerDashboard(), 1000);
+        })
+        .catch((error) => {
+            console.error('Email seller signup error:', error);
+            alert('Error creating seller account: ' + error.message);
+        });
+}
+
+function completeGoogleSellerRegistrationWithPayment(formData, paymentDetails, modal) {
+    const user = window.pendingSellerUser;
+    completeSellerRegistrationWithPayment(user, formData, paymentDetails)
+        .then(() => {
+            delete window.pendingSellerUser;
+            modal.remove();
+            alert('Premium seller account created successfully! Your subscription is now active.');
+            setTimeout(() => showSellerDashboard(), 1000);
+        })
+        .catch((error) => {
+            console.error('Google seller signup error:', error);
+            alert('Error creating seller account: ' + error.message);
+        });
+}
+
+
+function completeSellerRegistrationWithPayment(user, formData, paymentDetails) {
+    const monthlyFeeJMD = 2300;
+    const subscriptionStart = new Date();
+    const subscriptionEnd = new Date();
+    subscriptionEnd.setMonth(subscriptionEnd.getMonth() + 1); // Add 1 month
+    
+    return user.updateProfile({
+        displayName: `${formData.firstName} ${formData.lastName}`
+    }).then(() => {
+        return db.collection('sellers').doc(user.uid).set({
+            uid: user.uid,
+            firstName: formData.firstName,
+            lastName: formData.lastName,
+            dateOfBirth: formData.dateOfBirth,
+            email: formData.email,
+            phone: formData.phone,
+            businessName: formData.businessName,
+            
+            // Subscription details
+            subscriptionStatus: 'active',
+            subscriptionTier: 'premium',
+            monthlyFee: monthlyFeeJMD,
+            monthlyFeeUSD: parseFloat(convertJMDToUSD(monthlyFeeJMD)),
+            subscriptionStart: subscriptionStart.toISOString(),
+            subscriptionEnd: subscriptionEnd.toISOString(),
+            joinedDate: new Date().toISOString(),
+            autoRenew: true,
+            
+            // Payment details
+            lastPayment: {
+                paypalTransactionId: paymentDetails.id,
+                amount: monthlyFeeJMD, // JMD
+                amountUSD: parseFloat(convertJMDToUSD(monthlyFeeJMD)),
+                paymentDate: new Date().toISOString(),
+                status: 'completed',
+                exchangeRate: JMD_TO_USD_RATE
+            },
+            
+            isSeller: true,
+            products: [],
+            
+            // PayPal information (to be completed later)
+            paypalEmail: '',
+            paypalVerified: false,
+            paymentSetupComplete: false,
+            
+            // Financial tracking
+            totalSales: 0,
+            pendingPayouts: 0,
+            availableBalance: 0,
+            lastPayoutDate: null,
+            salesHistory: [],
+            payoutHistory: [],
+            subscriptionHistory: [{
+                paypalTransactionId: paymentDetails.id,
+                amount: monthlyFeeJMD,
+                amountUSD: parseFloat(convertJMDToUSD(monthlyFeeJMD)),
+                paymentDate: new Date().toISOString(),
+                period: `${subscriptionStart.toISOString()} to ${subscriptionEnd.toISOString()}`,
+                status: 'completed',
+                exchangeRate: JMD_TO_USD_RATE
+            }]
+        });
+    }).then(() => {
+        currentUser = user;
+        updateAuthUI();
+        closeSellerSignup();
+    });
+                    }
+
+
+    function checkSellerSubscriptionStatus() {
+    if (!currentUser) return;
+    
+    db.collection('sellers').doc(currentUser.uid).get()
+        .then((doc) => {
+            if (doc.exists) {
+                const seller = doc.data();
+                const subscriptionEnd = new Date(seller.subscriptionEnd);
+                const now = new Date();
+                const daysUntilExpiry = Math.ceil((subscriptionEnd - now) / (1000 * 60 * 60 * 24));
+                
+                if (daysUntilExpiry <= 7 && daysUntilExpiry > 0) {
+                    showSubscriptionRenewalReminder(daysUntilExpiry, seller.monthlyFee);
+                } else if (daysUntilExpiry <= 0) {
+                    showSubscriptionExpiredNotice();
+                }
+            }
+        });
+}
+
+function showSubscriptionRenewalReminder(days, monthlyFee) {
+    const notification = document.createElement('div');
+    notification.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        background: #ff9800;
+        color: white;
+        padding: 1rem;
+        border-radius: 8px;
+        z-index: 3000;
+        max-width: 300px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    `;
+    notification.innerHTML = `
+        <strong>Subscription Renewal</strong><br>
+        Your premium subscription expires in ${days} day(s).<br>
+        Monthly fee: JMD $${monthlyFee}<br>
+        <button onclick="this.parentElement.remove()" style="background: rgba(255,255,255,0.2); color: white; border: none; padding: 0.3rem 0.6rem; border-radius: 4px; cursor: pointer; margin-top: 0.5rem;">OK</button>
+    `;
+    document.body.appendChild(notification);
+    
+    setTimeout(() => {
+        if (notification.parentElement) {
+            notification.remove();
+        }
+    }, 10000);
+}
 function createEmailSellerAccount(formData) {
     auth.createUserWithEmailAndPassword(formData.email, formData.password)
         .then((result) => {
