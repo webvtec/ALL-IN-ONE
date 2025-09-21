@@ -3911,38 +3911,74 @@ function loadSellerOrders() {
     if (!currentUser) return;
     
     const ordersList = document.getElementById('sellerOrdersList');
-    if (!ordersList) return; // Prevent error if element doesn't exist
+    if (!ordersList) return;
     
     ordersList.innerHTML = '<div style="text-align: center; padding: 2rem;">Loading orders...</div>';
     
-    // Clear any existing listener to prevent duplicates
-    if (window.sellerOrdersListener) {
-        window.sellerOrdersListener();
-    }
-    
-    window.sellerOrdersListener = db.collection('sellerOrders')
+    // Try to load seller orders, fallback to main orders collection
+    db.collection('sellerOrders')
         .where('sellerId', '==', currentUser.uid)
-        .orderBy('createdAt', 'desc')
-        .onSnapshot((snapshot) => {
-            if (!ordersList) return; // Double check element exists
-            
+        .get() // Use get() instead of onSnapshot to avoid permission issues
+        .then((snapshot) => {
             ordersList.innerHTML = '';
             
             if (snapshot.empty) {
-                ordersList.innerHTML = '<div style="text-align: center; color: #666; padding: 3rem;">No orders yet. Your products will appear here when customers place orders.</div>';
-                return;
+                // Fallback: check main orders collection
+                return db.collection('orders')
+                    .where('sellers.' + currentUser.uid, '!=', null)
+                    .get();
+            } else {
+                // Display seller orders
+                snapshot.forEach((doc) => {
+                    const order = doc.data();
+                    const orderElement = createSellerOrderCard(order);
+                    ordersList.appendChild(orderElement);
+                });
+                return null; // Don't continue to fallback
             }
-            
-            snapshot.forEach((doc) => {
-                const order = doc.data();
-                const orderElement = createSellerOrderCard(order);
-                ordersList.appendChild(orderElement);
-            });
-        }, (error) => {
+        })
+        .then((mainOrdersSnapshot) => {
+            if (mainOrdersSnapshot) {
+                if (mainOrdersSnapshot.empty) {
+                    ordersList.innerHTML = '<div style="text-align: center; color: #666; padding: 3rem;">No orders yet. Your products will appear here when customers place orders.</div>';
+                } else {
+                    // Process main orders and extract seller-specific data
+                    mainOrdersSnapshot.forEach((doc) => {
+                        const order = doc.data();
+                        const sellerData = order.sellers[currentUser.uid];
+                        if (sellerData) {
+                            const sellerOrder = {
+                                orderNumber: sellerData.orderNumber || order.orderId,
+                                mainOrderId: order.orderId,
+                                sellerId: currentUser.uid,
+                                sellerName: sellerData.sellerName,
+                                buyerId: order.buyerId,
+                                buyerEmail: order.buyerEmail,
+                                items: sellerData.items,
+                                subtotal: sellerData.subtotal,
+                                status: sellerData.status || 'pending',
+                                createdAt: order.createdAt,
+                                shippingAddress: order.shippingAddress
+                            };
+                            
+                            const orderElement = createSellerOrderCard(sellerOrder);
+                            ordersList.appendChild(orderElement);
+                        }
+                    });
+                }
+            }
+        })
+        .catch((error) => {
             console.error('Error loading seller orders:', error);
-            if (ordersList) {
-                ordersList.innerHTML = '<div style="text-align: center; color: #ff4757; padding: 2rem;">Error loading orders. Please try again.</div>';
-            }
+            ordersList.innerHTML = `
+                <div style="text-align: center; color: #666; padding: 3rem;">
+                    <h3>No Orders Yet</h3>
+                    <p>Your orders will appear here when customers make purchases.</p>
+                    <p style="font-size: 0.9rem; color: #999; margin-top: 1rem;">
+                        Make sure your products are active and visible to customers.
+                    </p>
+                </div>
+            `;
         });
 }
 
