@@ -3475,9 +3475,7 @@ function showSellerPaymentModal(formData) {
             <h2 style="color: #ffd700; margin-bottom: 1rem;">Seller Subscription Payment</h2>
             
             <div style="background: rgba(255, 215, 0, 0.1); padding: 1rem; border-radius: 8px; margin: 1rem 0;">
-                <h3 style="color: #ffd700; margin: 0 0 0.5rem 0;">Premium Seller Subscription</h3>
-                <p style="color: #ccc; margin: 0;">Business: ${formData.businessName}</p>
-                <h4 style="color: #ffd700; margin: 0.5rem 0 0 0;">Monthly Fee: JMD $2,300.00</h4>
+                <h4 style="color: #ffd700; margin: 0.5rem 0;">Monthly Fee: JMD $2,300.00</h4>
                 <p style="color: #ccc; font-size: 0.8rem; margin: 0.3rem 0 0 0;">PayPal will charge: USD $${monthlyFeeUSD}</p>
                 <p style="color: #999; font-size: 0.75rem; margin: 0.2rem 0 0 0;">Exchange rate: 1 JMD = ${JMD_TO_USD_RATE} USD</p>
             </div>
@@ -3503,7 +3501,7 @@ function showSellerPaymentModal(formData) {
         processSellerSubscriptionPayment(formData, modal);
     }, 100);
 }
-
+    
 function processSellerSubscriptionPayment(formData, modal) {
     const monthlyFeeJMD = 2300;
     const subscriptionAmount = convertJMDToUSD(monthlyFeeJMD);
