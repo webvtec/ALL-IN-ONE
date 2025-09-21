@@ -2559,6 +2559,27 @@ function generateMainOrderId() {
 }
 
 
+function selectDeliveryLocation(location) {
+    // Update hidden input
+    document.getElementById('deliveryLocation').value = location;
+    
+    // Reset button styles
+    document.getElementById('knutsfordBtn').style.borderColor = '#ddd';
+    document.getElementById('knutsfordBtn').style.background = 'white';
+    document.getElementById('knutsfordBtn').style.color = '#333';
+    
+    document.getElementById('taraBtn').style.borderColor = '#ddd';
+    document.getElementById('taraBtn').style.background = 'white';
+    document.getElementById('taraBtn').style.color = '#333';
+    
+    // Highlight selected button
+    const selectedBtn = document.getElementById(location + 'Btn');
+    selectedBtn.style.borderColor = '#007185';
+    selectedBtn.style.background = '#007185';
+    selectedBtn.style.color = 'white';
+}
+
+
 async function saveOrderToFirestore(orderData) {
     try {
         // Save main order
@@ -2589,8 +2610,15 @@ async function saveOrderToFirestore(orderData) {
 }
 
 
+
 async function completeOrder(event) {
     event.preventDefault();
+    
+    const deliveryLocation = document.getElementById('deliveryLocation').value;
+    if (!deliveryLocation) {
+        alert('Please select a delivery location (Knutsford or Tara)');
+        return;
+    }
     
     const groupedCart = groupCartBySeller();
     const totalAmount = Object.values(groupedCart).reduce((sum, group) => sum + group.subtotal, 0);
@@ -2600,10 +2628,9 @@ async function completeOrder(event) {
     const shippingAddress = {
         name: document.getElementById('shippingName').value,
         phone: document.getElementById('shippingPhone').value,
-        address1: document.getElementById('shippingAddress1').value,
-        address2: document.getElementById('shippingAddress2').value,
+        address: document.getElementById('shippingAddress').value,
         parish: document.getElementById('shippingParish').value,
-        postalCode: document.getElementById('shippingPostal').value
+        deliveryLocation: deliveryLocation.toUpperCase()
     };
     
     // Create order data structure
@@ -2634,7 +2661,8 @@ async function completeOrder(event) {
                 subtotal: item.price * item.quantity
             })),
             subtotal: sellerGroup.subtotal,
-            status: 'pending'
+            status: 'pending',
+            deliveryLocation: deliveryLocation.toUpperCase()
         };
     });
     
@@ -2651,7 +2679,7 @@ async function completeOrder(event) {
         
         // Show success message with order numbers
         let orderNumbers = Object.values(orderData.sellers).map(seller => seller.orderNumber).join(', ');
-        alert(`Order placed successfully!\n\nMain Order ID: ${mainOrderId}\nSeller Order Numbers: ${orderNumbers}\n\nTotal: JMD $${totalAmount.toFixed(2)}`);
+        alert(`Order placed successfully!\n\nMain Order ID: ${mainOrderId}\nSeller Order Numbers: ${orderNumbers}\nDelivery Location: ${deliveryLocation.toUpperCase()}\n\nTotal: JMD $${totalAmount.toFixed(2)}`);
         
         console.log('Order saved:', orderData);
     } else {
@@ -2659,6 +2687,7 @@ async function completeOrder(event) {
     }
 }
 
+    
 function proceedToCheckout() {
     if (!currentUser) {
         alert('Please sign in to proceed with checkout');
@@ -2696,38 +2725,43 @@ function showShippingForm() {
                     <input type="tel" id="shippingPhone" required>
                 </div>
                 <div class="form-group">
-                    <label>Address Line 1:</label>
-                    <input type="text" id="shippingAddress1" required>
+                    <label>Address:</label>
+                    <input type="text" id="shippingAddress" required>
                 </div>
                 <div class="form-group">
-                    <label>Address Line 2 (Optional):</label>
-                    <input type="text" id="shippingAddress2">
+                    <label>Parish:</label>
+                    <select id="shippingParish" required>
+                        <option value="">Select Parish</option>
+                        <option value="Kingston">Kingston</option>
+                        <option value="St. Andrew">St. Andrew</option>
+                        <option value="St. Thomas">St. Thomas</option>
+                        <option value="Portland">Portland</option>
+                        <option value="St. Mary">St. Mary</option>
+                        <option value="St. Ann">St. Ann</option>
+                        <option value="Trelawny">Trelawny</option>
+                        <option value="St. James">St. James</option>
+                        <option value="Hanover">Hanover</option>
+                        <option value="Westmoreland">Westmoreland</option>
+                        <option value="St. Elizabeth">St. Elizabeth</option>
+                        <option value="Manchester">Manchester</option>
+                        <option value="Clarendon">Clarendon</option>
+                        <option value="St. Catherine">St. Catherine</option>
+                    </select>
                 </div>
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
-                    <div class="form-group">
-                        <label>Parish:</label>
-                        <select id="shippingParish" required>
-                            <option value="">Select Parish</option>
-                            <option value="Kingston">Kingston</option>
-                            <option value="St. Andrew">St. Andrew</option>
-                            <option value="St. Thomas">St. Thomas</option>
-                            <option value="Portland">Portland</option>
-                            <option value="St. Mary">St. Mary</option>
-                            <option value="St. Ann">St. Ann</option>
-                            <option value="Trelawny">Trelawny</option>
-                            <option value="St. James">St. James</option>
-                            <option value="Hanover">Hanover</option>
-                            <option value="Westmoreland">Westmoreland</option>
-                            <option value="St. Elizabeth">St. Elizabeth</option>
-                            <option value="Manchester">Manchester</option>
-                            <option value="Clarendon">Clarendon</option>
-                            <option value="St. Catherine">St. Catherine</option>
-                        </select>
+                
+                <!-- Delivery Location Selection -->
+                <div class="form-group">
+                    <label>Delivery Location:</label>
+                    <div style="display: flex; gap: 1rem; margin-top: 0.5rem;">
+                        <button type="button" id="knutsfordBtn" onclick="selectDeliveryLocation('knutsford')" style="flex: 1; padding: 0.8rem; border: 2px solid #ddd; border-radius: 8px; background: white; color: #333; cursor: pointer; font-weight: bold; transition: all 0.3s ease;">
+                            KNUTSFORD
+                        </button>
+                        <button type="button" id="taraBtn" onclick="selectDeliveryLocation('tara')" style="flex: 1; padding: 0.8rem; border: 2px solid #ddd; border-radius: 8px; background: white; color: #333; cursor: pointer; font-weight: bold; transition: all 0.3s ease;">
+                            TARA
+                        </button>
                     </div>
-                    <div class="form-group">
-                        <label>Postal Code:</label>
-                        <input type="text" id="shippingPostal">
-                    </div>
+                    <input type="hidden" id="deliveryLocation" required>
+                    <p style="color: #ccc; font-size: 0.8rem; margin: 0.5rem 0 0 0;">Please select your preferred delivery location</p>
                 </div>
                 
                 <div style="background: rgba(255, 215, 0, 0.1); padding: 1rem; border-radius: 8px; margin: 1rem 0;">
