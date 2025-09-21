@@ -2480,6 +2480,7 @@ function showCartNotification(productName) {
     }, 3000);
 }
 
+// Update the cart display function
 function showCart() {
     if (cart.length === 0) {
         alert('Your cart is empty!');
@@ -2490,7 +2491,6 @@ function showCart() {
     let cartHTML = '<h3 style="color: #ffd700; margin-bottom: 1.5rem;">Your Cart</h3>';
     let grandTotal = 0;
     
-    // Display items grouped by seller
     Object.entries(groupedCart).forEach(([sellerId, sellerGroup]) => {
         cartHTML += `
             <div style="background: rgba(255, 255, 255, 0.05); padding: 1rem; border-radius: 8px; margin-bottom: 1rem; border-left: 3px solid #ffd700;">
@@ -2506,7 +2506,7 @@ function showCart() {
                         <span style="color: #ccc; margin-left: 10px;">x${item.quantity}</span>
                     </div>
                     <div style="display: flex; gap: 10px; align-items: center;">
-                        <span>$${itemTotal.toFixed(2)}</span>
+                        <span>JMD $${itemTotal.toFixed(2)}</span>
                         <button onclick="removeFromCart('${item.id}')" style="background: #ff4757; color: white; border: none; padding: 0.2rem 0.5rem; border-radius: 3px; cursor: pointer; font-size: 0.7rem;">Remove</button>
                     </div>
                 </div>
@@ -2515,7 +2515,7 @@ function showCart() {
         
         cartHTML += `
                 <div style="text-align: right; margin-top: 0.5rem;">
-                    <strong style="color: #ffd700;">Subtotal: $${sellerGroup.subtotal.toFixed(2)}</strong>
+                    <strong style="color: #ffd700;">Subtotal: JMD $${sellerGroup.subtotal.toFixed(2)}</strong>
                 </div>
             </div>
         `;
@@ -2525,7 +2525,7 @@ function showCart() {
     
     cartHTML += `
         <div style="background: rgba(255, 215, 0, 0.1); padding: 1rem; border-radius: 8px; margin: 1rem 0; text-align: center;">
-            <h3 style="color: #ffd700; margin: 0;">Total: $${grandTotal.toFixed(2)}</h3>
+            <h3 style="color: #ffd700; margin: 0;">Total: JMD $${grandTotal.toFixed(2)}</h3>
             <p style="color: #ccc; font-size: 0.8rem; margin: 0.5rem 0 0 0;">
                 Items from ${Object.keys(groupedCart).length} seller(s)
             </p>
@@ -2547,21 +2547,201 @@ function showCart() {
 
 
 
+// Generate unique order numbers for each seller
+function generateOrderNumber(sellerId) {
+    const timestamp = Date.now().toString().slice(-8);
+    const sellerCode = sellerId.slice(0, 4).toUpperCase();
+    return `WV${sellerCode}${timestamp}`;
+}
+
+function generateMainOrderId() {
+    return `WVO${Date.now()}${Math.random().toString(36).substr(2, 4).toUpperCase()}`;
+}
+
+
+async function saveOrderToFirestore(orderData) {
+    try {
+        // Save main order
+        await db.collection('orders').doc(orderData.orderId).set(orderData);
+        
+        // Save individual seller orders for easier querying
+        for (const [sellerId, sellerData] of Object.entries(orderData.sellers)) {
+            await db.collection('sellerOrders').doc(sellerData.orderNumber).set({
+                orderNumber: sellerData.orderNumber,
+                mainOrderId: orderData.orderId,
+                sellerId: sellerId,
+                sellerName: sellerData.sellerName,
+                buyerId: orderData.buyerId,
+                buyerEmail: orderData.buyerEmail,
+                items: sellerData.items,
+                subtotal: sellerData.subtotal,
+                status: sellerData.status,
+                createdAt: orderData.createdAt,
+                shippingAddress: orderData.shippingAddress
+            });
+        }
+        
+        return true;
+    } catch (error) {
+        console.error('Error saving order:', error);
+        return false;
+    }
+}
+
+
+async function completeOrder(event) {
+    event.preventDefault();
+    
+    const groupedCart = groupCartBySeller();
+    const totalAmount = Object.values(groupedCart).reduce((sum, group) => sum + group.subtotal, 0);
+    const mainOrderId = generateMainOrderId();
+    
+    // Collect shipping information
+    const shippingAddress = {
+        name: document.getElementById('shippingName').value,
+        phone: document.getElementById('shippingPhone').value,
+        address1: document.getElementById('shippingAddress1').value,
+        address2: document.getElementById('shippingAddress2').value,
+        parish: document.getElementById('shippingParish').value,
+        postalCode: document.getElementById('shippingPostal').value
+    };
+    
+    // Create order data structure
+    const orderData = {
+        orderId: mainOrderId,
+        buyerId: currentUser.uid,
+        buyerEmail: currentUser.email,
+        totalAmount: totalAmount,
+        currency: 'JMD',
+        status: 'pending',
+        createdAt: new Date().toISOString(),
+        shippingAddress: shippingAddress,
+        sellers: {}
+    };
+    
+    // Process each seller's items
+    Object.entries(groupedCart).forEach(([sellerId, sellerGroup]) => {
+        const orderNumber = generateOrderNumber(sellerId);
+        
+        orderData.sellers[sellerId] = {
+            orderNumber: orderNumber,
+            sellerName: sellerGroup.sellerName,
+            items: sellerGroup.items.map(item => ({
+                productId: item.id,
+                productName: item.name,
+                price: item.price,
+                quantity: item.quantity,
+                subtotal: item.price * item.quantity
+            })),
+            subtotal: sellerGroup.subtotal,
+            status: 'pending'
+        };
+    });
+    
+    // Save order to Firestore
+    const saved = await saveOrderToFirestore(orderData);
+    
+    if (saved) {
+        // Clear cart
+        cart = [];
+        updateCartCount();
+        
+        // Close modal
+        document.querySelector('.modal').remove();
+        
+        // Show success message with order numbers
+        let orderNumbers = Object.values(orderData.sellers).map(seller => seller.orderNumber).join(', ');
+        alert(`Order placed successfully!\n\nMain Order ID: ${mainOrderId}\nSeller Order Numbers: ${orderNumbers}\n\nTotal: JMD $${totalAmount.toFixed(2)}`);
+        
+        console.log('Order saved:', orderData);
+    } else {
+        alert('Error placing order. Please try again.');
+    }
+}
+
 function proceedToCheckout() {
     if (!currentUser) {
         alert('Please sign in to proceed with checkout');
         return;
     }
     
+    if (cart.length === 0) {
+        alert('Your cart is empty');
+        return;
+    }
+    
+    // Show shipping form
+    showShippingForm();
+}
+
+function showShippingForm() {
     const groupedCart = groupCartBySeller();
     const totalAmount = Object.values(groupedCart).reduce((sum, group) => sum + group.subtotal, 0);
     
-    // For now, just show the checkout summary
-    alert(`Checkout Summary:\n\nSellers: ${Object.keys(groupedCart).length}\nTotal Items: ${cart.length}\nTotal Amount: $${totalAmount.toFixed(2)}\n\nPayPal integration coming soon!`);
-    
-    console.log('Grouped cart for checkout:', groupedCart);
+    const modal = document.createElement('div');
+    modal.className = 'modal';
+    modal.style.display = 'block';
+    modal.innerHTML = `
+        <div class="modal-content" style="max-width: 500px;">
+            <span class="close" onclick="this.parentElement.parentElement.remove()">&times;</span>
+            <h2 style="color: #ffd700; margin-bottom: 1rem;">Shipping Information</h2>
+            
+            <form id="shippingForm" onsubmit="completeOrder(event)">
+                <div class="form-group">
+                    <label>Full Name:</label>
+                    <input type="text" id="shippingName" required>
+                </div>
+                <div class="form-group">
+                    <label>Phone Number:</label>
+                    <input type="tel" id="shippingPhone" required>
+                </div>
+                <div class="form-group">
+                    <label>Address Line 1:</label>
+                    <input type="text" id="shippingAddress1" required>
+                </div>
+                <div class="form-group">
+                    <label>Address Line 2 (Optional):</label>
+                    <input type="text" id="shippingAddress2">
+                </div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                    <div class="form-group">
+                        <label>Parish:</label>
+                        <select id="shippingParish" required>
+                            <option value="">Select Parish</option>
+                            <option value="Kingston">Kingston</option>
+                            <option value="St. Andrew">St. Andrew</option>
+                            <option value="St. Thomas">St. Thomas</option>
+                            <option value="Portland">Portland</option>
+                            <option value="St. Mary">St. Mary</option>
+                            <option value="St. Ann">St. Ann</option>
+                            <option value="Trelawny">Trelawny</option>
+                            <option value="St. James">St. James</option>
+                            <option value="Hanover">Hanover</option>
+                            <option value="Westmoreland">Westmoreland</option>
+                            <option value="St. Elizabeth">St. Elizabeth</option>
+                            <option value="Manchester">Manchester</option>
+                            <option value="Clarendon">Clarendon</option>
+                            <option value="St. Catherine">St. Catherine</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Postal Code:</label>
+                        <input type="text" id="shippingPostal">
+                    </div>
+                </div>
+                
+                <div style="background: rgba(255, 215, 0, 0.1); padding: 1rem; border-radius: 8px; margin: 1rem 0;">
+                    <h3 style="color: #ffd700; margin: 0 0 0.5rem 0;">Order Summary</h3>
+                    <p style="color: #ccc; margin: 0;">Items from ${Object.keys(groupedCart).length} seller(s)</p>
+                    <h4 style="color: #ffd700; margin: 0.5rem 0 0 0;">Total: JMD $${totalAmount.toFixed(2)}</h4>
+                </div>
+                
+                <button type="submit" class="btn" style="width: 100%;">Complete Order</button>
+            </form>
+        </div>
+    `;
+    document.body.appendChild(modal);
 }
-
 
     function removeFromCart(productId) {
     const index = cart.findIndex(item => item.id === productId);
