@@ -1628,20 +1628,20 @@ body {
 </div>
 
         <!-- Overview Tab -->
-        <div id="overview-tab" class="dashboard-content">
-            <div style="display: flex; gap: 1.5rem; justify-content: center; margin-bottom: 2rem;">
-                <div style="background: white; padding: 1.5rem; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); text-align: center; min-width: 180px;">
-                    <div style="width: 40px; height: 40px; background: rgba(0, 113, 133, 0.1); color: #007185; border-radius: 10px; display: flex; align-items: center; justify-content: center; margin: 0 auto 1rem auto; font-size: 1.2rem;">📦</div>
-                    <h3 style="color: #666; margin: 0 0 0.5rem 0; font-size: 0.85rem; font-weight: 500; text-transform: uppercase;">Total Products</h3>
-                    <div style="font-size: 1.8rem; font-weight: 700; color: #007185;" id="totalProducts">0</div>
-                </div>
-                <div style="background: white; padding: 1.5rem; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); text-align: center; min-width: 180px;">
-                    <div style="width: 40px; height: 40px; background: rgba(40, 167, 69, 0.1); color: #28a745; border-radius: 10px; display: flex; align-items: center; justify-content: center; margin: 0 auto 1rem auto; font-size: 1.2rem;">💰</div>
-                    <h3 style="color: #666; margin: 0 0 0.5rem 0; font-size: 0.85rem; font-weight: 500; text-transform: uppercase;">Monthly Revenue</h3>
-                    <div style="font-size: 1.8rem; font-weight: 700; color: #28a745;">$0</div>
-                </div>
-            </div>
+<div id="overview-tab" class="dashboard-content">
+    <div style="display: flex; gap: 1rem; justify-content: center; margin-bottom: 2rem;">
+        <div style="background: white; padding: 1rem; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); text-align: center; min-width: 120px; max-width: 150px;">
+            <div style="width: 30px; height: 30px; background: rgba(0, 113, 133, 0.1); color: #007185; border-radius: 6px; display: flex; align-items: center; justify-content: center; margin: 0 auto 0.5rem auto; font-size: 1rem;">📦</div>
+            <h3 style="color: #666; margin: 0 0 0.3rem 0; font-size: 0.7rem; font-weight: 500; text-transform: uppercase;">Total Products</h3>
+            <div style="font-size: 1.4rem; font-weight: 700; color: #007185;" id="totalProducts">0</div>
         </div>
+        <div style="background: white; padding: 1rem; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); text-align: center; min-width: 120px; max-width: 150px;">
+            <div style="width: 30px; height: 30px; background: rgba(40, 167, 69, 0.1); color: #28a745; border-radius: 6px; display: flex; align-items: center; justify-content: center; margin: 0 auto 0.5rem auto; font-size: 1rem;">💰</div>
+            <h3 style="color: #666; margin: 0 0 0.3rem 0; font-size: 0.7rem; font-weight: 500; text-transform: uppercase;">Monthly Revenue</h3>
+            <div style="font-size: 1.4rem; font-weight: 700; color: #28a745;">$0</div>
+        </div>
+    </div>
+</div>
         
         <!-- Add Product Tab -->
         <div id="add-product-tab" class="dashboard-content" style="display: none;">
@@ -3579,6 +3579,16 @@ function showSellerDashboard() {
 function closeSellerDashboardPage() {
     document.getElementById('sellerDashboardPage').style.display = 'none';
     document.body.style.overflow = 'auto';
+    
+    // Clean up listeners to prevent memory leaks and duplicates
+    if (window.sellerOrdersListener) {
+        window.sellerOrdersListener();
+        window.sellerOrdersListener = null;
+    }
+    
+    // Remove PayPal notifications
+    const paypalNotifications = document.querySelectorAll('.paypal-setup-notification');
+    paypalNotifications.forEach(notification => notification.remove());
 }
 
 function showDashboardTab(tabName, event) {
@@ -3612,6 +3622,7 @@ function showDashboardTab(tabName, event) {
     }
 }
 
+// In the loadDashboardOverview function, replace the statistics HTML:
 function loadDashboardOverview() {
     if (!currentUser) return;
     
@@ -3620,7 +3631,7 @@ function loadDashboardOverview() {
         .onSnapshot((snapshot) => {
             document.getElementById('totalProducts').textContent = snapshot.size;
         });
-}
+    }
 
 function loadDashboardProducts() {
     if (!currentUser) return;
@@ -3894,12 +3905,21 @@ function loadSellerOrders() {
     if (!currentUser) return;
     
     const ordersList = document.getElementById('sellerOrdersList');
+    if (!ordersList) return; // Prevent error if element doesn't exist
+    
     ordersList.innerHTML = '<div style="text-align: center; padding: 2rem;">Loading orders...</div>';
     
-    db.collection('sellerOrders')
+    // Clear any existing listener to prevent duplicates
+    if (window.sellerOrdersListener) {
+        window.sellerOrdersListener();
+    }
+    
+    window.sellerOrdersListener = db.collection('sellerOrders')
         .where('sellerId', '==', currentUser.uid)
         .orderBy('createdAt', 'desc')
         .onSnapshot((snapshot) => {
+            if (!ordersList) return; // Double check element exists
+            
             ordersList.innerHTML = '';
             
             if (snapshot.empty) {
@@ -3914,7 +3934,9 @@ function loadSellerOrders() {
             });
         }, (error) => {
             console.error('Error loading seller orders:', error);
-            ordersList.innerHTML = '<div style="text-align: center; color: #ff4757; padding: 2rem;">Error loading orders. Please try again.</div>';
+            if (ordersList) {
+                ordersList.innerHTML = '<div style="text-align: center; color: #ff4757; padding: 2rem;">Error loading orders. Please try again.</div>';
+            }
         });
 }
 
@@ -4160,7 +4182,14 @@ function createCustomerOrderCard(order) {
 // PAYPAL SETUP FUNCTIONS
 // ================================
 function showPayPalSetupNotification() {
+    // Check if notification already exists
+    const existingNotification = document.querySelector('.paypal-setup-notification');
+    if (existingNotification) {
+        return; // Don't create duplicate
+    }
+    
     const notification = document.createElement('div');
+    notification.className = 'paypal-setup-notification';
     notification.style.cssText = `
         background: #ff9800;
         color: white;
@@ -4177,7 +4206,9 @@ function showPayPalSetupNotification() {
     notification.onclick = () => showPayPalSetup();
     
     const dashboard = document.querySelector('#sellerDashboardPage .dashboard-content-wrapper');
-    dashboard.insertBefore(notification, dashboard.firstChild);
+    if (dashboard) {
+        dashboard.insertBefore(notification, dashboard.firstChild);
+    }
 }
 
 function showPayPalSetup() {
