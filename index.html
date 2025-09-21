@@ -1985,6 +1985,19 @@ body {
                         </select>
                     </div>
                 </div>
+
+                 <div class="form-row">
+    <div class="form-field">
+        <label>Stock Quantity</label>
+        <input type="number" id="editProductStock" min="0" required>
+        <small style="color: #666; display: block; margin-top: 0.3rem;">Available quantity for sale</small>
+    </div>
+    <div class="form-field">
+        <label>Low Stock Alert</label>
+        <input type="number" id="editLowStockAlert" min="0" required>
+        <small style="color: #666; display: block; margin-top: 0.3rem;">Get notified when stock reaches this level</small>
+    </div>
+                 </div>
                 
                 <div style="display: flex; gap: 1rem; margin-top: 2rem; justify-content: center;">
                     <button type="submit" class="btn-primary">Update Product</button>
@@ -4169,17 +4182,18 @@ function handleEditProduct(event) {
     }
     
     const updatedProduct = {
-        name: document.getElementById('editProductName').value,
-        description: document.getElementById('editProductDescription').value,
-        price: parseFloat(document.getElementById('editProductPrice').value),
-        category: document.getElementById('editProductCategory').value,
-        image: images[0], // First image as main
-        images: images, // All images
-        knutsfordDelivery: document.getElementById('editKnutsfordDelivery').value,
-        stock: parseInt(document.getElementById('editProductStock').value) || 0,
-        lowStockAlert: parseInt(document.getElementById('editLowStockAlert').value) || 5,
-        updatedAt: new Date().toISOString()
-    };
+    name: document.getElementById('editProductName').value,
+    description: document.getElementById('editProductDescription').value,
+    price: parseFloat(document.getElementById('editProductPrice').value),
+    category: document.getElementById('editProductCategory').value,
+    image: images[0], // First image as main
+    images: images, // All images
+    knutsfordDelivery: document.getElementById('editKnutsfordDelivery').value,
+    taraDelivery: document.getElementById('editTaraDelivery').value,
+    stock: parseInt(document.getElementById('editProductStock').value) || 0,
+    lowStockAlert: parseInt(document.getElementById('editLowStockAlert').value) || 5,
+    updatedAt: new Date().toISOString()
+};
     
     // Update product in Firestore
     db.collection('products').doc(productId).update(updatedProduct)
