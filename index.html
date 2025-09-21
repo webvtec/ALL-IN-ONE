@@ -1801,6 +1801,21 @@ body {
                             </div>
                         </div>
                     </div>
+
+
+                    <!-- Add this after the existing form-rows and before the delivery options -->
+<div class="form-row">
+    <div class="form-field">
+        <label>Stock Quantity</label>
+        <input type="number" id="dashboardProductStock" min="0" value="10" required>
+        <small style="color: #666; display: block; margin-top: 0.3rem;">Available quantity for sale</small>
+    </div>
+    <div class="form-field">
+        <label>Low Stock Alert</label>
+        <input type="number" id="dashboardLowStockAlert" min="0" value="5" required>
+        <small style="color: #666; display: block; margin-top: 0.3rem;">Get notified when stock reaches this level</small>
+    </div>
+</div>
                     
                     <div class="form-row">
                         <div class="form-field">
