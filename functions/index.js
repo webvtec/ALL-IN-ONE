@@ -6,8 +6,8 @@ const axios = require('axios');
 admin.initializeApp();
 const db = admin.firestore();
 
-// Email transporter setup
-const transporter = nodemailer.createTransporter({
+// Email transporter setup - FIXED: createTransport (not createTransporter)
+const transporter = nodemailer.createTransport({
   service: 'gmail',
   auth: {
     user: functions.config().gmail.email,
@@ -436,4 +436,4 @@ function generateEarningsNotificationEmail(data) {
     <p><strong>Platform Fee:</strong> $${data.platformFee}</p>
     <p>The amount has been added to your available balance.</p>
   `;
-}
+                       }
